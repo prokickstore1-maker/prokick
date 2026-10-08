@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+_build_plan
+graphify-out
+/*.png
+.env*
+.DS_Store
