@@ -61,7 +61,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
           </div>
         )}
 
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black uppercase leading-[0.98] tracking-tight font-display text-white drop-shadow-md">
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black uppercase leading-[0.98] tracking-tight font-display text-white">
           {/* non-breaking space sebelum tahun: cegah orphan "2026" di 390px */}
           {banner.title.replace(/ (20\d{2})/g, " $1")}
         </h1>

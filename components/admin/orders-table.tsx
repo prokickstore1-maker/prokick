@@ -242,12 +242,12 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                         <span
                           className={`text-[10px] font-bold px-2.5 py-0.5 rounded-lg inline-block border ${
                             order.orderStatus === "SHIPPED" || order.orderStatus === "COMPLETED"
-                              ? "bg-[#ECFDF5] text-[#16A34A] border-[#A7F3D0]"
+                              ? "bg-emerald-400/20 text-emerald-300 border-emerald-400/30"
                               : order.orderStatus === "PROCESSING"
-                              ? "bg-[#ECFEFF] text-[#0E7490] border-[#A5F3FC]"
+                              ? "bg-cyan-400/20 text-cyan-300 border-cyan-400/30"
                               : order.orderStatus === "CANCELLED"
-                              ? "bg-neutral-100 text-neutral-500 border-neutral-300"
-                              : "bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]"
+                              ? "bg-zinc-500/10 text-zinc-400 border-zinc-500/30"
+                              : "bg-zinc-500/15 text-zinc-300 border-zinc-500/40"
                           }`}
                         >
                           {order.orderStatus}
