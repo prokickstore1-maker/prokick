@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local agent settings (skills di .claude/skills tetap di-track — dirujuk AGENTS.md)
+.claude/settings.local.json
+
+# graphify artifacts
+graphify-out/
+
+# screenshot kerja
+home-mobile*.png

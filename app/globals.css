@@ -1,26 +1,207 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ProKick Athletic Dark Palette */
+  --bg-canvas: #09090B;
+  --bg-surface: #121217;
+  --bg-surface-elevated: #181820;
+  --bg-surface-hover: #22222B;
+
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.16);
+  --border-accent: rgba(255, 255, 255, 0.28);
+
+  --accent-volt: #E2F952;
+  /* shadcn semantic vars — aliased to ProKick tokens above (one source of truth, no duplicate hex).
+     NOTE: --accent is shadcn's subtle hover surface, NOT the brand accent; volt lives in --volt. */
+  --background: var(--bg-canvas);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-surface-elevated);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--text-primary);
+  --primary-foreground: var(--bg-canvas);
+  --secondary: var(--bg-surface-elevated);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-surface);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--bg-surface-hover);
+  --accent-foreground: var(--text-primary);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: var(--border-subtle);
+  --input: var(--border-light);
+  --ring: var(--border-accent);
+  --volt: var(--accent-volt);
+  --radius: 0.75rem; /* DESIGN.md: cards 12px */
+  --chart-1: var(--text-primary);
+  --chart-2: var(--text-secondary);
+  --chart-3: var(--text-muted);
+  --chart-4: var(--bg-surface-hover);
+  --chart-5: var(--border-accent);
+  --sidebar: var(--bg-surface);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--text-primary);
+  --sidebar-primary-foreground: var(--bg-canvas);
+  --sidebar-accent: var(--bg-surface-hover);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--border-accent);
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-surface-elevated: var(--bg-surface-elevated);
+  --font-display: var(--font-display), sans-serif;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono), monospace;
+  /* ponytail: clamp 2xl/3xl to 12px per DESIGN.md; drop overrides and rename call sites to rounded-xl if radius needs to vary again */
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.75rem;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-volt: var(--volt);
+  /* DESIGN.md: satu aksen volt. Amber = alias volt (69 call site, nol perubahan markup).
+     Konteks Harimau/Malaysia yang butuh warna berbeda pakai token --color-harimau (#F2D24B). */
+  --color-amber-300: var(--color-volt);
+  --color-amber-400: var(--color-volt);
+  --color-amber-500: var(--color-volt);
+  --color-amber-200: var(--color-volt);
+  --color-harimau: #F2D24B;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #09090B;
+  color: #FAFAFA;
+  font-family: var(--font-sans), sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Studio Jersey Spotlight Canvas — backdrop only; shape/border live at call sites */
+.studio-stage {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08) 0%, rgba(18, 18, 23, 0.95) 75%);
+  transition: background 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.studio-stage:hover {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.12) 0%, rgba(18, 18, 23, 0.98) 75%);
+}
+
+/* Smooth micro-transitions & reset */
+* {
+  box-sizing: border-box;
+}
+
+/* Sticky header offset for anchor jumps */
+html {
+  scroll-padding-top: 6rem;
+}
+
+/* Horizontal scroll rows (filter pills, thumbnails) — hide bar, keep scroll */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Minimalist Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #09090B;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F46;
+}
+
+/* Admin is a LIGHT surface (app/admin/layout.tsx uses #FAFAF9/white). Scope light
+   tokens here instead of a global .dark toggle — storefront stays dark by default. */
+.admin-surface {
+  --background: #FAFAF9;
+  --foreground: #0C0A09;
+  --card: oklch(1 0 0);
+  --card-foreground: #0C0A09;
+  --popover: oklch(1 0 0);
+  --popover-foreground: #0C0A09;
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: #F5F5F5;
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: #F5F5F5;
+  --muted-foreground: #57534E;
+  --accent: #F5F5F5;
+  --accent-foreground: oklch(0.205 0 0);
+  --border: #E5E5E5;
+  --input: #E5E5E5;
+  --ring: #0C0A09;
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: #0C0A09;
+  --sidebar-border: #E5E5E5;
+  --sidebar-accent: #F5F5F5;
+  --sidebar-ring: #0C0A09;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

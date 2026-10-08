@@ -7,3 +7,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+<!-- antislop:start -->
+## antislop
+Untuk kerja UI, copy, people, mobile layout, atau code comment, baca `.claude/skills/antislop/SKILL.md` (core) lalu skill untuk tugasnya:
+- UI / visual: `.claude/skills/antislop-ui/SKILL.md`
+- Copy & text: `.claude/skills/antislop-copywriting/SKILL.md`
+- People: `.claude/skills/antislop-human/SKILL.md` (+ `contrast-check.py`)
+- Mobile / responsive: `.claude/skills/antislop-layoutmobile/SKILL.md`
+- Code comments: `.claude/skills/antislop-code/SKILL.md`
+Arah visual: `DESIGN.md`. Sebelum mulai, tanya user kapan antislop berlaku: saat kerja, atau setelah selesai (audit).
+<!-- antislop:end -->
