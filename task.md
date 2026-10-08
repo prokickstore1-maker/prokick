@@ -180,7 +180,7 @@
   - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
   - `NEXTAUTH_SECRET` / Admin session secrets
 
-### Task 4.3: Database Push on Coolify
+### Task 4.3: Database Push ke Neon (bukan container VPS)
 - [ ] Synchronize clean football schema to Coolify PostgreSQL:
   ```bash
   npx drizzle-kit push

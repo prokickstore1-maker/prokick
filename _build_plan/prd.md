@@ -39,12 +39,12 @@ Build **ProKick Store** as the premier football jersey e-commerce destination in
 | **Language** | **TypeScript** | `strict: true`, end-to-end type safety from PostgreSQL schema to UI components. |
 | **Styling & Design System** | **Tailwind CSS v4 + Shadcn UI** | Design tokens mengikuti `DESIGN.md`, dark-mode CSS variables, micro-animations. |
 | **Icons & Motion** | **Lucide Icons + Framer Motion** | Clean 24px sports iconography, motion level 1 (hover/fade saja). |
-| **Database** | **PostgreSQL (Coolify VPS / Dev)** | Rock-solid relational database for orders, stock consistency, and transaction integrity. |
+| **Database** | **Neon Postgres (serverless)** | Managed Postgres for orders, stock consistency, and transaction integrity. Free tier: 1 GB/project (20 GB/account), 100 CU-hours/project, autosuspend 5 min (idle = $0). `DATABASE_URL` via pooled connection string; app stays on Coolify VPS. |
 | **ORM & Migrations** | **Drizzle ORM** | Lightweight, type-safe query builder with instant schema migrations. |
-| **Object Storage** | **IDCloudHost S3 (is3.cloudhost.id)** | Bucket `prokick-store` for high-res jersey images, thumbnails, banners, and payment slips. |
+| **Object Storage** | **Cloudflare R2 (S3-compatible)** | Bucket `prokick-store` for payment receipts & QR images. Free tier: 10 GB, 1M Class A + 10M Class B ops/bulan, egress gratis. App pakai AWS SDK yang sudah ada — cukup ganti `S3_ENDPOINT`/`S3_REGION=auto` env. |
 | **Client Compression** | **HTML5 Canvas Compressor** | Browser-side receipt & photo compression (max 1920px, WebP/JPEG 0.82 quality) saving 80% bandwidth. |
 | **Admin Notifications** | **Telegram Bot API (HTML Mode)** | Instant push notification of new orders and receipt photos directly to the admin smartphone. |
-| **Deployment & Hosting** | **Coolify VPS (Docker Engine)** | Self-hosted production on Ubuntu VPS (`103.193.178.112`). |
+| **Deployment & Hosting** | **Coolify VPS (Docker Engine)** | Self-hosted production app on Ubuntu VPS (`103.193.178.112`); database hosted separately on Neon. |
 
 ---
 
