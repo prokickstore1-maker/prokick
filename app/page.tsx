@@ -107,7 +107,7 @@ export default async function HomePage() {
             </div>
             <Link
               href="/jersey"
-              className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1.5 uppercase tracking-wider transition-colors"
+              className="min-h-11 flex items-center gap-1.5 -my-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-wider transition-colors"
             >
               <span>View All</span>
               <ChevronRight className="w-3.5 h-3.5" />

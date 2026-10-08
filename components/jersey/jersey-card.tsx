@@ -111,7 +111,7 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
             <span className="hidden sm:inline shrink-0">{jersey.season}</span>
           </div>
 
-          <Link href={`/product/${jersey.id}`} className="block">
+          <Link href={`/product/${jersey.id}`} className="block py-1.5 -my-1.5">
             <h3 className="font-bold text-xs sm:text-sm text-zinc-100 group-hover:text-white transition-colors line-clamp-1 font-display">
               {jersey.name}
             </h3>

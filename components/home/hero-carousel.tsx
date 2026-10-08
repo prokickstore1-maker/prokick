@@ -49,11 +49,12 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
         sizes="(max-width: 1540px) 100vw, 1540px"
         className="object-cover object-[center_25%] brightness-[0.72] transition-transform duration-1000 ease-out group-hover:scale-105"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#09090B] via-[#09090B]/40 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#09090B]/80 via-transparent to-transparent sm:w-2/3" />
+      {/* Scrim: lebih pekat di kiri/bawah agar copy terbaca di semua slide (M-04) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#09090B] via-[#09090B]/50 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#09090B]/90 via-[#09090B]/35 to-transparent sm:w-2/3" />
 
       {/* Hero Content */}
-      <div className="absolute inset-x-6 bottom-8 sm:inset-x-12 sm:bottom-12 max-w-2xl text-white z-10 space-y-3 sm:space-y-4">
+      <div className="absolute inset-x-6 bottom-24 sm:inset-x-12 sm:bottom-12 max-w-2xl text-white z-10 space-y-3 sm:space-y-4">
         {banner.badge && (
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/10 border border-white/15 text-[10px] sm:text-xs font-bold tracking-wider uppercase text-white">
             {banner.badge}
@@ -61,7 +62,8 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
         )}
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black uppercase leading-[0.98] tracking-tight font-display text-white drop-shadow-md">
-          {banner.title}
+          {/* non-breaking space sebelum tahun: cegah orphan "2026" di 390px */}
+          {banner.title.replace(/ (20\d{2})/g, " $1")}
         </h1>
 
         {banner.subtitle && (
@@ -98,31 +100,36 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
             <button
               onClick={prevSlide}
               aria-label="Previous banner"
-              className="p-2 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/10 text-white transition active:scale-95 cursor-pointer"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/10 text-white transition active:scale-95 cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={nextSlide}
               aria-label="Next banner"
-              className="p-2 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/10 text-white transition active:scale-95 cursor-pointer"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/10 text-white transition active:scale-95 cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Dots Indicator */}
-          <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+          {/* Dots Indicator — visual dot kecil, area sentuh tiap tombol 44×44 */}
+          <div className="flex items-center gap-0.5 bg-black/40 backdrop-blur-md px-1 py-0.5 rounded-full border border-white/10">
             {banners.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setCurrentIndex(index)}
                 aria-label={`Go to slide ${index + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  index === currentIndex ? "w-6 bg-white" : "w-1.5 bg-white/30 hover:bg-white/60"
-                }`}
-              />
+                aria-current={index === currentIndex ? "true" : undefined}
+                className="group/dot min-w-11 min-h-11 flex items-center justify-center cursor-pointer"
+              >
+                <span
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === currentIndex ? "w-6 bg-white" : "w-1.5 bg-white/30 group-hover/dot:bg-white/60"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>

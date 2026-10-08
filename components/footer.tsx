@@ -66,7 +66,6 @@ export default function Footer() {
                 </a>
               </li>
               <li><Link href="/track-order" className="hover:text-white transition-colors">Track Order</Link></li>
-              <li><Link href="/admin/orders" className="hover:text-white transition-colors">Admin Portal</Link></li>
             </ul>
           </div>
         </div>

@@ -94,6 +94,8 @@ export function Navbar() {
               aria-label="Search kits"
               className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/40 text-xs text-white placeholder:text-zinc-400 w-28 md:w-36"
             />
+            {/* implicit submission kadang gagal tanpa tombol submit di form — ini juga tombol screen-reader */}
+            <button type="submit" className="sr-only">Search</button>
           </form>
 
           {/* Currency indicator (desktop) */}
@@ -144,6 +146,7 @@ export function Navbar() {
                     aria-label="Search kits"
                     className="min-w-0 flex-1 text-xs text-white placeholder:text-zinc-400 bg-transparent outline-none focus-visible:ring-1 focus-visible:ring-white/40"
                   />
+                  <button type="submit" className="sr-only">Search</button>
                 </form>
                 <Link
                   href="/jersey"

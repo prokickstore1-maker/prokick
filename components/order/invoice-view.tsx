@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { StoredOrder } from "@/lib/orders-store";
 import { formatMYR } from "@/lib/utils";
 import { uploadReceiptAction } from "@/app/actions/order";
+import { orderStatusLabel } from "@/lib/order-status";
 
 interface InvoiceViewProps {
   order: StoredOrder;
@@ -110,7 +111,22 @@ export function InvoiceView({ order }: InvoiceViewProps) {
 
     try {
       // 1. Client-Side Canvas Compression
-      const base64Data = await compressImage(file);
+      let base64Data: string;
+      try {
+        base64Data = await compressImage(file);
+      } catch {
+        setUploadError("Could not process this image. Please choose a different receipt screenshot.");
+        setIsUploading(false);
+        return;
+      }
+
+      // cek ukuran pra-submit: server tolak >1MB, jangan lempar error generik sesudah request
+      const estimatedBytes = Math.ceil((base64Data.length - base64Data.indexOf(",") - 1) * 0.75);
+      if (estimatedBytes > 1024 * 1024) {
+        setUploadError("Receipt must be under 1 MB. Please retake a smaller photo.");
+        setIsUploading(false);
+        return;
+      }
 
       // 2. Server Action to S3 and Database
       const result = await uploadReceiptAction(order.id, base64Data, "image/jpeg");
@@ -125,36 +141,23 @@ export function InvoiceView({ order }: InvoiceViewProps) {
       setIsUploading(false);
     } catch (err) {
       console.error("Receipt upload error:", err);
-      setUploadError("Failed to compress and upload receipt. Please retry or contact admin.");
+      setUploadError("Upload failed. Please check your connection and try again, or contact admin.");
       setIsUploading(false);
     }
   };
 
-  // Status Badge Colors & Labels — DESIGN.md §2: semantik saja (proses=cyan, terkirim/selesai=emerald, batal=muted)
-  const statusConfig: Record<string, { label: string; color: string }> = {
-    PENDING_PAYMENT: {
-      label: "Awaiting Payment Slip",
-      color: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40",
-    },
-    PROCESSING: {
-      label: "Receipt Uploaded • Verifying",
-      color: "bg-cyan-400/20 text-cyan-300 border-cyan-400/30",
-    },
-    SHIPPED: {
-      label: "Shipped & Tracking Added",
-      color: "bg-emerald-400/20 text-emerald-300 border-emerald-400/30",
-    },
-    COMPLETED: {
-      label: "Completed",
-      color: "bg-emerald-400/20 text-emerald-300 border-emerald-400/30",
-    },
-    CANCELLED: {
-      label: "Cancelled",
-      color: "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
-    },
+  // Status Badge Colors — DESIGN.md §2: semantik saja (proses=cyan, terkirim/selesai=emerald, batal=muted)
+  // label dari lib/order-status.ts: satu sumber dengan /track-order
+  const statusColors: Record<string, string> = {
+    PENDING_PAYMENT: "bg-zinc-500/15 text-zinc-300 border-zinc-500/40",
+    PROCESSING: "bg-cyan-400/20 text-cyan-300 border-cyan-400/30",
+    SHIPPED: "bg-emerald-400/20 text-emerald-300 border-emerald-400/30",
+    COMPLETED: "bg-emerald-400/20 text-emerald-300 border-emerald-400/30",
+    CANCELLED: "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
   };
+  const statusColor = statusColors[order.orderStatus] || statusColors.PENDING_PAYMENT;
+  const statusLabel = orderStatusLabel(order.orderStatus);
 
-  const currentStatus = statusConfig[order.orderStatus] || statusConfig.PENDING_PAYMENT;
   const isDuitNow = order.paymentMethodId?.includes("duitnow") || order.paymentMethodId === "qr-pay" || order.paymentMethodLabel?.includes("DuitNow") || order.paymentMethodLabel?.includes("QR");
 
   const waHelpMessage = encodeURIComponent(
@@ -183,8 +186,8 @@ export function InvoiceView({ order }: InvoiceViewProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${currentStatus.color}`}>
-            {currentStatus.label}
+          <span className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${statusColor}`}>
+            {statusLabel}
           </span>
         </div>
       </div>
@@ -356,7 +359,7 @@ export function InvoiceView({ order }: InvoiceViewProps) {
                     {file ? file.name : "Select Transfer Receipt Screenshot"}
                   </span>
                   <span className="text-[10px] text-zinc-400 mt-0.5 font-mono">
-                    PNG, JPEG, WebP &bull; Max 10MB
+                    PNG, JPEG, WebP &bull; Max 1MB
                   </span>
                   <input
                     type="file"

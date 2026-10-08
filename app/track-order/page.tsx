@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { trackOrderAction } from "@/app/actions/tracking";
+import { orderStatusLabel } from "@/lib/order-status";
 import { Search, PackageCheck, AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,7 +107,7 @@ export default function TrackOrderPage() {
                 <span className="font-mono font-bold text-sm text-white">{result.orderNumber}</span>
               </div>
               <span className="text-xs font-bold uppercase px-2.5 py-1 rounded-lg bg-white/10 text-zinc-300 border border-white/15">
-                {result.status}
+                {orderStatusLabel(result.status)}
               </span>
             </div>
 
