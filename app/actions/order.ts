@@ -10,6 +10,7 @@ import { sendTelegramNotification } from "@/lib/telegram";
 import crypto from "node:crypto";
 import { isAdmin } from "@/lib/admin-auth";
 import { grantOrderAccess, canAccessOrder } from "@/lib/order-auth";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export interface CreateOrderInput {
   customerName: string;
@@ -36,6 +37,8 @@ export interface CreateOrderInput {
 const seenOrderNumbers = new Set<string>();
 function generateOrderNumber(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  // bounded: 1 entri/order tanpa evict; clear di 20k (lebih dari cukup utk window harian)
+  if (seenOrderNumbers.size > 20000) seenOrderNumbers.clear();
   for (let attempt = 0; attempt < 5; attempt++) {
     const candidate = `PK-${date}-${crypto.randomInt(1000, 10000)}`;
     if (!seenOrderNumbers.has(candidate)) {
@@ -49,6 +52,9 @@ function generateOrderNumber(): string {
 
 export async function createOrderAction(input: CreateOrderInput) {
   try {
+    // shared NAT (office/campus) gets the same allowance as one home user
+    const limit = rateLimit(`checkout:${await clientIp()}`, 10, 15 * 60 * 1000);
+    if (!limit.allowed) return { success: false, error: `Too many checkout attempts. Try again in ${limit.retryAfterMinutes} min.` };
     if (input.idempotencyKey && !/^[a-zA-Z0-9_-]{16,100}$/.test(input.idempotencyKey)) return { success: false, error: "Invalid checkout request." };
     if (!input.customerName || !input.customerPhone || !input.streetAddress || !input.state) {
       return { success: false, error: "Please complete all mandatory delivery fields." };
@@ -108,20 +114,22 @@ export async function createOrderAction(input: CreateOrderInput) {
     // 3. Construct Verified Order Record
     const orderId = `pk-${crypto.randomUUID()}`;
     const orderNumber = generateOrderNumber();
-    const fullAddress = `${input.streetAddress}, ${input.city}, ${input.postcode}, ${input.state}, Malaysia`;
+    const fullAddress = [input.streetAddress, input.city, input.postcode, input.state, "Malaysia"]
+      .map((part) => part.trim().slice(0, 200))
+      .join(", ");
 
     const newOrder: StoredOrder = {
       id: orderId,
       orderNumber,
-      customerName: input.customerName.trim(),
-      customerPhone: input.customerPhone.trim(),
-      customerAddress: fullAddress,
+      customerName: input.customerName.trim().slice(0, 120),
+      customerPhone: input.customerPhone.trim().slice(0, 25),
+      customerAddress: fullAddress.slice(0, 500),
       shippingZone,
       shippingCost: promoResult.shippingCost.toFixed(2),
       subtotal: promoResult.rawSubtotal.toFixed(2),
       totalAmount: promoResult.grandTotal.toFixed(2),
       paymentMethodId: input.paymentMethodId,
-      paymentMethodLabel: input.paymentMethodLabel || "Instant QR Pay",
+      paymentMethodLabel: (input.paymentMethodLabel || "Instant QR Pay").slice(0, 100),
       paymentProofUrl: null,
       paymentStatus: "PENDING",
       orderStatus: "PENDING_PAYMENT",
@@ -172,7 +180,7 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
     const match = base64Data.match(/^data:(image\/(jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
     if (!match || mimeType !== match[1]) return { success: false, error: "Only JPEG, PNG, or WebP receipts are allowed." };
     const buffer = Buffer.from(match[3], "base64");
-    if (buffer.length === 0 || buffer.length > 5 * 1024 * 1024) return { success: false, error: "Receipt must be between 1 byte and 5 MB." };
+    if (buffer.length === 0 || buffer.length > 1024 * 1024) return { success: false, error: "Receipt must be under 1 MB. Please retake a clearer, smaller photo." };
     const signature = buffer.subarray(0, 12).toString("hex");
     const validSignature = (match[2] === "jpeg" && signature.startsWith("ffd8ff")) ||
       (match[2] === "png" && signature.startsWith("89504e470d0a1a0a")) ||
@@ -217,6 +225,7 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
 
 export async function updateOrderStatusAction(orderId: string, status: StoredOrder["orderStatus"], tracking?: string) {
   if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
+  if (tracking && tracking.length > 80) return { success: false, error: "Tracking number too long." };
   try {
     await updateOrderStatus(orderId, status, tracking);
     revalidatePath("/admin/orders");

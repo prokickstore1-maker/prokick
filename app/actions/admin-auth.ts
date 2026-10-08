@@ -1,6 +1,5 @@
 "use server";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import {
   authenticateAdmin,
   setAdminSession,
@@ -9,13 +8,12 @@ import {
   recordLoginFailure,
   clearLoginFailures,
 } from "@/lib/admin-auth";
+import { clientIp } from "@/lib/rate-limit";
 
 export async function loginAdminAction(email: string, password: string) {
   if (!email.trim() || !password) return { success: false, error: "Enter email and password." };
 
-  // trust the last hop (closest proxy) — the first entry is client-supplied and spoofable
-  const forwarded = (await headers()).get("x-forwarded-for") || "";
-  const ip = forwarded.split(",").pop()?.trim() || (await headers()).get("x-real-ip") || "unknown";
+  const ip = await clientIp();
   const limit = checkLoginRateLimit(ip);
   if (!limit.allowed)
     return { success: false, error: `Too many attempts. Try again in ${limit.retryAfterMinutes} min.` };
