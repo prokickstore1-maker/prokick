@@ -159,7 +159,11 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
   const statusColor = statusColors[order.orderStatus] || statusColors.PENDING_PAYMENT;
   const statusLabel = orderStatusLabel(order.orderStatus);
 
-  const isDuitNow = order.paymentMethodId?.includes("duitnow") || order.paymentMethodId === "qr-pay" || order.paymentMethodLabel?.includes("DuitNow") || order.paymentMethodLabel?.includes("QR");
+  // tipe dari settings admin (qr_pay / bank_transfer); label sebagai fallback order lama
+  const isDuitNow =
+    order.paymentMethodType === "qr_pay" ||
+    order.paymentMethodLabel?.includes("DuitNow") ||
+    order.paymentMethodLabel?.includes("QR");
 
   const waHelpMessage = encodeURIComponent(
     `Hello ProKick Admin! I have placed order #${order.orderNumber} for RM ${order.totalAmount}. Here is my query regarding payment/tracking.`
@@ -280,27 +284,27 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 space-y-1">
                 <span className="text-zinc-400 block text-[10px] uppercase font-bold">Bank Name</span>
                 <span className="font-bold text-white text-sm">
-                  {order.paymentMethodLabel?.includes("CIMB") ? "CIMB Bank Berhad" : "Malayan Banking Berhad (Maybank)"}
+                  {order.paymentMethodLabel || "Bank Transfer"}
                 </span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 space-y-1">
                 <span className="text-zinc-400 block text-[10px] uppercase font-bold">Account Name</span>
-                <span className="font-bold text-white">PROKICK MALAYSIA ENTERPRISE</span>
+                <span className="font-bold text-white">{order.paymentAccountName || "PROKICK MALAYSIA ENTERPRISE"}</span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 flex items-center justify-between">
                 <div>
                   <span className="text-zinc-400 block text-[10px] uppercase font-bold">Account Number</span>
                   <span className="font-mono font-bold text-white text-sm">
-                    {order.paymentMethodLabel?.includes("CIMB") ? "8001 2345 6789" : "5140 1234 5678"}
+                    {order.paymentAccountNumber || "-"}
                   </span>
                 </div>
                 <Button
                   variant="secondary"
                   onClick={() =>
                     copyToClipboard(
-                      order.paymentMethodLabel?.includes("CIMB") ? "800123456789" : "514012345678",
+                      (order.paymentAccountNumber || "").replace(/\s/g, ""),
                       "account"
                     )
                   }
@@ -325,7 +329,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
             </div>
 
             {uploadError && (
-              <div role="alert" className="p-3.5 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-300 mb-3 flex items-center gap-2">
+              <div role="alert" className="p-3.5 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-300 mb-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200 motion-reduce:animate-none">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{uploadError}</span>
               </div>

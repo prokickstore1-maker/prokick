@@ -29,7 +29,10 @@ export interface StoredOrder {
   totalAmount: string;
   paymentMethodId?: string | null;
   paymentMethodLabel?: string;
+  paymentMethodType?: string | null;
   paymentQrImageUrl?: string | null;
+  paymentAccountName?: string | null;
+  paymentAccountNumber?: string | null;
   paymentProofUrl?: string | null;
   paymentStatus: "PENDING" | "PAID" | "FAILED";
   orderStatus: "PENDING_PAYMENT" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED";
@@ -222,7 +225,10 @@ export async function getOrderById(id: string): Promise<StoredOrder | null> {
           totalAmount: row.totalAmount,
           paymentMethodId: row.paymentMethodId,
           paymentMethodLabel: row.paymentMethod?.label,
+          paymentMethodType: row.paymentMethod?.type,
           paymentQrImageUrl: row.paymentMethod?.qrImageUrl,
+          paymentAccountName: row.paymentMethod?.accountName,
+          paymentAccountNumber: row.paymentMethod?.accountNumber,
           paymentProofUrl: row.paymentProofUrl,
           paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
           orderStatus: row.orderStatus as StoredOrder["orderStatus"],
@@ -279,7 +285,10 @@ export async function getAllOrders(): Promise<StoredOrder[]> {
           totalAmount: row.totalAmount,
           paymentMethodId: row.paymentMethodId,
           paymentMethodLabel: row.paymentMethod?.label,
+          paymentMethodType: row.paymentMethod?.type,
           paymentQrImageUrl: row.paymentMethod?.qrImageUrl,
+          paymentAccountName: row.paymentMethod?.accountName,
+          paymentAccountNumber: row.paymentMethod?.accountNumber,
           paymentProofUrl: row.paymentProofUrl,
           paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
           orderStatus: row.orderStatus as StoredOrder["orderStatus"],

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAllJerseys } from "@/lib/data";
+import { buildLeagueOptions } from "@/lib/leagues";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { Search, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -79,7 +80,15 @@ export default async function JerseyCatalogPage({
   const typeOptions = [...new Set(allJerseys.map((j) => j.type))].filter(Boolean);
   const editionOptions = [...new Set(allJerseys.map((j) => j.edition))].filter(Boolean);
   const seasonOptions = [...new Set(allJerseys.map((j) => j.season))].filter(Boolean);
-  const sizeOptions = ["S", "M", "L", "XL", "XXL"];
+  // ukuran diturunkan dari produk yang ada (ukuran anak/3XL ikut muncul sendiri)
+  const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "XXL", "XXXL"];
+  const sizeOptions = [...new Set(allJerseys.flatMap((j) => j.sizes || []))]
+    .filter(Boolean)
+    .sort((a, b) => {
+      const ia = SIZE_ORDER.indexOf(a.toUpperCase());
+      const ib = SIZE_ORDER.indexOf(b.toUpperCase());
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+    });
 
   // Rebuild query keeping every other active filter; used by league pills so
   // they don't silently drop type/size/price selections.
@@ -105,13 +114,7 @@ export default async function JerseyCatalogPage({
     return qs ? `/jersey?${qs}` : "/jersey";
   };
 
-  const leagueOptions = [
-    { label: "All Kits", value: "" },
-    { label: "Premier League", value: "Premier League" },
-    { label: "La Liga", value: "La Liga" },
-    { label: "Harimau Malaya", value: "World Cup" },
-    { label: "Retro Classics", value: "Retro Classic" },
-  ];
+  const leagueOptions = buildLeagueOptions(allJerseys);
 
   const filterLabels: string[] = [
     currentLeague && `League: ${currentLeague}`,

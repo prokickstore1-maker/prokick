@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Globe } from "lucide-react";
-import { getSetting } from "@/lib/data";
+import { getSetting, getAllJerseys } from "@/lib/data";
+import { buildLeagueOptions } from "@/lib/leagues";
 
 export default async function Footer() {
   const waNumber = (await getSetting("whatsappNumber", "60123456789")).replace(/[^0-9]/g, "");
+  const leagues = buildLeagueOptions(await getAllJerseys());
   return (
     <footer className="bg-[#09090B] border-t border-white/10 text-white pt-14 pb-12 text-xs">
       <div className="max-w-[1540px] mx-auto px-4 sm:px-8 lg:px-12">
@@ -16,10 +18,16 @@ export default async function Footer() {
             </h4>
             <ul className="space-y-2 text-zinc-400">
               <li><Link href="/jersey" className="hover:text-white transition-colors">All Football Kits</Link></li>
-              <li><Link href="/jersey?league=Premier+League" className="hover:text-white transition-colors">Premier League</Link></li>
-              <li><Link href="/jersey?league=La+Liga" className="hover:text-white transition-colors">La Liga</Link></li>
-              <li><Link href="/jersey?league=World+Cup" className="hover:text-harimau transition-colors">Harimau Malaya 2026</Link></li>
-              <li><Link href="/jersey?league=Retro+Classic" className="hover:text-white transition-colors">Retro Classics Vault</Link></li>
+              {leagues.filter((l) => l.value).map((l) => (
+                <li key={l.value}>
+                  <Link
+                    href={`/jersey?league=${encodeURIComponent(l.value)}`}
+                    className={l.isHarimau ? "hover:text-harimau transition-colors" : "hover:text-white transition-colors"}
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

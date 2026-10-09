@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getAllJerseys, getActiveBanners } from "@/lib/data";
+import { buildLeagueOptions } from "@/lib/leagues";
+import { flagUrl } from "@/lib/countries";
 import { JerseyCard } from "@/components/jersey/jersey-card";
-import { Button } from "@/components/ui/button";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { ChevronRight, ShieldCheck, QrCode, Truck } from "lucide-react";
 
@@ -14,19 +15,23 @@ export default async function HomePage() {
   const trending = allJerseys.filter((j) => j.isBestSeller).slice(0, 8);
   const newArrivals = allJerseys.filter((j) => j.isNew).slice(0, 8);
 
-  const leaguePills = [
-    { name: "All Kits", href: "/jersey" },
-    { name: "Premier League", href: "/jersey?league=Premier+League" },
-    { name: "La Liga", href: "/jersey?league=La+Liga" },
-    { name: "Harimau Malaya", href: "/jersey?league=World+Cup", highlight: true },
-    { name: "Retro Vault", href: "/jersey?league=Retro+Classic" },
-  ];
+  const leaguePills = buildLeagueOptions(allJerseys).map((l) => ({
+    name: l.label,
+    href: l.value ? `/jersey?league=${encodeURIComponent(l.value)}` : "/jersey",
+    highlight: l.isHarimau,
+  }));
+
+  // Featured = 2 banner pertama; hero carousel pakai sisanya (task H-5)
+  const featuredBanners = banners.slice(0, 2);
+
+  // Negara dari produk yang ada (urut abjad) — grid klik → filter /jersey?country=
+  const countries = [...new Set(allJerseys.map((j) => j.country).filter(Boolean))].sort();
 
   return (
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] pb-24">
       <div className="max-w-[1540px] mx-auto px-4 sm:px-8 lg:px-12 pt-3 sm:pt-6 space-y-12 sm:space-y-16">
         {/* 1. Cinematic Hero Carousel */}
-        <HeroCarousel banners={banners} />
+        {banners.length > 2 && <HeroCarousel banners={banners.slice(2)} />}
 
         {/* 2. Malaysian Store Trust & Benefit Strip */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -94,7 +99,41 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 4. Best sellers 2026/27 */}
+        {/* 4. Popular National Teams — negara dari produk, bukan daftar tetap */}
+        {countries.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">Shop by country</span>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">National Teams</h2>
+              </div>
+            </div>
+            {/* row geser: tile lebar tetap (kompak), sisa negara bisa di-swipe */}
+            <div className="flex overflow-x-auto pb-2 scrollbar-none gap-2.5 snap-x snap-mandatory">
+              {countries.map((country) => {
+                const src = flagUrl(country, 80);
+                return (
+                  <Link
+                    key={country}
+                    href={`/jersey?country=${encodeURIComponent(country)}`}
+                    className="group snap-start w-20 sm:w-24 shrink-0 flex flex-col items-center gap-1.5 rounded-lg border border-white/10 bg-[#121217] px-2 py-2.5 hover:border-white/25 hover:bg-[#181820] transition-colors"
+                  >
+                    <div className="h-9 w-full flex items-center justify-center overflow-hidden">
+                      {src ? (
+                        <Image src={src} alt={`${country} flag`} width={48} height={32} className="max-h-7 w-auto object-contain" />
+                      ) : (
+                        <span className="text-xs font-black text-zinc-300">{country.slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <span className="w-full truncate text-center text-[10px] font-bold text-zinc-300 group-hover:text-white">{country}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* 5. Best sellers 2026/27 */}
         <section className="space-y-6">
           <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
             <div>
@@ -132,67 +171,41 @@ export default async function HomePage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Card 1: Harimau Malaya 2026 */}
-            <div className="relative overflow-hidden rounded-xl border border-harimau/30 bg-[#181820] aspect-[4/5] sm:aspect-[16/10] flex flex-col justify-end p-6 sm:p-10 group shadow-xl">
-              <Image
-                src="/images/hero/malaysia-hero-2026.jpg"
-                alt="Harimau Malaya 2026 Official Jersey"
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 brightness-[0.78]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#09090B] via-[#09090B]/60 to-transparent" />
-              
-              <div className="relative z-10 space-y-3">
-                <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-black/60 text-harimau border border-harimau/40">
-                  National Team Edition
-                </span>
-                <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tight font-display text-white">
-                  Harimau Malaya 2026
-                </h3>
-                <p className="text-xs text-zinc-300 max-w-sm line-clamp-2">
-                  Official Malaysian stadium kit with tiger stripes and embroidered national crest.
-                </p>
-                <div className="pt-1">
-                  <Button asChild className="mt-1 h-auto rounded-lg px-7 py-3 text-xs uppercase tracking-wider font-extrabold">
-                    <Link href="/jersey?league=World+Cup">View Malaysia Kit</Link>
-                  </Button>
-                </div>
-              </div>
+          {featuredBanners.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {featuredBanners.map((banner) => (
+                <Link
+                  key={banner.id}
+                  href={banner.link || "/jersey"}
+                  className="group relative overflow-hidden rounded-xl border border-white/15 bg-[#181820] aspect-[4/5] sm:aspect-[16/10] flex flex-col justify-end"
+                >
+                  <Image
+                    src={banner.image}
+                    alt={banner.title || "Featured edition"}
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 brightness-[0.78]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#09090B] via-[#09090B]/60 to-transparent" />
+                  <div className="relative z-10 space-y-3 p-6">
+                    <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-black/60 text-white">
+                      {banner.badge || "Featured"}
+                    </span>
+                    <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tight font-display text-white">
+                      {banner.title}
+                    </h3>
+                    {banner.subtitle && (
+                      <p className="text-xs text-zinc-300 max-w-sm line-clamp-2">{banner.subtitle}</p>
+                    )}
+                    <span className="inline-flex mt-1 h-auto rounded-lg px-7 py-3 text-xs uppercase tracking-wider font-extrabold bg-white text-black">
+                      {banner.cta || "View collection"}
+                    </span>
+                  </div>
+                </Link>
+              ))}
             </div>
-
-            {/* Card 2: 90s Retro Classics Vault */}
-            <div className="relative overflow-hidden rounded-xl border border-white/15 bg-[#181820] aspect-[4/5] sm:aspect-[16/10] flex flex-col justify-end p-6 sm:p-10 group shadow-xl">
-              <Image
-                src="/images/hero/retro-hero.jpg"
-                alt="Classic Retro 1999 Treble Jersey"
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 brightness-[0.75]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#09090B] via-[#09090B]/60 to-transparent" />
-              
-              <div className="relative z-10 space-y-3">
-                <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-black/60 text-zinc-200 border border-white/25">
-                  Treble Winners &apos;99
-                </span>
-                <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tight font-display text-white">
-                  Classic Retro Vault
-                </h3>
-                <p className="text-xs text-zinc-300 max-w-sm line-clamp-2">
-                  Vintage 1990s football shirts with embroidered sponsor details and ribbed collars.
-                </p>
-                <div className="pt-1">
-                  <Button asChild className="mt-1 h-auto rounded-lg px-7 py-3 text-xs uppercase tracking-wider font-extrabold">
-                    <Link href="/jersey?league=Retro+Classic">View Retro Classics</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </section>
 
         {/* 6. Smart Bundle Promo Bento Tile */}

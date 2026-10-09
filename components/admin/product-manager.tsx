@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { NormalizedJersey } from "@/lib/data";
-import { createProductAction, deleteProductAction, updateProductAction, ProductInput } from "@/app/actions/products";
+import { buildLeagueOptions } from "@/lib/leagues";
+import { createProductAction, deleteProductAction, updateProductAction, uploadProductImageAction, ProductInput } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -30,8 +31,46 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
   const [editing, setEditing] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const filtered = products.filter((p) => `${p.name} ${p.team} ${p.league}`.toLowerCase().includes(query.toLowerCase()));
   const update = (key: keyof ProductInput, value: string | boolean | string[]) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  // resize sisi klien (canvas) sebelum upload — foto HP 4000px jadi max 1600px JPEG
+  async function handleImageUpload(file: File) {
+    if (!file.type.startsWith("image/")) { setMessage("File must be an image."); return; }
+    setIsUploadingImage(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Read failed"));
+        reader.readAsDataURL(file);
+      });
+      const resized = await new Promise<string>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const maxDim = 1600;
+          let w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; } else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.onerror = () => reject(new Error("Invalid image"));
+        img.src = dataUrl;
+      });
+      const result = await uploadProductImageAction(resized, "image/jpeg");
+      if (result.success) { update("image", result.url); setMessage("Image uploaded ✓"); }
+      else setMessage(result.error || "Upload failed");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }
 
   async function save() {
     const result = editing ? await updateProductAction(editing, form) : await createProductAction(form);
@@ -52,8 +91,56 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
     <section className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
       <h2 className="text-lg font-bold">{editing ? "Edit product" : "Add product"}</h2>
       <div className="grid gap-3 sm:grid-cols-3">
-        {([['name','Product name'],['team','Team'],['season','Season'],['price','Price'],['image','Image URL'],['description','Description']] as const).map(([key, label]) => <Input key={key} aria-label={label} placeholder={label} value={form[key] as string} onChange={(e) => update(key, e.target.value)} />)}
-        <Select aria-label="League" value={form.league} onValueChange={(v) => update("league", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Premier League">Premier League</SelectItem><SelectItem value="La Liga">La Liga</SelectItem><SelectItem value="World Cup">World Cup</SelectItem><SelectItem value="Retro Classic">Retro Classic</SelectItem></SelectContent></Select>
+        {([['name','Product name'],['team','Team'],['season','Season'],['price','Price'],['description','Description']] as const).map(([key, label]) => <Input key={key} aria-label={label} placeholder={label} value={form[key] as string} onChange={(e) => update(key, e.target.value)} />)}
+        {/* Foto produk: upload dari komputer (otomatis resize + kompres), atau tempel URL manual */}
+        <div className="space-y-1.5">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label="Upload product photo"
+            disabled={isUploadingImage}
+            className="block w-full text-xs text-[#57534E] file:mr-3 file:rounded-lg file:border-0 file:bg-[#FAFAF9] file:px-3 file:py-2 file:text-xs file:font-bold file:uppercase file:tracking-wider file:text-[#0C0A09] hover:file:bg-[#E5E5E5] file:cursor-pointer"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.currentTarget.value = ""; }}
+          />
+          <Input
+            aria-label="Image URL (manual)"
+            placeholder="Atau tempel URL gambar"
+            value={form.image.startsWith("data:") ? "" : form.image}
+            onChange={(e) => update("image", e.target.value)}
+          />
+          {form.image && !form.image.startsWith("data:") && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={form.image} alt="Preview" className="h-16 w-16 rounded-lg object-cover border border-[#E5E5E5]" />
+          )}
+          {isUploadingImage && <span className="text-xs text-[#57534E]">Mengunggah foto…</span>}
+        </div>
+        {/* Liga: input + datalist — pilih yang sudah ada ATAU ketik nama liga baru;
+            liga baru otomatis muncul di filter & menu (baca dari data produk) */}
+        <Input
+          aria-label="League"
+          list="league-options"
+          placeholder="League (e.g. Bundesliga)"
+          value={form.league}
+          onChange={(e) => update("league", e.target.value)}
+        />
+        <datalist id="league-options">
+          {buildLeagueOptions(initialProducts).filter((o) => o.value).map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </datalist>
+        {/* Ukuran: pisahkan dengan koma — pilihan dari ukuran produk yang ada */}
+        <Input
+          aria-label="Sizes"
+          list="size-options"
+          placeholder="Sizes (e.g. S,M,L,XL)"
+          value={form.sizes.join(", ")}
+          onChange={(e) => update("sizes", e.target.value.split(",").map((v) => v.trim().toUpperCase()).filter(Boolean))}
+        />
+        <datalist id="size-options">
+          {[...new Set(initialProducts.flatMap((j) => j.sizes || []))].sort().map((sz) => (
+            <option key={sz} value={sz} />
+          ))}
+        </datalist>
         <Select aria-label="Type" value={form.type} onValueChange={(v) => update("type", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Player Issue">Player Issue</SelectItem><SelectItem value="Fans Version">Fans Version</SelectItem><SelectItem value="Retro">Retro</SelectItem><SelectItem value="Kids">Kids</SelectItem></SelectContent></Select>
       </div>
       <div className="flex flex-wrap gap-4 text-sm">

@@ -57,3 +57,27 @@ export async function uploadToS3(
   const base64 = buffer.toString("base64");
   return `data:${contentType};base64,${base64}`;
 }
+
+/**
+ * Upload foto produk ke path products/ (publik — tanpa ContentDisposition attachment).
+ * Return: URL publik yang bisa langsung dipakai field `image` produk.
+ */
+export async function uploadProductImage(buffer: Buffer, fileName: string, contentType: string = "image/jpeg"): Promise<string> {
+  const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
+  const key = `products/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}.${ext}`;
+
+  if (!s3Client || !isS3Configured) {
+    throw new Error("Object storage not configured (S3_ACCESS_KEY/S3_SECRET_KEY missing).");
+  }
+
+  await s3Client.send(new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+    // produk = file publik (ditampilkan <img>), tanpa attachment disposition
+  }));
+
+  // Garage/MinIO path-style: endpoint + bucket + key
+  return `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
+}

@@ -5,6 +5,8 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { cn } from "@/lib/utils";
+import { getAllJerseys } from "@/lib/data";
+import { buildLeagueOptions } from "@/lib/leagues";
 
 const outfit = Outfit({
   variable: "--font-display",
@@ -36,11 +38,12 @@ export const viewport: Viewport = {
   themeColor: "#09090B",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const leagues = buildLeagueOptions(await getAllJerseys());
   return (
     <html
       lang="en"
@@ -50,7 +53,7 @@ export default function RootLayout({
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-3 focus:font-bold focus:text-black">
           Skip to content
         </a>
-        <Navbar />
+        <Navbar leagues={leagues} />
         <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
         <Footer />
         <CartDrawer />

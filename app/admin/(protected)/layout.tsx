@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin-auth";
 import { logoutAdminAction } from "@/app/actions/admin-auth";
@@ -19,9 +20,13 @@ export default async function AdminLayout({
       {/* Admin Top Header */}
       <header className="border-b border-[#E5E5E5] bg-white px-4 sm:px-8 py-3.5 sm:py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-black text-xs">
-            PK
-          </div>
+          <Image
+            src="/logo/prokick-dark.png"
+            alt="PROKICK MY"
+            width={1709}
+            height={731}
+            className="h-7 w-auto"
+          />
           <div>
             <h1 className="text-sm font-black text-black font-display tracking-tight">
               PROKICK ADMIN

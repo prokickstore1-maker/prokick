@@ -1,19 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShoppingBag, Search, Menu } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import type { LeagueOption } from "@/lib/leagues";
 
-export function Navbar() {
+export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const router = useRouter();
@@ -49,33 +45,36 @@ export function Navbar() {
       {/* 2. Main Navigation Bar */}
       <div className="max-w-[1540px] mx-auto px-4 sm:px-8 lg:px-12 py-3.5 sm:py-4 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <span className="font-black text-2xl sm:text-3xl text-white uppercase tracking-tight font-display group-hover:text-zinc-200 transition-colors">
-            PROKICK
-          </span>
-          <span className="text-[10px] font-bold bg-volt/10 text-volt px-2 py-0.5 rounded-lg border border-volt/30 uppercase">
-            MY
-          </span>
+        <Link href="/" className="flex items-center group">
+          <Image
+            src="/logo/prokick-wordmark.png"
+            alt="PROKICK MY"
+            width={2113}
+            height={658}
+            priority
+            className="h-7 sm:h-8 w-auto group-hover:opacity-85 transition-opacity"
+          />
         </Link>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation Links — liga diturunkan dari data produk */}
         <nav className="hidden lg:flex items-center gap-7 text-xs font-bold uppercase tracking-wider text-zinc-400">
           <Link href="/jersey" className="hover:text-white transition-colors">
             All Kits
           </Link>
-          <Link href="/jersey?league=Premier+League" className="hover:text-white transition-colors">
-            Premier League
-          </Link>
-          <Link href="/jersey?league=La+Liga" className="hover:text-white transition-colors">
-            La Liga
-          </Link>
-          <Link href="/jersey?league=World+Cup" className="hover:text-harimau transition-colors flex items-center gap-1.5">
-            <span>Harimau Malaya</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-harimau"></span>
-          </Link>
-          <Link href="/jersey?league=Retro+Classic" className="hover:text-white transition-colors">
-            Retro Vault
-          </Link>
+          {leagues.filter((l) => l.value).map((l) => (
+            <Link
+              key={l.value}
+              href={`/jersey?league=${encodeURIComponent(l.value)}`}
+              className={
+                l.isHarimau
+                  ? "hover:text-harimau transition-colors flex items-center gap-1.5"
+                  : "hover:text-white transition-colors"
+              }
+            >
+              <span>{l.label}</span>
+              {l.isHarimau && <span className="w-1.5 h-1.5 rounded-full bg-harimau"></span>}
+            </Link>
+          ))}
         </nav>
 
         {/* Right Actions */}
@@ -111,8 +110,12 @@ export function Navbar() {
           >
             <div className="relative">
               <ShoppingBag className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white" />
+              {/* key = remount saat count berubah → animate-in mainkan ulang (pop) */}
               {totalItemsCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-white text-black flex items-center justify-center text-[9px] font-black shadow-sm">
+                <span
+                  key={totalItemsCount}
+                  className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-white text-black flex items-center justify-center text-[9px] font-black shadow-sm animate-in zoom-in-0 duration-300"
+                >
                   {totalItemsCount}
                 </span>
               )}
@@ -156,35 +159,21 @@ export function Navbar() {
                   <span>All Football Kits</span>
                   <span className="text-[11px] text-zinc-400 font-bold">2026/27</span>
                 </Link>
-                <Link
-                  href="/jersey?league=Premier+League"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="min-h-11 flex items-center border-b border-white/5 hover:text-white"
-                >
-                  Premier League
-                </Link>
-                <Link
-                  href="/jersey?league=La+Liga"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="min-h-11 flex items-center border-b border-white/5 hover:text-white"
-                >
-                  La Liga
-                </Link>
-                <Link
-                  href="/jersey?league=World+Cup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="min-h-11 flex items-center border-b border-white/5 text-harimau justify-between"
+                {leagues.filter((l) => l.value).map((l) => (
+                  <Link
+                    key={l.value}
+                    href={`/jersey?league=${encodeURIComponent(l.value)}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`min-h-11 flex items-center border-b border-white/5 justify-between ${
+                      l.isHarimau ? "text-harimau" : "hover:text-white"
+                    }`}
                   >
-                  <span>Harimau Malaya 2026</span>
-                  <span className="text-[10px] font-bold bg-harimau/20 text-harimau px-2 py-0.5 rounded-lg border border-harimau/30">Official</span>
-                </Link>
-                <Link
-                  href="/jersey?league=Retro+Classic"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="min-h-11 flex items-center hover:text-white"
-                >
-                  Retro Vault (90s Classics)
-                </Link>
+                    <span>{l.label}</span>
+                    {l.isHarimau && (
+                      <span className="text-[10px] font-bold bg-harimau/20 text-harimau px-2 py-0.5 rounded-lg border border-harimau/30">Official</span>
+                    )}
+                  </Link>
+                ))}
               </nav>
             </SheetContent>
           </Sheet>
