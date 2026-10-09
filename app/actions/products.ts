@@ -9,6 +9,7 @@ import { uploadProductImage } from "@/lib/s3";
 
 export interface ProductInput {
   name: string; team: string; league: string; season: string; type: string; category: string;
+  country: string;
   price: string; description: string; image: string; sizes: string[];
   isBestSeller: boolean; isFeatured: boolean; isNew: boolean;
 }
@@ -16,7 +17,7 @@ export interface ProductInput {
 function valid(input: ProductInput) {
   return [input.name, input.team, input.league, input.season, input.type, input.category].every((v) => v.trim()) &&
     Number.isFinite(Number(input.price)) && Number(input.price) >= 0 && input.sizes.length > 0 && input.sizes.length <= 10 &&
-    input.sizes.every((size) => /^[A-Z0-9]{1,5}$/.test(size));
+    input.sizes.every((size) => /^[A-Z0-9]{1,5}$/.test(size)) && input.country.length <= 40;
 }
 
 async function guard(input: ProductInput) {

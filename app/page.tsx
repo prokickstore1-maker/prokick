@@ -24,8 +24,15 @@ export default async function HomePage() {
   // Featured = 2 banner pertama; hero carousel pakai sisanya (task H-5)
   const featuredBanners = banners.slice(0, 2);
 
-  // Negara dari produk yang ada (urut abjad) — grid klik → filter /jersey?country=
-  const countries = [...new Set(allJerseys.map((j) => j.country).filter(Boolean))].sort();
+  // National Teams: hanya jersey tim nasional (category "Tim Nasional") —
+  // country di produk klub = asal klub (Arsenal→England), bukan identitas tim nasional
+  const nationalCountries = [
+    ...new Set(
+      allJerseys
+        .filter((j) => j.category === "Tim Nasional" && j.country)
+        .map((j) => j.country)
+    ),
+  ].sort();
 
   return (
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] pb-24">
@@ -99,8 +106,8 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 4. Popular National Teams — negara dari produk, bukan daftar tetap */}
-        {countries.length > 0 && (
+        {/* 4. National Teams — hanya jersey tim nasional (category "Tim Nasional") */}
+        {nationalCountries.length > 0 && (
           <section className="space-y-6">
             <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
               <div>
@@ -110,12 +117,12 @@ export default async function HomePage() {
             </div>
             {/* row geser: tile lebar tetap (kompak), sisa negara bisa di-swipe */}
             <div className="flex overflow-x-auto pb-2 scrollbar-none gap-2.5 snap-x snap-mandatory">
-              {countries.map((country) => {
+              {nationalCountries.map((country) => {
                 const src = flagUrl(country, 80);
                 return (
                   <Link
                     key={country}
-                    href={`/jersey?country=${encodeURIComponent(country)}`}
+                    href={`/jersey?category=${encodeURIComponent("Tim Nasional")}&country=${encodeURIComponent(country)}`}
                     className="group snap-start w-20 sm:w-24 shrink-0 flex flex-col items-center gap-1.5 rounded-lg border border-white/10 bg-[#121217] px-2 py-2.5 hover:border-white/25 hover:bg-[#181820] transition-colors"
                   >
                     <div className="h-9 w-full flex items-center justify-center overflow-hidden">

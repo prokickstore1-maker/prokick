@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const empty: ProductInput = { name: "", team: "", league: "Premier League", season: "2026/2027", type: "Fans Version", category: "Jersey", price: "", description: "", image: "", sizes: ["S", "M", "L", "XL"], isBestSeller: false, isFeatured: false, isNew: false };
+const empty: ProductInput = { name: "", team: "", league: "Premier League", season: "2026/2027", type: "Fans Version", category: "Klub", country: "England", price: "", description: "", image: "", sizes: ["S", "M", "L", "XL"], isBestSeller: false, isFeatured: false, isNew: false };
 
 export function ProductManager({ initialProducts }: { initialProducts: NormalizedJersey[] }) {
   const [products, setProducts] = useState(initialProducts);
@@ -141,6 +141,32 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
             <option key={sz} value={sz} />
           ))}
         </datalist>
+        {/* Category: Klub / Tim Nasional / lain. Country hanya relevan utk Tim Nasional
+            (mengisi grid "National Teams" di homepage) */}
+        <Input
+          aria-label="Category"
+          list="category-options"
+          placeholder="Category (Klub / Tim Nasional)"
+          value={form.category}
+          onChange={(e) => update("category", e.target.value)}
+        />
+        <datalist id="category-options">
+          {["Klub", "Tim Nasional", ...new Set(initialProducts.map((j) => j.category))].map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+        <Input
+          aria-label="Country"
+          list="country-options"
+          placeholder="Country (untuk Tim Nasional)"
+          value={form.country}
+          onChange={(e) => update("country", e.target.value)}
+        />
+        <datalist id="country-options">
+          {[...new Set(initialProducts.map((j) => j.country).filter(Boolean))].sort().map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
         <Select aria-label="Type" value={form.type} onValueChange={(v) => update("type", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Player Issue">Player Issue</SelectItem><SelectItem value="Fans Version">Fans Version</SelectItem><SelectItem value="Retro">Retro</SelectItem><SelectItem value="Kids">Kids</SelectItem></SelectContent></Select>
       </div>
       <div className="flex flex-wrap gap-4 text-sm">
@@ -170,7 +196,7 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
                 <TableCell>{p.league}</TableCell>
                 <TableCell>RM {p.price}</TableCell>
                 <TableCell className="text-right space-x-2">
-                  <button className="underline" onClick={() => { setEditing(p.id); setForm({ ...empty, name: p.name, team: p.team, league: p.league, season: p.season, type: p.type, price: p.price, description: p.description || "", image: p.image || "", sizes: p.sizes, isBestSeller: p.isBestSeller, isFeatured: p.isFeatured, isNew: p.isNew ?? false }); }}>Edit</button>
+                  <button className="underline" onClick={() => { setEditing(p.id); setForm({ ...empty, name: p.name, team: p.team, league: p.league, season: p.season, type: p.type, category: p.category, country: p.country, price: p.price, description: p.description || "", image: p.image || "", sizes: p.sizes, isBestSeller: p.isBestSeller, isFeatured: p.isFeatured, isNew: p.isNew ?? false }); }}>Edit</button>
                   <button className="text-[#DC2626] underline" onClick={() => remove(p.id)}>Delete</button>
                 </TableCell>
               </TableRow>
