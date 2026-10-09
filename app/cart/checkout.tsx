@@ -191,7 +191,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="customerName" className="text-xs font-bold text-zinc-300">
+                  <Label htmlFor="customerName" className="text-sm font-bold text-zinc-300">
                     Full Recipient Name *
                   </Label>
                   <Input
@@ -201,12 +201,12 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="e.g. Mohd Danial Bin Azman"
-                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
+                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium resize-none"
                   />
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="customerPhone" className="text-xs font-bold text-zinc-300">
+                  <Label htmlFor="customerPhone" className="text-sm font-bold text-zinc-300">
                     Active WhatsApp Mobile Number *
                   </Label>
                   <Input
@@ -216,12 +216,12 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder="e.g. +60 12-345 6789 or 0123456789"
-                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-medium"
+                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="streetAddress" className="text-xs font-bold text-zinc-300">
+                  <Label htmlFor="streetAddress" className="text-sm font-bold text-zinc-300">
                     Street Address / House / Unit No. *
                   </Label>
                   <Textarea
@@ -231,12 +231,12 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     value={streetAddress}
                     onChange={(e) => setStreetAddress(e.target.value)}
                     placeholder="e.g. No. 25, Jalan Kemuning 2, Seksyen 3"
-                    className="w-full px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
+                    className="w-full px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="city" className="text-xs font-bold text-zinc-300">
+                  <Label htmlFor="city" className="text-sm font-bold text-zinc-300">
                     City / Town *
                   </Label>
                   <Input
@@ -246,12 +246,12 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="e.g. Shah Alam"
-                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
+                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="postcode" className="text-xs font-bold text-zinc-300">
+                  <Label htmlFor="postcode" className="text-sm font-bold text-zinc-300">
                     5-Digit Postcode *
                   </Label>
                   <Input
@@ -262,16 +262,16 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     value={postcode}
                     onChange={(e) => setPostcode(e.target.value)}
                     placeholder="e.g. 40000"
-                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-medium"
+                    className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label className="text-xs font-bold text-zinc-300">
+                  <Label className="text-sm font-bold text-zinc-300">
                     State / Federal Territory *
                   </Label>
                   <Select value={state} onValueChange={setState}>
-                    <SelectTrigger className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-xs text-white focus-visible:border-volt">
+                    <SelectTrigger className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white focus-visible:border-volt">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -293,7 +293,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                 </div>
                 <div className="text-right">
                   <span className="text-zinc-400 block text-[10px]">Couriers:</span>
-                  <span className="text-xs font-bold text-zinc-300">Pos Laju &bull; J&amp;T Express MY</span>
+                  <span className="text-sm font-bold text-zinc-300">Pos Laju &bull; J&amp;T Express MY</span>
                 </div>
               </div>
             </div>
