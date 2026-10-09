@@ -188,7 +188,7 @@
 - [ ] Run seed script on production database to initialize default payment methods, admin user, and launch jersey catalog.
 
 ### Task 4.4: Live End-to-End Smoke Test
-- [ ] Verify domain DNS and SSL certificate via Traefik proxy.
+- [ ] Verify domain DNS and SSL certificate via Traefik proxy. Domain produksi: **`prokickstore1.com`** (A record → `103.193.178.112`, Traefik auto-SSL). `metadataBase` sudah di-set di `app/layout.tsx`.
 - [ ] Complete live test order in English UI:
   1. Add 2 jerseys to cart -> Verify **FREE Shipping** (RM 0.00) rule triggers.
   2. Complete checkout with Malaysian test address (e.g. Kuala Lumpur, 50450).
