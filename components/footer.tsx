@@ -13,7 +13,7 @@ export default async function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10 border-b border-white/8">
           {/* Col 1 */}
           <div className="space-y-3">
-            <h4 className="font-extrabold text-white text-xs uppercase tracking-wider font-display">
+            <h4 className="font-bold text-white text-xs font-display">
               Collections
             </h4>
             <ul className="space-y-2 text-zinc-400">
@@ -33,7 +33,7 @@ export default async function Footer() {
 
           {/* Col 2 */}
           <div className="space-y-3">
-            <h4 className="font-extrabold text-white text-xs uppercase tracking-wider font-display">
+            <h4 className="font-bold text-white text-xs font-display">
               Delivery &amp; Logistics
             </h4>
             <ul className="space-y-2 text-zinc-400">
@@ -47,7 +47,7 @@ export default async function Footer() {
 
           {/* Col 3 */}
           <div className="space-y-3">
-            <h4 className="font-extrabold text-white text-xs uppercase tracking-wider font-display">
+            <h4 className="font-bold text-white text-xs font-display">
               Payment Support
             </h4>
             <ul className="space-y-2 text-zinc-400">
@@ -61,7 +61,7 @@ export default async function Footer() {
 
           {/* Col 4 */}
           <div className="space-y-3">
-            <h4 className="font-extrabold text-white text-xs uppercase tracking-wider font-display">
+            <h4 className="font-bold text-white text-xs font-display">
               Customer Support
             </h4>
             <ul className="space-y-2 text-zinc-400">

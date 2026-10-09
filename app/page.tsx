@@ -85,27 +85,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 3. Quick Filter Selector Pills */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {leaguePills.map((comp, idx) => (
-              <Link
-                key={comp.name}
-                href={comp.href}
-                className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                  idx === 0
-                    ? "bg-white text-black font-extrabold shadow-md hover:bg-zinc-200"
-                    : comp.highlight
-                    ? "bg-harimau/15 text-harimau border border-harimau/30 hover:bg-harimau/25"
-                    : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/8"
-                }`}
-              >
-                {comp.name}
-              </Link>
-            ))}
-          </div>
-        </section>
-
         {/* 4. National Teams — hanya jersey tim nasional (category "Tim Nasional") */}
         {nationalCountries.length > 0 && (
           <section className="space-y-6">
@@ -158,6 +137,25 @@ export default async function HomePage() {
               <span>View All</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
+          </div>
+
+          {/* Quick filter pills (liga dari data) — dipindah ke dalam section Best Sellers */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            {leaguePills.map((comp, idx) => (
+              <Link
+                key={comp.name}
+                href={comp.href}
+                className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  idx === 0
+                    ? "bg-white text-black font-extrabold shadow-md hover:bg-zinc-200"
+                    : comp.highlight
+                    ? "bg-harimau/15 text-harimau border border-harimau/30 hover:bg-harimau/25"
+                    : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/8"
+                }`}
+              >
+                {comp.name}
+              </Link>
+            ))}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">

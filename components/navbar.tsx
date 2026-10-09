@@ -30,7 +30,7 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
   const totalItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#09090B]/90 backdrop-blur-md border-b border-white/10">
+    <header className="sticky top-0 z-40 w-full bg-[#09090B]/90 backdrop-blur-md border-b border-white/10 shadow-[0_1px_0_0_rgba(255,255,255,0.04)]">
       {/* 1. High-Impact Matchday Ticker */}
       <div className="bg-[#181820] border-b border-white/6 py-1.5 px-4 text-center">
         <p className="text-[10px] sm:text-xs font-semibold text-zinc-400 tracking-wider uppercase flex items-center justify-center gap-2">
