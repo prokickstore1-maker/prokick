@@ -20,6 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // domain produksi — canonical/OG absolute URL dihitung dari sini
+  metadataBase: new URL("https://prokickstore1.com"),
   title: "ProKick Store Malaysia | Official Football Kits & Retro Vault",
   description: "Football kit store in Malaysia. 2026/27 club kits, Harimau Malaya stadium shirts, retro editions, with DuitNow QR checkout.",
   keywords: ["football kits malaysia", "jersey harimau malaya", "player issue jersey", "retro football shirts", "duitnow qr jersey"],

@@ -1,9 +1,43 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getJerseyById, getAllJerseys } from "@/lib/data";
 import { JerseyCustomizer } from "@/components/jersey/jersey-customizer";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { ChevronRight } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const jersey = await getJerseyById(id);
+  if (!jersey) return { title: "Kit not found" };
+
+  const title = `${jersey.name} | ProKick Malaysia`;
+  const description = `${jersey.name} — RM ${jersey.price}. ${jersey.description || `${jersey.league} ${jersey.season} football kit.`}`;
+  const image = jersey.image || jersey.images?.[0]?.url;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      ...(image ? { images: [{ url: image, alt: jersey.name }] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
 
 export default async function ProductDetailPage({
   params,

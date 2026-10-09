@@ -22,9 +22,10 @@ import { orderStatusLabel } from "@/lib/order-status";
 
 interface InvoiceViewProps {
   order: StoredOrder;
+  waNumber: string;
 }
 
-export function InvoiceView({ order }: InvoiceViewProps) {
+export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [copiedAccount, setCopiedAccount] = useState(false);
 
@@ -266,7 +267,7 @@ export function InvoiceView({ order }: InvoiceViewProps) {
                 </div>
               ) : (
                 <div className="p-4 rounded-xl bg-[#09090B] border border-white/10 text-xs text-zinc-300 max-w-xs mx-auto leading-relaxed">
-                  QR image belum tersedia. Hubungi admin ProKick untuk QR DuitNow, atau gunakan transfer bank di bawah.
+                  QR image not available yet. Contact ProKick admin for the DuitNow QR, or use the bank transfer below.
                 </div>
               )}
               <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
@@ -402,7 +403,7 @@ export function InvoiceView({ order }: InvoiceViewProps) {
             {/* WhatsApp Confirmation Link */}
             <Button asChild variant="outline" className="w-full h-auto rounded-xl px-4 py-3 text-xs font-bold gap-2 bg-white/5 text-white border-white/10 hover:bg-white/10 hover:text-white">
               <a
-                href={`https://wa.me/601123456789?text=${waHelpMessage}`}
+                href={`https://wa.me/${waNumber}?text=${waHelpMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

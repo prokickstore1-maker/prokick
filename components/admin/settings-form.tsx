@@ -19,6 +19,7 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments 
   const [shipping, setShipping] = useState(settingMap.peninsularShippingCost || "8.00");
   const [eastShipping, setEastShipping] = useState(settingMap.eastShippingCost || "15.00");
   const [freeItems, setFreeItems] = useState(settingMap.freeShippingMinItems || "2");
+  const [whatsapp, setWhatsapp] = useState(settingMap.whatsappNumber || "60123456789");
 
   async function saveSetting(key: string, value: string) {
     const result = await updateStoreSettingAction(key, value);
@@ -45,6 +46,17 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments 
             </Label>
           ))}
         </div>
+      </section>
+
+      <section className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
+        <h2 className="text-lg font-bold">Contact</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Label className="space-y-1 text-sm font-semibold">
+            WhatsApp number
+            <Input className="font-normal" value={whatsapp} onChange={(event) => setWhatsapp(event.target.value)} onBlur={() => saveSetting("whatsappNumber", whatsapp)} placeholder="60123456789" />
+          </Label>
+        </div>
+        <p className="text-xs text-[#57534E]">International format without &quot;+&quot; — e.g. 60123456789. Used by the Chat Admin button on invoices and the footer.</p>
       </section>
 
       <section className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">

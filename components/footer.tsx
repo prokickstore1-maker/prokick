@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Globe } from "lucide-react";
+import { getSetting } from "@/lib/data";
 
-export default function Footer() {
+export default async function Footer() {
+  const waNumber = (await getSetting("whatsappNumber", "60123456789")).replace(/[^0-9]/g, "");
   return (
     <footer className="bg-[#09090B] border-t border-white/10 text-white pt-14 pb-12 text-xs">
       <div className="max-w-[1540px] mx-auto px-4 sm:px-8 lg:px-12">
@@ -57,7 +59,7 @@ export default function Footer() {
             <ul className="space-y-2 text-zinc-400">
               <li>
                 <a
-                  href="https://wa.me/601123456789"
+                  href={`https://wa.me/${waNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-emerald-400 transition-colors"
