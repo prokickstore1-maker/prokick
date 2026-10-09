@@ -12,10 +12,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      {
-        protocol: "https",
-        hostname: "is3.cloudhost.id",
-      },
       // bendera negara (grid National Teams di homepage)
       {
         protocol: "https",

@@ -78,6 +78,6 @@ export async function uploadProductImage(buffer: Buffer, fileName: string, conte
     // produk = file publik (ditampilkan <img>), tanpa attachment disposition
   }));
 
-  // Garage/MinIO path-style: endpoint + bucket + key
-  return `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
+  // Bucket tetap privat — disajikan lewat proxy /api/img/ (lihat app/api/img/[...key])
+  return `/api/img/${key}`;
 }
