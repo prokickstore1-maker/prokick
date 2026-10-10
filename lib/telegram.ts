@@ -21,8 +21,9 @@ function escapeHtml(value: string) {
 }
 
 const trustedReceiptHost = (() => {
+  // tanpa S3_ENDPOINT, hostname kosong -> safeReceiptUrl selalu null (fail closed)
   try {
-    return new URL(process.env.S3_ENDPOINT || "https://is3.cloudhost.id").hostname;
+    return new URL(process.env.S3_ENDPOINT || "").hostname;
   } catch {
     return "";
   }

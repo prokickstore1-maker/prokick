@@ -1,17 +1,18 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const endpoint = process.env.S3_ENDPOINT || "https://is3.cloudhost.id";
-const region = process.env.S3_REGION || "id-jkt-1";
+// wajib dari env — tanpa default, biar salah provider ketahuan langsung
+const endpoint = process.env.S3_ENDPOINT;
+const region = process.env.S3_REGION || "garage";
 const bucket = process.env.S3_BUCKET || "prokick-store";
 const accessKeyId = process.env.S3_ACCESS_KEY || "";
 const secretAccessKey = process.env.S3_SECRET_KEY || "";
 
-const isS3Configured = Boolean(accessKeyId && secretAccessKey);
+const isS3Configured = Boolean(endpoint && accessKeyId && secretAccessKey);
 
 const s3Client = isS3Configured
   ? new S3Client({
-      endpoint,
+      endpoint: endpoint!,
       region,
       credentials: {
         accessKeyId,

@@ -1,24 +1,28 @@
 import { NextResponse } from "next/server";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
-const endpoint = process.env.S3_ENDPOINT || "https://is3.cloudhost.id";
-const region = process.env.S3_REGION || "id-jkt-1";
+// wajib dari env — tanpa default, biar salah provider ketahuan langsung
+const endpoint = process.env.S3_ENDPOINT;
+const region = process.env.S3_REGION || "garage";
 const bucket = process.env.S3_BUCKET || "prokick-store";
 
 // Proxy gambar publik (foto produk) dari object storage.
 // Bucket tetap privat; route ini hanya melayani prefix "products/".
 // Receipt TIDAK lewat sini — ada /api/orders/[orderId]/receipt dengan cek akses sendiri.
-const client = new S3Client({
-  endpoint,
-  region,
-  credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY || "",
-    secretAccessKey: process.env.S3_SECRET_KEY || "",
-  },
-  forcePathStyle: true,
-});
+const client = endpoint
+  ? new S3Client({
+      endpoint,
+      region,
+      credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY || "",
+        secretAccessKey: process.env.S3_SECRET_KEY || "",
+      },
+      forcePathStyle: true,
+    })
+  : null;
 
 export async function GET(_: Request, { params }: { params: Promise<{ key: string[] }> }) {
+  if (!client) return NextResponse.json({ error: "Storage not configured" }, { status: 503 });
   const { key: parts } = await params;
   const key = parts.map((p) => decodeURIComponent(p)).join("/");
 

@@ -17,13 +17,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "flagcdn.com",
       },
-      // object storage (endpoint dari env — bisa diganti ke Garage di Coolify)
+      // object storage (endpoint dari env — Garage via Coolify)
       (function () {
         try {
-          const u = new URL(process.env.S3_ENDPOINT || "https://is3.cloudhost.id");
+          const u = new URL(process.env.S3_ENDPOINT || "");
           return { protocol: (u.protocol === "http:" ? "http" : "https") as "http" | "https", hostname: u.hostname };
         } catch {
-          return { protocol: "https" as const, hostname: "is3.cloudhost.id" };
+          // belum dikonfigurasi — pattern dummy, tidak dipakai
+          return { protocol: "http" as const, hostname: "storage.invalid" };
         }
       })(),
     ],

@@ -1,57 +1,45 @@
-# HANDOFF — Master Eksekusi (untuk agent executor)
+# HANDOFF BARU — PROKICK MY (2026-10-09, pasca-deploy)
 
-> Terima 3 dokumen ini: `REPORT_buyer.md` (temuan C-01..C-09), `REPORT_mobile.md` (M-01..M-06), `PLAN_audit.md` (F-1..F-6, **sudah selesai & terverifikasi** — jangan dikerjakan ulang).
+> Dokumen ini MENGGANTIKAN semua handoff lama. Abaikan referensi ke `REPORT_buyer.md`, `REPORT_mobile.md`, `PLAN_audit.md`, `task-next.md` bila bertentangan dengan dokumen ini.
 
-## Urutan kerja
+## Kondisi aktual
+- **App LIVE**: `https://prokickstore1.com`; routes `/`, `/jersey`, `/cart`, `/track-order`, `/admin/login`, `/privacy`, `/terms`, `/api/health` semuanya HTTP 200.
+- **Infra**: Coolify v4.4.3 di VPS `103.117.56.39`; PostgreSQL container `qtpidpsjkmhrshalpxnbp4hg`, DB `prokick_my`; Garage container `garage-zhcaicsab1s83vbrepxvxdne`, buckets `prokick-store` (private) dan `prokick-public`.
+- App container prefix `m7vepeaf5nwhwwomiyecxq6j-`, Coolify build pack Dockerfile; repo `prokickstore1-maker/prokick`, branch `main`.
+- 13 environment variables sudah diset di Coolify dan juga tersimpan di `~/prokick.env` VPS (chmod 600). Tidak mencantumkan nilai rahasia di handoff.
+- Neon Postgres + Cloudflare R2 yang disebut di handoff lama **dibatalkan**; stack aktif adalah PG + Garage di Coolify.
+- User push GitHub manual; jangan push tanpa diminta.
 
-### Batch 0 — Keputusan infrastruktur (2026-10-09, sudah didokumentasikan)
-- **Database: Neon Postgres** (bukan container di VPS). Free tier: 1 GB/project (20 GB akun), 100 CU-hours, autosuspend 5 menit. Detail + checklist di `task-next.md`.
-- **Storage: Cloudflare R2** (bukan IDCloudHost S3). Free tier: 10 GB, 1M Class A + 10M Class B ops, egress gratis. Kode `lib/s3.ts` nol perubahan — cukup ganti env `S3_ENDPOINT`/`S3_REGION=auto`. PRD sudah diupdate (`_build_plan/prd.md`).
-- Blocking sebelum eksekusi itu: C-01/C-02 (konfigurasi admin) + fix AUDIT #24 (receipt UI pakai object key mentah, bukan `/api/orders/[orderId]/receipt`).
+## Status deploy dan blocker terverifikasi
+- Website hidup dan health check 200.
+- Schema sudah dibuat (9 tabel), tetapi data DB saat pemeriksaan masih kosong: `jerseys=0`, `users=0`, `payment_methods=0`, `settings=0`.
+- Penyebab seed pertama gagal: `ADMIN_SEED_PASSWORD` 11 karakter, sedangkan seed mensyaratkan minimal 12.
+- Env di Coolify telah diubah ke nilai 16 karakter. Namun container aktif terakhir masih memakai nilai lama dan log menunjukkan seed gagal. Perlu redeploy satu kali agar container memakai env terbaru; setelah selesai, verifikasi log `Seed completed` dan jumlah row di DB.
+- Setelah seed sukses, ubah `DB_PUSH=false`/hapus lalu redeploy agar seed/schema push tidak dijalankan setiap start.
+- Jangan mengasumsikan status seed beres hanya dari status deployment “Success”; cek log dan row counts.
 
-### Batch 1 — Blocking live (C-01, C-02) [konfigurasi, bukan kode]
-User harus mengisi sendiri via `/admin/settings`: QR DuitNow asli + nomor rekening asli. **Jangan commit nilai rahasia; catat ke user bahwa ini wajib sebelum deploy.** Jika diminta bantu, hanya arahkan UI-nya.
+## Langkah setelah seed sukses
+1. Login `/admin/login` menggunakan akun/password hasil seed (lihat nilai `ADMIN_SEED_PASSWORD` di Coolify; jangan minta/kirim secret di chat).
+2. Di `/admin/settings`, user isi QR DuitNow asli, nomor rekening asli, dan nomor WhatsApp asli. Angka seed Maybank/CIMB dan WA masih dummy — jangan menerima pembayaran sebelum diganti.
+3. Jalankan smoke/E2E: login admin, katalog produk dari DB, tambah produk, checkout, invoice/tracking, upload bukti <=1MB.
+- Atur backup PostgreSQL dan Garage. Load test/CDN/cache trafik besar ditunda sampai ada kebutuhan nyata.
 
-### Batch 2 — Patch kode kecil (urut)
-| # | ID | File | Perubahan ringkas |
-|---|---|---|---|
-| 1 | C-03 | `components/order/invoice-view.tsx` | Label `Max 10MB` → `Max 1MB`; pesan error jelas saat kompresi/ukuran gagal |
-| 2 | C-04 | `app/track-order/page.tsx` | Map enum status → label human-readable (pakai konfigurasi yang sama dengan `invoice-view.tsx`) |
-| 3 | C-05 | `components/footer.tsx` | Hapus link "Admin Portal" |
-| 4 | C-06 | `components/navbar.tsx` | Enter di search → navigasi ke saran pertama / `/jersey?q=` |
-| 5 | M-01 | `app/page.tsx` | Ikon feature card `OFFICIAL & RETRO KITS` overflow — perbaiki wrapper (jangan sembunyi dengan `overflow-hidden` saja) |
-| 6 | M-02 | `components/home/hero-carousel.tsx` | Area sentuh dot carousel ≥44px (visual dot tetap kecil) |
-| 7 | M-03 | `components/home/hero-carousel.tsx` | Non-breaking space antara "MALAYA" dan "2026" (atau type scale mobile) |
-| 8 | M-04 | `components/home/hero-carousel.tsx` | Scrim gradient lebih kuat di belakang copy hero — uji semua slide |
-| 9 | M-06 | `components/jersey/jersey-card.tsx`, `app/page.tsx` | Link judul produk + "VIEW ALL": bounding box min-height 44px tanpa membesar teks |
+## Pekerjaan kode yang sudah selesai
+- C-03..C-06, M-01..M-04, M-06; audit anti-slop #001/#002; UI polish footer/navbar/home; checkout labels/inputs 14px dan textarea resize disabled.
 
-### Batch 3 — Butuh input user / konten (jangan dikerjakan buta)
-- C-07 nomor WA asli · C-08 size chart + skema retur · C-09 konfirmasi ke pembeli · M-05 rhythm (validasi ulang setelah hero beres)
+## Bug teridentifikasi
+- `/admin/login` kini berada di luar chrome storefront melalui route group `(shop)`; `Navbar`, `Footer`, dan `CartDrawer` hanya dirender di layout storefront.
+- National Teams grid difilter category `Tim Nasional` + country; form admin Category/Country tersedia dan data negara diturunkan dari produk.
+- `tsc --noEmit` terakhir lulus. Jangan ulang audit/fitur tersebut tanpa alasan.
 
-## Aturan (wajib)
-- Patch lewat **patch tool** (R-33). JANGAN script-replace.
-- JANGAN sentuh `components/ui/*`, `components.json`, `globals.css.pre-shadcn`, class `admin-surface`.
-- Verifikasi: `node_modules/.bin/tsc --noEmit` (bukan npx tsc). JANGAN `npm run build` / commit / push kecuali diminta.
-- Setiap batch selesai → update checklist di bawah.
+## Backlog (butuh keputusan/konten user)
+- C-08 size guide + kebijakan retur (butuh ukuran/konten asli).
+- C-09 konfirmasi order ke pembeli (opsional).
+- M-05 validasi rhythm tampilan mobile setelah hero.
+- QR upload langsung dari komputer (saat ini field menerima URL).
 
-## Checklist status
-- [ ] Batch 1 (konfigurasi) — user
-- [x] Batch 2 (9 patch) — selesai 2026-10-09
-- [ ] Batch 3 (input konten) — user
-- [x] tsc --noEmit hijau (exit 0 setelah Batch 2)
-- [ ] Regression: checkout E2E ulang (order kecil) + mobile 390px screenshot hero & feature cards
-
-### Catatan eksekusi Batch 2
-- C-03: label `Max 1MB` + cek ukuran pra-submit + pesan kompresi jelas.
-- C-04: helper baru `lib/order-status.ts` (satu sumber label dipakai invoice + tracking).
-- C-05: link Admin Portal dihapus dari footer.
-- C-06: tombol sr-only di 2 form search navbar (implicit submission sekarang jalan).
-- M-01: **false positive** — DOM measure 390px: ikon wrapper 40×40 seragam, `scrollW==clientW`, nol overflow; "lingkaran N" di screenshot = tombol dev overlay Next.js, bukan elemen halaman. Tidak ada perubahan.
-- M-02: dot carousel dibungkus tombol `min-w-11 min-h-11`, visual dot tetap `h-1.5`; `aria-current` ditambah. Efek samping: konten hero digeser `bottom-24` mobile agar tidak tertimpa (perbaikan ikut-ikutan).
-- M-03: nbsp via `title.replace(/ (20\d{2})/g, " $1")` — aman untuk semua banner bertahun.
-- M-04: scrim diperkuat (`/90` kiri, `via/35`, bottom `via/50`).
-- M-06: title card `py-1.5 -my-1.5`, VIEW ALL `min-h-11 -my-2` — bounding box 44px tanpa membesar teks.
-- M-05 (Batch 3): butuh screenshot hero→cards baru setelah M-04; tunda.
-
-## Bukti tes sebelumnya (jangan diulang tanpa alasan)
-- Rate limit hidup (ke-11 kena throttle) · invoice tanpa cookie aman · admin 307 · receipt API 401 · zero horizontal overflow mobile · `tsc` exit 0 · `check-rate-limit.ts` RATE_LIMIT_OK.
+## Aturan agent
+- Patch minimal; verifikasi `node_modules/.bin/tsc --noEmit`; jangan `npm run build` kecuali diminta.
+- Jangan sentuh `components/ui/*`, `components.json`, `globals.css.pre-shadcn`, class `admin-surface`, atau hapus `anti-slop/`.
+- Jangan push tanpa izin. Jangan bunuh semua proses Node; PID spesifik saja setelah identifikasi.
+- Jangan tulis/cetak secret di chat atau dokumen. Jangan klaim selesai tanpa bukti output.
