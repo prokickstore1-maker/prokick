@@ -1,6 +1,12 @@
-# HANDOFF BARU — PROKICK MY (2026-10-09, pasca-deploy)
+# HANDOFF BARU — PROKICK MY (2026-10-11)
 
 > Dokumen ini MENGGANTIKAN semua handoff lama. Abaikan referensi ke `REPORT_buyer.md`, `REPORT_mobile.md`, `PLAN_audit.md`, `task-next.md` bila bertentangan dengan dokumen ini.
+
+## Update 2026-10-11 — Migrasi Malaysia → Indonesia (kode SELESAI, DB belum)
+- Store kini konteks Indonesia penuh: IDR (`formatIDR`), 38 provinsi (Jawa/Luar Jawa), kurir J&T, QRIS/BCA/Mandiri/BRI/e-wallet, WA default 6281234567890, `lib/malaysia.ts` DIHAPUS diganti `lib/indonesia.ts`. `tsc --noEmit` bersih.
+- **DB BELUM diurus** (user tunda): (1) jalankan `! node_modules/.bin/drizzle-kit migrate` untuk `0003_order_payment_snapshot.sql`; (2) data migration harga ×3500 + settings ongkir — lihat file `TASK-LANJUTAN.md` untuk langkah lengkap + sisa tugas.
+- Historical orders tidak di-rewrite; sisa "Malaysia" di kode = konten produk sah (Harimau Malaya dll).
+- In-flight kerja sesi ini juga berisi: payment snapshot per order, guard status upload bukti, chooser WA/Telegram invoice, upload-on-save galeri produk — sudah masuk, jangan diulang.
 
 ## Kondisi aktual
 - **App LIVE**: `https://prokickstore1.com`; routes `/`, `/jersey`, `/cart`, `/track-order`, `/admin/login`, `/privacy`, `/terms`, `/api/health` semuanya HTTP 200.
@@ -32,7 +38,13 @@
 - National Teams grid difilter category `Tim Nasional` + country; form admin Category/Country tersedia dan data negara diturunkan dari produk.
 - `tsc --noEmit` terakhir lulus. Jangan ulang audit/fitur tersebut tanpa alasan.
 
+## UI admin buruk (laporan user 2026-10-11, BELUM diperbaiki)
+- Header admin di mobile (375px) overlap/broke: logo PROKICK bertabrakan dengan teks "OPERATIONS", nama toko terpotong, ikon-ikon header remang/tertindih, tombol Log out & back arrow menumpuk di kanan. Perlu layout header admin responsif sendiri (bukan memakai asumsi storefront), ada juga tombol logo ganda.
+- Form "Add product" di mobile: semua input full-width panjang tanpa grup/two-column, urutan field membingungkan (League muncul setelah upload gambar), placeholder "PILIH FILE" campur bahasa (ID) padahal UI lain EN, checkbox Best seller/Featured/New arrival polos tanpa styling, tombol SAVE PRODUCT kehitaman tanpa aksen brand.
+- Catatan user: "halaman admin busuk parah" — rework UI admin (khususnya mobile) masuk backlog prioritas tinggi.
+
 ## Backlog (butuh keputusan/konten user)
+- **Prioritas tinggi**: rework UI admin mobile (lihat "UI admin buruk" di atas).
 - C-08 size guide + kebijakan retur (butuh ukuran/konten asli).
 - C-09 konfirmasi order ke pembeli (opsional).
 - M-05 validasi rhythm tampilan mobile setelah hero.

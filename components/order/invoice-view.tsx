@@ -16,16 +16,18 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StoredOrder } from "@/lib/orders-store";
-import { formatMYR } from "@/lib/utils";
+import { formatIDR } from "@/lib/utils";
 import { uploadReceiptAction } from "@/app/actions/order";
 import { orderStatusLabel } from "@/lib/order-status";
 
 interface InvoiceViewProps {
   order: StoredOrder;
   waNumber: string;
+  telegramUsername?: string;
+  chatButtons?: "wa" | "telegram" | "both";
 }
 
-export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
+export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "both" }: InvoiceViewProps) {
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [copiedAccount, setCopiedAccount] = useState(false);
 
@@ -159,15 +161,20 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
   const statusColor = statusColors[order.orderStatus] || statusColors.PENDING_PAYMENT;
   const statusLabel = orderStatusLabel(order.orderStatus);
 
-  // tipe dari settings admin (qr_pay / bank_transfer); label sebagai fallback order lama
-  const isDuitNow =
+  const isQrPayment =
     order.paymentMethodType === "qr_pay" ||
-    order.paymentMethodLabel?.includes("DuitNow") ||
+    order.paymentMethodLabel?.includes("QRIS") ||
     order.paymentMethodLabel?.includes("QR");
 
   const waHelpMessage = encodeURIComponent(
-    `Hello ProKick Admin! I have placed order #${order.orderNumber} for RM ${order.totalAmount}. Here is my query regarding payment/tracking.`
+    `Halo ProKick, saya memesan #${order.orderNumber} dengan total Rp${order.totalAmount}. Saya ingin bertanya tentang pembayaran/pengiriman.`
   );
+  const tgHelpMessage = encodeURIComponent(
+    `Halo ProKick, saya memesan #${order.orderNumber} dengan total Rp${order.totalAmount}. Saya ingin bertanya tentang pembayaran/pengiriman.`
+  );
+  // tombol chat sesuai pilihan admin: wa | telegram | both; telegram disembunyikan kalau username kosong
+  const showWa = (chatButtons === "wa" || chatButtons === "both") && Boolean(waNumber);
+  const showTg = (chatButtons === "telegram" || chatButtons === "both") && Boolean(telegramUsername);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 text-white">
@@ -213,7 +220,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
           </div>
           <Button asChild className="rounded-lg px-4 h-auto py-2 text-xs uppercase tracking-wider gap-1.5 self-start sm:self-auto font-extrabold">
             <a
-              href={`https://www.pos.com.my/tracking?trackingNo=${order.trackingNumber}`}
+              href={`https://www.jtexpress.id/tracking?billcode=${order.trackingNumber}`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -231,7 +238,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <h2 className="text-base font-bold text-white font-display uppercase tracking-wider">Payment Instructions</h2>
             <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded-lg bg-white/10 text-zinc-300 border border-white/15">
-              {order.paymentMethodLabel || "Instant DuitNow QR Pay"}
+              {order.paymentMethodLabel || "QRIS / Transfer"}
             </span>
           </div>
 
@@ -240,7 +247,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
             <div>
               <span className="text-[10px] text-zinc-400 uppercase font-bold block">Exact Amount to Pay</span>
               <span className="text-2xl font-black text-white font-mono">
-                {formatMYR(order.totalAmount)}
+                {formatIDR(order.totalAmount)}
               </span>
             </div>
             <Button
@@ -254,7 +261,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
           </div>
 
           {/* QR View */}
-          {isDuitNow ? (
+          {isQrPayment ? (
             <div className="text-center space-y-3">
               {order.paymentQrImageUrl ? (
                 <div className="inline-block p-4 rounded-2xl bg-white shadow-xl mx-auto border border-white/20">
@@ -262,7 +269,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
                   <div className="w-48 h-48 relative flex items-center justify-center bg-white rounded-lg">
                     <Image
                       src={order.paymentQrImageUrl}
-                      alt="DuitNow QR Code"
+                      alt="QRIS Code"
                       fill
                       className="object-contain p-2"
                       sizes="200px"
@@ -271,11 +278,11 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
                 </div>
               ) : (
                 <div className="p-4 rounded-xl bg-[#09090B] border border-white/10 text-xs text-zinc-300 max-w-xs mx-auto leading-relaxed">
-                  QR image not available yet. Contact ProKick admin for the DuitNow QR, or use the bank transfer below.
+                  QR belum tersedia. Hubungi admin ProKick untuk QRIS, atau gunakan transfer bank di bawah.
                 </div>
               )}
               <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
-                Scan using <strong className="text-white">Maybank MAE</strong>, <strong className="text-white">CIMB OCTO</strong>, <strong className="text-white">Touch &apos;n Go eWallet</strong>, or any Malaysian banking app.
+                Scan pakai <strong className="text-white">GoPay</strong>, <strong className="text-white">OVO</strong>, <strong className="text-white">DANA</strong>, atau aplikasi bank apa pun.
               </p>
             </div>
           ) : (
@@ -290,7 +297,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
 
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 space-y-1">
                 <span className="text-zinc-400 block text-[10px] uppercase font-bold">Account Name</span>
-                <span className="font-bold text-white">{order.paymentAccountName || "PROKICK MALAYSIA ENTERPRISE"}</span>
+                <span className="font-bold text-white">{order.paymentAccountName || "ProKick Indonesia"}</span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 flex items-center justify-between">
@@ -404,17 +411,31 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
               </Button>
             )}
 
-            {/* WhatsApp Confirmation Link */}
-            <Button asChild variant="outline" className="w-full h-auto rounded-xl px-4 py-3 text-xs font-bold gap-2 bg-white/5 text-white border-white/10 hover:bg-white/10 hover:text-white">
-              <a
-                href={`https://wa.me/${waNumber}?text=${waHelpMessage}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MessageCircle className="w-4 h-4 text-emerald-400" />
-                <span>Chat Admin on WhatsApp</span>
-              </a>
-            </Button>
+            {/* Chat admin — tombol sesuai pilihan settings */}
+            {showWa && (
+              <Button asChild variant="outline" className="w-full h-auto rounded-xl px-4 py-3 text-xs font-bold gap-2 bg-white/5 text-white border-white/10 hover:bg-white/10 hover:text-white">
+                <a
+                  href={`https://wa.me/${waNumber}?text=${waHelpMessage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-400" />
+                  <span>Chat Admin on WhatsApp</span>
+                </a>
+              </Button>
+            )}
+            {showTg && (
+              <Button asChild variant="outline" className="w-full h-auto rounded-xl px-4 py-3 text-xs font-bold gap-2 bg-white/5 text-white border-white/10 hover:bg-white/10 hover:text-white">
+                <a
+                  href={`https://t.me/${telegramUsername}?text=${tgHelpMessage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="w-4 h-4 text-sky-400" />
+                  <span>Chat Admin on Telegram</span>
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -451,7 +472,7 @@ export function InvoiceView({ order, waNumber }: InvoiceViewProps) {
               </div>
 
               <div className="text-right font-mono font-bold text-white">
-                {formatMYR(parseFloat(item.unitPrice) * item.quantity)}
+                {formatIDR(parseFloat(item.unitPrice) * item.quantity)}
               </div>
             </div>
           ))}

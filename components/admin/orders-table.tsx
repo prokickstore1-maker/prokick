@@ -10,11 +10,12 @@ import {
   MessageCircle,
   Loader2,
   ExternalLink,
+  XCircle,
 } from "lucide-react";
 import { StoredOrder } from "@/lib/orders-store";
-import { formatMYR } from "@/lib/utils";
-import { updateOrderStatusAction } from "@/app/actions/order";
-import { MALAYSIAN_COURIERS } from "@/lib/malaysia";
+import { formatIDR } from "@/lib/utils";
+import { updateOrderAdminNotesAction, updateOrderStatusAction } from "@/app/actions/order";
+import { JNT_COURIER } from "@/lib/indonesia";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +46,41 @@ interface OrdersTableProps {
   initialOrders: StoredOrder[];
 }
 
+// Catatan admin per order: blur = simpan, indikator status di sampingnya.
+function OrderNotesInput({ orderId, initial }: { orderId: string; initial: string }) {
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSaved, setLastSaved] = useState(initial);
+
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5">
+      <Input
+        defaultValue={initial}
+        placeholder="Catatan admin"
+        aria-label="Catatan admin"
+        disabled={status === "saving"}
+        onBlur={async (e) => {
+          const v = e.target.value.trim();
+          if (v === lastSaved) return;
+          setStatus("saving");
+          const r = await updateOrderAdminNotesAction(orderId, v);
+          if (!r.success) {
+            alert(r.error || "Gagal menyimpan catatan.");
+            e.target.value = lastSaved;
+            setStatus("idle");
+            return;
+          }
+          setLastSaved(v);
+          setStatus("saved");
+          setTimeout(() => setStatus("idle"), 2000);
+        }}
+        className="h-7 rounded-lg px-2 text-[11px]"
+      />
+      {status === "saving" && <Loader2 className="w-3 h-3 animate-spin text-[#57534E] shrink-0" />}
+      {status === "saved" && <span className="text-[10px] text-[#16A34A] font-bold shrink-0">✓ Tersimpan</span>}
+    </div>
+  );
+}
+
 export function OrdersTable({ initialOrders }: OrdersTableProps) {
   const [orders, setOrders] = useState<StoredOrder[]>(initialOrders);
   const [activeTab, setActiveTab] = useState<string>("ALL");
@@ -52,7 +88,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
 
   // Tracking Modal State
   const [trackingModalOrder, setTrackingModalOrder] = useState<StoredOrder | null>(null);
-  const [courierName, setCourierName] = useState("Pos Laju");
+  const [courierName, setCourierName] = useState("J&T Express");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -102,6 +138,20 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
     setIsUpdating(false);
   };
 
+  const handleCancel = async (orderId: string) => {
+    if (!window.confirm("Batalkan order ini? Stok akan dikembalikan.")) return;
+    setIsUpdating(true);
+    const r = await updateOrderStatusAction(orderId, "CANCELLED");
+    if (!r.success) {
+      alert(r.error || "Gagal membatalkan order.");
+    } else {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, orderStatus: "CANCELLED", paymentStatus: "PENDING" } : o))
+      );
+    }
+    setIsUpdating(false);
+  };
+
   return (
     <div className="space-y-6 text-[#0C0A09]">
       {/* Status Filter Tabs (Clean Nike Pills) */}
@@ -133,7 +183,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                 <TableHead className="p-4">Order Number &amp; Date</TableHead>
                 <TableHead className="p-4">Customer Info</TableHead>
                 <TableHead className="p-4">Kits &amp; Customization</TableHead>
-                <TableHead className="p-4">Total (MYR)</TableHead>
+                <TableHead className="p-4">Total (IDR)</TableHead>
                 <TableHead className="p-4">Payment &amp; Slip</TableHead>
                 <TableHead className="p-4">Status &amp; Courier</TableHead>
                 <TableHead className="p-4 text-right">Actions</TableHead>
@@ -149,7 +199,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
               ) : (
                 filteredOrders.map((order) => {
                   const cleanPhone = order.customerPhone.replace(/[^0-9]/g, "");
-                  const waUrl = `https://wa.me/${cleanPhone.startsWith("60") ? cleanPhone : "60" + cleanPhone}`;
+                  const waUrl = `https://wa.me/${cleanPhone.startsWith("62") ? cleanPhone : "62" + cleanPhone.replace(/^0/, "")}`;
 
                   return (
                     <TableRow key={order.id} className="hover:bg-[#F9F9F9] transition-colors border-[#E5E5E5]">
@@ -214,13 +264,13 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
 
                       {/* Total */}
                       <TableCell className="p-4 font-mono font-black text-black text-sm">
-                        {formatMYR(order.totalAmount)}
+                        {formatIDR(order.totalAmount)}
                       </TableCell>
 
                       {/* Payment & Receipt */}
                       <TableCell className="p-4">
                         <span className="text-[11px] text-black block font-semibold">
-                          {order.paymentMethodLabel || "Instant QR Pay"}
+                          {order.paymentMethodLabel || "QRIS / Transfer"}
                         </span>
                         {order.paymentProofUrl ? (
                           <Button
@@ -257,6 +307,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                             {order.trackingNumber}
                           </span>
                         )}
+                        <OrderNotesInput key={order.id} orderId={order.id} initial={order.adminNotes || ""} />
                       </TableCell>
 
                       {/* Action buttons */}
@@ -283,6 +334,19 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                           >
                             <Truck className="w-3.5 h-3.5" />
                             <span>Add Tracking</span>
+                          </Button>
+                        )}
+
+                        {(order.orderStatus === "PENDING_PAYMENT" || order.orderStatus === "PROCESSING") && (
+                          <Button
+                            onClick={() => handleCancel(order.id)}
+                            disabled={isUpdating}
+                            variant="outline"
+                            className="h-auto rounded-lg border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 hover:text-red-700"
+                            title="Batalkan order (stok dikembalikan)"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Batalkan</span>
                           </Button>
                         )}
 
@@ -348,18 +412,14 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
           <div className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="courier" className="text-xs font-bold text-[#57534E]">
-                Malaysian Courier Service
+                Kurir
               </Label>
               <Select value={courierName} onValueChange={setCourierName}>
                 <SelectTrigger id="courier" className="w-full rounded-xl border-[#CCCCCC] text-xs font-medium focus-visible:border-black">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {MALAYSIAN_COURIERS.map((c) => (
-                    <SelectItem key={c.name} value={c.name}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value={JNT_COURIER.name}>{JNT_COURIER.name}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -371,7 +431,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
               <Input
                 id="trackingNumber"
                 type="text"
-                placeholder="e.g. ER123456789MY or JNT987654321"
+                placeholder="e.g. JT1234567890"
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
                 className="rounded-xl border-[#CCCCCC] font-mono text-xs font-bold focus-visible:border-black"

@@ -17,7 +17,7 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            ProKick Store Malaysia &bull; Protecting Customer Data
+            ProKick Store Indonesia &bull; Melindungi Data Pelanggan
           </p>
         </div>
 
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
           <section className="space-y-2">
             <h3 className="font-bold text-white text-base font-display uppercase">3. Data Sharing</h3>
             <p>
-              We never sell or disclose customer personal data to third-party advertisers. Shipping information is shared only with our official Malaysian delivery partners (Pos Laju &amp; J&amp;T Express) for consignment generation.
+              We never sell or disclose customer personal data to third-party advertisers. Shipping information is shared only with J&amp;T Express to generate shipment labels and tracking.
             </p>
           </section>
 

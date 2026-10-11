@@ -27,10 +27,12 @@ export async function updateStoreSettingAction(key: string, value: string) {
   return { success: true };
 }
 
-export async function updateBannerAction(id: string, input: { title: string; subtitle: string; link: string; active: boolean }) {
+export async function updateBannerAction(id: string, input: { title: string; subtitle: string; link: string; active: boolean; image?: string; displayOrder?: number }) {
   const error = await guard();
   if (error) return { success: false, error };
-  if (!id || input.title.length > 120 || input.subtitle.length > 240 || !input.link.startsWith("/")) {
+  const imageOk = !input.image || ((input.image.startsWith("/") || /^https?:\/\//.test(input.image)) && input.image.length <= 500);
+  if (!id || input.title.length > 120 || input.subtitle.length > 240 || !input.link.startsWith("/") || !imageOk ||
+      (input.displayOrder !== undefined && (!Number.isInteger(input.displayOrder) || input.displayOrder < 0))) {
     return { success: false, error: "Invalid banner" };
   }
 

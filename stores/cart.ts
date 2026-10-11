@@ -38,7 +38,7 @@ export const useCartStore = create<CartStore>()(
     (set) => ({
       items: [],
       isOpen: false,
-      shippingZone: "Peninsular Malaysia",
+      shippingZone: "Jawa",
 
       addItem: (newItem) => {
         const id = `${newItem.jerseyId}-${newItem.size}-${newItem.namesetName || "none"}-${newItem.namesetNumber || "none"}-${newItem.patch || "none"}`;
@@ -89,6 +89,14 @@ export const useCartStore = create<CartStore>()(
       partialize: (state) => ({ items: state.items, shippingZone: state.shippingZone }),
       // defer localStorage read past SSR hydration — Navbar triggers rehydrate on mount
       skipHydration: true,
+      // nilai lama Malaysia ("Peninsular/East Malaysia") dari localStorage sebelum migrasi — normalisasi saat rehydrate
+      migrate: (persisted) => {
+        const zone = (persisted as { shippingZone?: string })?.shippingZone;
+        if (zone !== "Jawa" && zone !== "Luar Jawa") {
+          (persisted as { shippingZone?: string }).shippingZone = "Jawa";
+        }
+        return persisted;
+      },
     }
   )
 );

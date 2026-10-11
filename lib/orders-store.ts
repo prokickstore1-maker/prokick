@@ -33,6 +33,7 @@ export interface StoredOrder {
   paymentQrImageUrl?: string | null;
   paymentAccountName?: string | null;
   paymentAccountNumber?: string | null;
+  paymentSnapshot?: string | null;
   paymentProofUrl?: string | null;
   paymentStatus: "PENDING" | "PAID" | "FAILED";
   orderStatus: "PENDING_PAYMENT" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELLED";
@@ -57,14 +58,14 @@ if (!globalOrders.mockOrders) {
       id: "demo-order-1",
       orderNumber: "PK-20260922-8491",
       customerName: "Ahmad Farhan",
-      customerPhone: "+60123456789",
-      customerAddress: "No. 12, Jalan Telawi 3, Bangsar, 59100 Kuala Lumpur",
-      shippingZone: "Peninsular Malaysia",
-      shippingCost: "0.00",
-      subtotal: "218.00",
-      totalAmount: "218.00",
+      customerPhone: "+6281234567890",
+      customerAddress: "Jl. Kemang Raya No. 12, Jakarta Selatan, 12730, DKI Jakarta, Indonesia",
+      shippingZone: "Jawa",
+      shippingCost: "0",
+      subtotal: "763000",
+      totalAmount: "763000",
       paymentMethodId: "qr-pay",
-      paymentMethodLabel: "Instant QR Pay",
+      paymentMethodLabel: "QRIS",
       paymentProofUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80",
       paymentStatus: "PAID",
       orderStatus: "PROCESSING",
@@ -77,17 +78,17 @@ if (!globalOrders.mockOrders) {
           name: "Real Madrid Home 2026/27 Player Issue",
           size: "L",
           quantity: 1,
-          unitPrice: "129.00",
+          unitPrice: "451500",
           namesetName: "MBAPPE",
           namesetNumber: "9",
-          namesetPrice: "20.00",
+          namesetPrice: "70000",
         },
         {
           id: "item-2",
           name: "Liverpool Home 2026/27 Fans Version",
           size: "M",
           quantity: 1,
-          unitPrice: "89.00",
+          unitPrice: "311500",
           patch: "UCL Starball + Foundation",
           patchPrice: "0.00",
         },
@@ -145,6 +146,7 @@ export async function createOrderWithStock(order: StoredOrder): Promise<StoredOr
         subtotal: order.subtotal,
         totalAmount: order.totalAmount,
         paymentMethodId: order.paymentMethodId,
+        paymentSnapshot: order.paymentSnapshot,
         paymentProofUrl: order.paymentProofUrl,
         paymentStatus: order.paymentStatus,
         orderStatus: order.orderStatus,
@@ -199,6 +201,37 @@ export async function createOrderWithStock(order: StoredOrder): Promise<StoredOr
   return order;
 }
 
+// Prefer paymentSnapshot (di-freeze saat checkout); fallback ke relasi live untuk order lama
+function paymentFromSnapshot(order: {
+  paymentSnapshot?: string | null;
+  paymentMethod?: { label?: string | null; type?: string | null; qrImageUrl?: string | null; accountName?: string | null; accountNumber?: string | null } | null;
+}): Pick<StoredOrder, "paymentMethodLabel" | "paymentMethodType" | "paymentQrImageUrl" | "paymentAccountName" | "paymentAccountNumber"> {
+  if (order.paymentSnapshot) {
+    try {
+      const s = JSON.parse(order.paymentSnapshot) as {
+        label?: string | null; type?: string | null;
+        qrImageUrl?: string | null; accountName?: string | null; accountNumber?: string | null;
+      };
+      return {
+        paymentMethodLabel: s.label ?? undefined,
+        paymentMethodType: s.type ?? undefined,
+        paymentQrImageUrl: s.qrImageUrl ?? undefined,
+        paymentAccountName: s.accountName ?? undefined,
+        paymentAccountNumber: s.accountNumber ?? undefined,
+      };
+    } catch {
+      // snapshot rusak: jatuh ke relasi live
+    }
+  }
+  return {
+    paymentMethodLabel: order.paymentMethod?.label ?? undefined,
+    paymentMethodType: order.paymentMethod?.type ?? undefined,
+    paymentQrImageUrl: order.paymentMethod?.qrImageUrl ?? undefined,
+    paymentAccountName: order.paymentMethod?.accountName ?? undefined,
+    paymentAccountNumber: order.paymentMethod?.accountNumber ?? undefined,
+  };
+}
+
 export async function getOrderById(id: string): Promise<StoredOrder | null> {
   const isDbOnline = await checkDbConnection();
 
@@ -224,11 +257,8 @@ export async function getOrderById(id: string): Promise<StoredOrder | null> {
           subtotal: row.subtotal,
           totalAmount: row.totalAmount,
           paymentMethodId: row.paymentMethodId,
-          paymentMethodLabel: row.paymentMethod?.label,
-          paymentMethodType: row.paymentMethod?.type,
-          paymentQrImageUrl: row.paymentMethod?.qrImageUrl,
-          paymentAccountName: row.paymentMethod?.accountName,
-          paymentAccountNumber: row.paymentMethod?.accountNumber,
+          ...paymentFromSnapshot(row),
+          paymentSnapshot: row.paymentSnapshot,
           paymentProofUrl: row.paymentProofUrl,
           paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
           orderStatus: row.orderStatus as StoredOrder["orderStatus"],
@@ -284,11 +314,8 @@ export async function getAllOrders(): Promise<StoredOrder[]> {
           subtotal: row.subtotal,
           totalAmount: row.totalAmount,
           paymentMethodId: row.paymentMethodId,
-          paymentMethodLabel: row.paymentMethod?.label,
-          paymentMethodType: row.paymentMethod?.type,
-          paymentQrImageUrl: row.paymentMethod?.qrImageUrl,
-          paymentAccountName: row.paymentMethod?.accountName,
-          paymentAccountNumber: row.paymentMethod?.accountNumber,
+          ...paymentFromSnapshot(row),
+          paymentSnapshot: row.paymentSnapshot,
           paymentProofUrl: row.paymentProofUrl,
           paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
           orderStatus: row.orderStatus as StoredOrder["orderStatus"],
@@ -318,31 +345,92 @@ export async function getAllOrders(): Promise<StoredOrder[]> {
   return globalOrders.mockOrders || [];
 }
 
+// Upload bukti hanya untuk order yang masih menunggu pembayaran —
+// tanpa guard ini order CANCELLED/COMPLETED bisa dinaikkan ke PROCESSING lagi oleh upload telat.
 export async function updateOrderPaymentProof(orderId: string, proofUrl: string) {
   const isDbOnline = await checkDbConnection();
 
   if (isDbOnline) {
-    // no swallow: a failed DB write must fail the action, not report success
-    await db.update(orders)
-      .set({ paymentProofUrl: proofUrl, orderStatus: "PROCESSING" })
-      .where(eq(orders.id, orderId));
+    await db.transaction(async (tx) => {
+      const [order] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
+      if (!order) throw new Error("Order tidak ditemukan.");
+      if (order.orderStatus !== "PENDING_PAYMENT") {
+        throw new Error(`Order berstatus ${order.orderStatus} tidak lagi menerima unggahan bukti pembayaran.`);
+      }
+      await tx.update(orders)
+        .set({ paymentProofUrl: proofUrl, orderStatus: "PROCESSING" })
+        .where(eq(orders.id, orderId));
+    });
   }
 
   const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
   if (order) {
+    if (order.orderStatus !== "PENDING_PAYMENT") {
+      throw new Error(`Order berstatus ${order.orderStatus} tidak lagi menerima unggahan bukti pembayaran.`);
+    }
     order.paymentProofUrl = proofUrl;
     order.orderStatus = "PROCESSING";
   }
+}
+
+// Cancel hanya dari status pre-shipment; retur order SHIPPED = alur terpisah (belum ada).
+const CANCELABLE: StoredOrder["orderStatus"][] = ["PENDING_PAYMENT", "PROCESSING"];
+
+// Cancel = satu transaksi: lock order, validasi status (blokir double-cancel),
+// kembalikan stok per ukuran, lalu update status + paymentStatus — semua atau tidak sama sekali.
+async function cancelOrderWithStock(orderId: string) {
+  await db.transaction(async (tx) => {
+    const [order] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
+    if (!order) throw new Error("Order tidak ditemukan.");
+    if (!CANCELABLE.includes(order.orderStatus as StoredOrder["orderStatus"])) {
+      throw new Error(`Order berstatus ${order.orderStatus} tidak bisa dibatalkan.`);
+    }
+
+    const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+    for (const item of items) {
+      if (!item.jerseyId) throw new Error("Produk untuk item order sudah tidak ada — stok tidak bisa dikembalikan.");
+      const [row] = await tx.select().from(jerseys).where(eq(jerseys.id, item.jerseyId)).for("update");
+      if (!row) throw new Error(`Produk untuk ukuran ${item.size} sudah tidak ada — stok tidak bisa dikembalikan.`);
+      const stockData = typeof row.stockData === "string" ? JSON.parse(row.stockData) : row.stockData || {};
+      stockData[item.size] = Number(stockData[item.size] || 0) + item.quantity;
+      const stock = Object.values(stockData).reduce((sum: number, value) => sum + Number(value || 0), 0);
+      await tx.update(jerseys).set({ stockData: JSON.stringify(stockData), stock }).where(eq(jerseys.id, item.jerseyId));
+    }
+
+    await tx.update(orders).set({ orderStatus: "CANCELLED", paymentStatus: "PENDING" }).where(eq(orders.id, orderId));
+  });
+}
+
+function cancelMockOrder(orderId: string) {
+  const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
+  if (!order) throw new Error("Order tidak ditemukan.");
+  if (!CANCELABLE.includes(order.orderStatus)) {
+    throw new Error(`Order berstatus ${order.orderStatus} tidak bisa dibatalkan.`);
+  }
+  const restores = order.items.map((item) => {
+    const product = globalOrders.mockJerseys?.find((j) => j.id === item.jerseyId);
+    if (!product) throw new Error("Produk untuk item order sudah tidak ada — stok tidak bisa dikembalikan.");
+    return { item, product };
+  });
+  for (const { item, product } of restores) {
+    product.stockData[item.size] = (product.stockData[item.size] || 0) + item.quantity;
+  }
+  order.orderStatus = "CANCELLED";
+  order.paymentStatus = "PENDING";
 }
 
 export async function updateOrderStatus(orderId: string, status: StoredOrder["orderStatus"], tracking?: string) {
   const isDbOnline = await checkDbConnection();
 
   if (isDbOnline) {
+    if (status === "CANCELLED") {
+      await cancelOrderWithStock(orderId);
+      return;
+    }
     // PROCESSING = admin confirmed payment (the only transition that marks PAID);
     // SHIPPED/COMPLETED leave paymentStatus untouched — shipping is not payment.
     const paymentStatus =
-      status === "PROCESSING" ? "PAID" : status === "CANCELLED" ? "PENDING" : undefined;
+      status === "PROCESSING" ? "PAID" : undefined;
     await db.update(orders)
       .set({
         orderStatus: status,
@@ -350,6 +438,9 @@ export async function updateOrderStatus(orderId: string, status: StoredOrder["or
         ...(paymentStatus ? { paymentStatus } : {}),
       })
       .where(eq(orders.id, orderId));
+  } else if (status === "CANCELLED") {
+    cancelMockOrder(orderId);
+    return;
   }
 
   const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
@@ -357,6 +448,16 @@ export async function updateOrderStatus(orderId: string, status: StoredOrder["or
     order.orderStatus = status;
     if (tracking) order.trackingNumber = tracking;
     if (status === "PROCESSING") order.paymentStatus = "PAID";
-    else if (status === "CANCELLED") order.paymentStatus = "PENDING";
   }
+}
+
+export async function updateOrderAdminNotes(orderId: string, notes: string) {
+  const isDbOnline = await checkDbConnection();
+
+  if (isDbOnline) {
+    await db.update(orders).set({ adminNotes: notes }).where(eq(orders.id, orderId));
+  }
+
+  const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
+  if (order) order.adminNotes = notes;
 }

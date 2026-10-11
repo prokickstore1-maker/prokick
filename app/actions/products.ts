@@ -2,22 +2,39 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { jerseys } from "@/db/schema";
+import { jerseys, jerseyImages } from "@/db/schema";
 import { db, checkDbConnection } from "@/lib/db";
 import { isAdmin } from "@/lib/admin-auth";
 import { uploadProductImage } from "@/lib/s3";
 
 export interface ProductInput {
   name: string; team: string; league: string; season: string; type: string; category: string;
-  country: string;
+  country: string; edition: string; kitType: string;
   price: string; description: string; image: string; sizes: string[];
+  images?: string[];
   isBestSeller: boolean; isFeatured: boolean; isNew: boolean;
 }
 
+// Rapikan input teks admin: trim + collapse spasi ganda, cegah "Premier  League" dsb.
+function clean(input: ProductInput): ProductInput {
+  const tidy = (v: string) => v.trim().replace(/\s+/g, " ");
+  return {
+    ...input,
+    name: tidy(input.name), team: tidy(input.team), league: tidy(input.league), season: tidy(input.season),
+    type: tidy(input.type), category: tidy(input.category), country: tidy(input.country),
+    edition: tidy(input.edition), kitType: tidy(input.kitType),
+  };
+}
+
+function validImages(images: string[] | undefined) {
+  return !images || (images.length <= 8 && images.every((u) => /^https?:\/\//.test(u) || u.startsWith("/")));
+}
+
 function valid(input: ProductInput) {
-  return [input.name, input.team, input.league, input.season, input.type, input.category].every((v) => v.trim()) &&
+  return [input.name, input.team, input.league, input.season, input.type, input.category, input.edition, input.kitType].every((v) => v.trim()) &&
     Number.isFinite(Number(input.price)) && Number(input.price) >= 0 && input.sizes.length > 0 && input.sizes.length <= 10 &&
-    input.sizes.every((size) => /^[A-Z0-9]{1,5}$/.test(size)) && input.country.length <= 40;
+    input.sizes.every((size) => /^[A-Z0-9]{1,5}$/.test(size)) && input.country.length <= 40 && input.edition.length <= 20 && input.kitType.length <= 20 &&
+    validImages(input.images);
 }
 
 async function guard(input: ProductInput) {
@@ -29,19 +46,39 @@ async function guard(input: ProductInput) {
 }
 
 export async function createProductAction(input: ProductInput) {
-  const error = await guard(input);
+  const data = clean(input);
+  const error = await guard(data);
   if (error) return { success: false, error };
   // sizes start at 0 so the storefront shows "Out" instead of an unbuyable size
-  const stockData = JSON.stringify(Object.fromEntries(input.sizes.map((size) => [size, 0])));
-  await db.insert(jerseys).values({ ...input, price: Number(input.price).toFixed(2), sizes: JSON.stringify(input.sizes), stockData, stock: 0, tags: "" });
+  const stockData = JSON.stringify(Object.fromEntries(data.sizes.map((size) => [size, 0])));
+  const { images, ...rest } = data;
+  const gallery = images ?? (data.image ? [data.image] : []);
+  await db.transaction(async (tx) => {
+    const [row] = await tx.insert(jerseys).values({
+      ...rest, image: gallery[0] || data.image,
+      price: Number(data.price).toFixed(2), sizes: JSON.stringify(data.sizes), stockData, stock: 0, tags: "",
+    }).returning({ id: jerseys.id });
+    if (gallery.length) {
+      await tx.insert(jerseyImages).values(gallery.map((url, index) => ({ jerseyId: row.id, url, displayOrder: index })));
+    }
+  });
   revalidatePath("/admin/products"); revalidatePath("/jersey"); revalidatePath("/");
   return { success: true };
 }
 
 export async function updateProductAction(id: string, input: ProductInput) {
-  const error = await guard(input);
+  const data = clean(input);
+  const error = await guard(data);
   if (error) return { success: false, error };
-  await db.update(jerseys).set({ ...input, price: Number(input.price).toFixed(2), sizes: JSON.stringify(input.sizes) }).where(eq(jerseys.id, id));
+  const { images, ...rest } = data;
+  const gallery = images ?? (data.image ? [data.image] : []);
+  await db.transaction(async (tx) => {
+    await tx.update(jerseys).set({ ...rest, image: gallery[0] || data.image, price: Number(data.price).toFixed(2), sizes: JSON.stringify(data.sizes) }).where(eq(jerseys.id, id));
+    await tx.delete(jerseyImages).where(eq(jerseyImages.jerseyId, id));
+    if (gallery.length) {
+      await tx.insert(jerseyImages).values(gallery.map((url, index) => ({ jerseyId: id, url, displayOrder: index })));
+    }
+  });
   revalidatePath("/admin/products"); revalidatePath("/jersey"); revalidatePath(`/product/${id}`);
   return { success: true };
 }

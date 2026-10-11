@@ -6,11 +6,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format numerical or string amount to standard Malaysian Ringgit display
- * Example: 89 -> "RM 89.00"
+ * Format amount to Indonesian Rupiah display
+ * Example: 451500 -> "Rp451.500"
  */
-export function formatMYR(amount: number | string): string {
+export function formatIDR(amount: number | string): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(num)) return "RM 0.00";
-  return `RM ${num.toFixed(2)}`;
+  if (isNaN(num)) return "Rp0";
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(num).replace(/^/, "Rp");
 }

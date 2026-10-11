@@ -17,8 +17,8 @@ export async function generateMetadata({
   const jersey = await getJerseyById(id);
   if (!jersey) return { title: "Kit not found" };
 
-  const title = `${jersey.name} | ProKick Malaysia`;
-  const description = `${jersey.name} — RM ${jersey.price}. ${jersey.description || `${jersey.league} ${jersey.season} football kit.`}`;
+  const title = `${jersey.name} | ProKick Indonesia`;
+  const description = `${jersey.name} — Rp${jersey.price}. ${jersey.description || `${jersey.league} ${jersey.season} football kit.`}`;
   const image = jersey.image || jersey.images?.[0]?.url;
 
   return {

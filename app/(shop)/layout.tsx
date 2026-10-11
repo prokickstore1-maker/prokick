@@ -1,11 +1,14 @@
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
-import { getAllJerseys } from "@/lib/data";
+import { getAllJerseys, getShippingSettingsMap } from "@/lib/data";
 import { buildLeagueOptions } from "@/lib/leagues";
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
-  const leagues = buildLeagueOptions(await getAllJerseys());
+  const [leagues, shippingSettings] = await Promise.all([
+    buildLeagueOptions(await getAllJerseys()),
+    getShippingSettingsMap(),
+  ]);
 
   return (
     <>
@@ -15,7 +18,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <Navbar leagues={leagues} />
       <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
       <Footer />
-      <CartDrawer />
+      <CartDrawer shippingSettings={shippingSettings} />
     </>
   );
 }

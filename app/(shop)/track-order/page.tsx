@@ -76,7 +76,7 @@ export default function TrackOrderPage() {
               id="trackPhone"
               required
               className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono"
-              placeholder="e.g. +60 12-345 6789 or 0123456789"
+              placeholder="e.g. 0812-3456-7890 atau 6281234567890"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
@@ -119,18 +119,18 @@ export default function TrackOrderPage() {
                 </div>
                 <Button asChild className="rounded-lg px-3 h-auto py-1.5 text-[11px] gap-1 font-bold">
                   <a
-                    href={`https://www.pos.com.my/tracking?trackingNo=${result.trackingNumber}`}
+                    href={`https://www.jtexpress.id/tracking?billcode=${result.trackingNumber}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span>Track Pos Laju</span>
+                    <span>Cek Resi J&amp;T</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </Button>
               </div>
             ) : (
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Your order is currently in the verification stage. Tracking details will update automatically once handed to Pos Laju / J&amp;T Express.
+                Your order is currently in the verification stage. Detail resi otomatis terupdate setelah paket diserahkan ke J&amp;T Express.
               </p>
             )}
           </div>

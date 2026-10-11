@@ -17,7 +17,7 @@ export default function TermsPage() {
             Terms of Sale
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            ProKick Store Malaysia &bull; Last updated September 2026
+            ProKick Store Indonesia &bull; Last updated October 2026
           </p>
         </div>
 
@@ -25,19 +25,19 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h3 className="font-bold text-white text-base font-display uppercase">1. Orders &amp; Authenticity</h3>
             <p>
-              All orders placed on ProKick Malaysia are subject to product stock verification. Prices, delivery rates across Peninsular and East Malaysia, and size availabilities are displayed accurately in Malaysian Ringgit (MYR).
+              All orders placed on ProKick Indonesia are subject to product stock verification. Prices, delivery rates across Jawa and Luar Jawa, and size availabilities are displayed accurately in Indonesian Rupiah (IDR).
             </p>
           </section>
 
           <section className="space-y-2">
             <h3 className="font-bold text-white text-base font-display uppercase">2. Delivery &amp; Couriers</h3>
             <p>
-              We dispatch packages using official Malaysian courier partners: Pos Laju and J&amp;T Express. Tracking numbers are issued once orders transition to Dispatched status. Delivery to Peninsular Malaysia typically takes 1–2 business days, while East Malaysia takes 2–4 business days.
+              We dispatch packages using J&amp;T Express. Tracking numbers are issued once orders transition to Dispatched status. Delivery to Jawa typically takes 1–2 business days, while Luar Jawa takes 2–4 business days.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h3 className="font-bold text-white text-base font-display uppercase">3. DuitNow &amp; Bank Transfer Payments</h3>
+            <h3 className="font-bold text-white text-base font-display uppercase">3. QRIS &amp; Bank Transfer Payments</h3>
             <p>
               Customers must upload a legible transfer receipt corresponding to their unique order amount. Orders are reserved and processed once payment proof is received and verified by store administration.
             </p>

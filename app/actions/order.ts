@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getJerseyById } from "@/lib/data";
-import { calculatePromoEngine, ShippingZone } from "@/lib/promo";
-import { getShippingZoneByState } from "@/lib/malaysia";
-import { createOrderWithStock, getOrderByIdempotencyKey, updateOrderPaymentProof, updateOrderStatus, StoredOrder, getOrderById } from "@/lib/orders-store";
+import { getJerseyById, getShippingSettingsMap, getPaymentMethods } from "@/lib/data";
+import { calculatePromoEngine, ShippingZone, toShippingSettings, STANDARD_NAMESET_FEE, STANDARD_PATCH_FEE } from "@/lib/promo";
+import { getShippingZoneByProvince } from "@/lib/indonesia";
+import { createOrderWithStock, getOrderByIdempotencyKey, updateOrderPaymentProof, updateOrderStatus, updateOrderAdminNotes, StoredOrder, getOrderById } from "@/lib/orders-store";
 import { uploadToS3, getReceiptUrl } from "@/lib/s3";
 import { sendTelegramNotification } from "@/lib/telegram";
 import crypto from "node:crypto";
@@ -90,9 +90,9 @@ export async function createOrderAction(input: CreateOrderInput) {
         unitPrice: verifiedPrice.toFixed(2),
         namesetName: item.namesetName?.trim() || null,
         namesetNumber: item.namesetNumber?.trim() || null,
-        namesetPrice: item.namesetName ? "20.00" : "0.00",
+        namesetPrice: item.namesetName ? STANDARD_NAMESET_FEE.toFixed(2) : "0.00",
         patch: item.patch?.trim() || null,
-        patchPrice: item.patch ? "10.00" : "0.00",
+        patchPrice: item.patch ? STANDARD_PATCH_FEE.toFixed(2) : "0.00",
       });
 
       promoItemsForCalculation.push({
@@ -101,22 +101,33 @@ export async function createOrderAction(input: CreateOrderInput) {
         price: verifiedPrice,
         quantity: item.quantity,
         hasNameset: Boolean(item.namesetName && item.namesetName.trim()),
-        namesetPrice: 20.00,
+        namesetPrice: STANDARD_NAMESET_FEE,
         hasPatch: Boolean(item.patch && item.patch.trim()),
-        patchPrice: 10.00,
+        patchPrice: STANDARD_PATCH_FEE,
       });
     }
 
     // 2. Authoritative Shipping Zone & Promo Calculation
-    const shippingZone: ShippingZone = getShippingZoneByState(input.state);
-    const promoResult = calculatePromoEngine(promoItemsForCalculation, shippingZone);
+    const shippingZone: ShippingZone = getShippingZoneByProvince(input.state);
+    const promoResult = calculatePromoEngine(promoItemsForCalculation, shippingZone, toShippingSettings(await getShippingSettingsMap()));
 
     // 3. Construct Verified Order Record
     const orderId = `pk-${crypto.randomUUID()}`;
     const orderNumber = generateOrderNumber();
-    const fullAddress = [input.streetAddress, input.city, input.postcode, input.state, "Malaysia"]
+    const fullAddress = [input.streetAddress, input.city, input.postcode, input.state, "Indonesia"]
       .map((part) => part.trim().slice(0, 200))
       .join(", ");
+
+    // Snapshot metode bayar saat checkout: invoice order ini tidak ikut berubah kalau admin ganti QR/rekening
+    const method = (await getPaymentMethods()).find((m) => m.id === input.paymentMethodId);
+    if (!method) return { success: false, error: "Selected payment method is unavailable. Please choose another method." };
+    const paymentSnapshot = JSON.stringify({
+          label: method.label,
+          type: method.type,
+          qrImageUrl: method.qrImageUrl,
+          accountName: method.accountName,
+          accountNumber: method.accountNumber,
+        });
 
     const newOrder: StoredOrder = {
       id: orderId,
@@ -129,7 +140,8 @@ export async function createOrderAction(input: CreateOrderInput) {
       subtotal: promoResult.rawSubtotal.toFixed(2),
       totalAmount: promoResult.grandTotal.toFixed(2),
       paymentMethodId: input.paymentMethodId,
-      paymentMethodLabel: (input.paymentMethodLabel || "Instant QR Pay").slice(0, 100),
+      paymentMethodLabel: (input.paymentMethodLabel || "QRIS / Transfer").slice(0, 100),
+      paymentSnapshot,
       paymentProofUrl: null,
       paymentStatus: "PENDING",
       orderStatus: "PENDING_PAYMENT",
@@ -176,6 +188,10 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
     if (!order) {
       return { success: false, error: "Order not found." };
     }
+    // Tolak sebelum upload: order selesai/dibatalkan tidak boleh berubah status lagi, dan tidak meninggalkan objek S3 yatim
+    if (order.orderStatus !== "PENDING_PAYMENT") {
+      return { success: false, error: `Order berstatus ${order.orderStatus} tidak lagi menerima unggahan bukti pembayaran.` };
+    }
 
     const match = base64Data.match(/^data:(image\/(jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
     if (!match || mimeType !== match[1]) return { success: false, error: "Only JPEG, PNG, or WebP receipts are allowed." };
@@ -190,8 +206,14 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
     // Upload to S3
     const proofUrl = await uploadToS3(buffer, `receipt-${order.orderNumber}.jpg`, mimeType);
 
-    // Update order status to PROCESSING
-    await updateOrderPaymentProof(orderId, proofUrl);
+    // Update order status to PROCESSING (throws kalau status order sudah bukan PENDING_PAYMENT)
+    try {
+      await updateOrderPaymentProof(orderId, proofUrl);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Order no longer accepts payment proof.";
+      console.error("Payment proof update rejected:", msg);
+      return { success: false, error: msg };
+    }
 
     // Dispatch Telegram alert asynchronously in background
     sendTelegramNotification({
@@ -207,8 +229,8 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
         nameset: i.namesetName ? `${i.namesetName} #${i.namesetNumber || "0"}` : undefined,
         patch: i.patch || undefined,
       })),
-      totalAmount: `RM ${order.totalAmount}`,
-      paymentMethod: order.paymentMethodLabel || "Instant QR Pay",
+      totalAmount: `Rp${order.totalAmount}`,
+      paymentMethod: order.paymentMethodLabel || "QRIS / Transfer",
       // presign → Telegram sendPhoto needs a real URL, not the raw object key
       paymentProofUrl: await getReceiptUrl(proofUrl),
     }).catch((err) => console.error("Telegram background notification failed:", err));
@@ -233,6 +255,21 @@ export async function updateOrderStatusAction(orderId: string, status: StoredOrd
     return { success: true };
   } catch (error) {
     console.error("Failed to update order status:", error);
-    return { success: false, error: "Failed to update order status." };
+    const message = error instanceof Error ? error.message : "";
+    return { success: false, error: message || "Failed to update order status." };
+  }
+}
+
+// Catatan internal admin per order — hanya admin, max 500 char.
+export async function updateOrderAdminNotesAction(orderId: string, notes: string) {
+  if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
+  if (notes.length > 500) return { success: false, error: "Catatan maksimal 500 karakter." };
+  try {
+    await updateOrderAdminNotes(orderId, notes);
+    revalidatePath("/admin/orders");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update admin notes:", error);
+    return { success: false, error: "Failed to save note." };
   }
 }

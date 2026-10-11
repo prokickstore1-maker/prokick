@@ -54,7 +54,7 @@ export async function sendTelegramNotification(data: TelegramOrderNotification):
   try {
     const receiptUrl = safeReceiptUrl(data.paymentProofUrl);
     const cleanPhone = data.customerPhone.replace(/[^0-9]/g, "");
-    const waLink = `https://wa.me/${cleanPhone.startsWith("60") ? cleanPhone : "60" + cleanPhone}`;
+    const waLink = `https://wa.me/${cleanPhone.startsWith("62") ? cleanPhone : "62" + cleanPhone.replace(/^0/, "")}`;
 
     const itemsListHtml = data.items
       .map(

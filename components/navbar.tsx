@@ -36,9 +36,9 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
         <p className="text-[10px] sm:text-xs font-semibold text-zinc-400 tracking-wider uppercase flex items-center justify-center gap-2">
           <span>Free Nationwide Delivery on 2+ Kits</span>
           <span className="text-zinc-500 hidden sm:inline">•</span>
-          <span className="hidden sm:inline text-zinc-300">DuitNow QR Pay</span>
+          <span className="hidden sm:inline text-zinc-300">QRIS &amp; e-Wallet</span>
           <span className="text-zinc-500 hidden md:inline">•</span>
-          <span className="hidden md:inline text-zinc-400">Pos Laju &amp; J&amp;T Express</span>
+          <span className="hidden md:inline text-zinc-400">J&amp;T Express</span>
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
         <Link href="/" className="flex items-center group">
           <Image
             src="/logo/prokick-wordmark.png"
-            alt="PROKICK MY"
+            alt="PROKICK ID"
             width={2113}
             height={658}
             priority
@@ -99,7 +99,7 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
 
           {/* Currency indicator (desktop) */}
           <span className="hidden sm:inline-block text-[11px] font-bold text-zinc-400 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8">
-            MYR
+            IDR
           </span>
 
           {/* Shopping Bag Button */}

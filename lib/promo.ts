@@ -9,7 +9,7 @@ export interface PromoItem {
   patchPrice?: number;
 }
 
-export type ShippingZone = "Peninsular Malaysia" | "East Malaysia";
+export type ShippingZone = "Jawa" | "Luar Jawa";
 
 export interface PromoCalculationResult {
   totalQuantity: number;
@@ -32,19 +32,39 @@ export interface PromoCalculationResult {
 }
 
 export const BASE_SHIPPING_RATES: Record<ShippingZone, number> = {
-  "Peninsular Malaysia": 8.00,
-  "East Malaysia": 15.00,
+  Jawa: 15000,
+  "Luar Jawa": 30000,
 };
 
-export const STANDARD_NAMESET_FEE = 20.00;
-export const STANDARD_PATCH_FEE = 10.00;
+// Override dari settings admin; nilai uang dalam IDR
+export interface ShippingSettings {
+  javaRate: number;
+  outsideJavaRate: number;
+  freeShippingMinItems: number;
+}
+
+export function toShippingSettings(settings: Record<string, string>): ShippingSettings {
+  const num = (v: string | undefined, fallback: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  };
+  return {
+    javaRate: num(settings.javaShippingCost ?? settings.peninsularShippingCost, BASE_SHIPPING_RATES.Jawa),
+    outsideJavaRate: num(settings.outsideJavaShippingCost ?? settings.eastShippingCost, BASE_SHIPPING_RATES["Luar Jawa"]),
+    freeShippingMinItems: Math.max(1, Math.floor(num(settings.freeShippingMinItems, 2))),
+  };
+}
+
+export const STANDARD_NAMESET_FEE = 70000;
+export const STANDARD_PATCH_FEE = 35000;
 
 /**
  * Pure deterministic calculation function for cart bundle promotions
  */
 export function calculatePromoEngine(
   items: PromoItem[],
-  zone: ShippingZone = "Peninsular Malaysia"
+  zone: ShippingZone = "Jawa",
+  settings?: ShippingSettings
 ): PromoCalculationResult {
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
   const rawSubtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -62,10 +82,14 @@ export function calculatePromoEngine(
   });
 
   const customizationTotal = totalNamesetCost + totalPatchCost;
-  const baseShipping = BASE_SHIPPING_RATES[zone] ?? 8.00;
+  const rates: Record<ShippingZone, number> = settings
+    ? { Jawa: settings.javaRate, "Luar Jawa": settings.outsideJavaRate }
+    : BASE_SHIPPING_RATES;
+  const baseShipping = rates[zone] ?? BASE_SHIPPING_RATES.Jawa;
 
-  // Tier 1: Buy 2+ -> Free Nationwide Shipping
-  const freeShippingUnlocked = totalQuantity >= 2;
+  // Tier 1: Buy N+ (default 2, diatur admin) -> Free Nationwide Shipping
+  const freeShippingMin = settings?.freeShippingMinItems ?? 2;
+  const freeShippingUnlocked = totalQuantity >= freeShippingMin;
   const shippingDiscount = freeShippingUnlocked ? baseShipping : 0;
   const shippingCost = freeShippingUnlocked ? 0 : baseShipping;
 
@@ -88,13 +112,14 @@ export function calculatePromoEngine(
   let promoBadgeText = "Standard Order";
 
   if (totalQuantity === 0) {
-    nextTierMessage = "Add jerseys to activate volume discounts.";
+    nextTierMessage = `Add jerseys to activate volume discounts.`;
     progressPercent = 0;
-  } else if (totalQuantity === 1) {
-    nextTierMessage = "Add 1 more jersey for free Pos Laju / J&T delivery.";
-    progressPercent = 50;
-    promoBadgeText = "1 Jersey";
-  } else if (totalQuantity === 2) {
+  } else if (totalQuantity < freeShippingMin) {
+    const needed = freeShippingMin - totalQuantity;
+    nextTierMessage = `Add ${needed} more jersey${needed > 1 ? "s" : ""} for free J&T delivery.`;
+    progressPercent = Math.round((totalQuantity / freeShippingMin) * 50);
+    promoBadgeText = `${totalQuantity} Jersey${totalQuantity > 1 ? "s" : ""}`;
+  } else if (totalQuantity < 3) {
     nextTierMessage = "Free shipping active. Add 1 more jersey for a free sleeve patch.";
     progressPercent = 66;
     promoBadgeText = "Free Shipping Active";

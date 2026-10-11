@@ -13,7 +13,7 @@ export default async function AdminOrdersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E5E5] pb-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-[#57534E] block mb-1">
-            Order Fulfillment • Malaysia Domestic
+            Order Fulfillment • Indonesia Domestic
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-black font-display uppercase tracking-tight">
             Orders Verification &amp; Dispatch

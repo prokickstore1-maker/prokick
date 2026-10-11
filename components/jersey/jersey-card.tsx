@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus, Check } from "lucide-react";
 import { useState } from "react";
-import { formatMYR } from "@/lib/utils";
+import { formatIDR } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart";
 import { NormalizedJersey } from "@/lib/data";
 
@@ -130,7 +130,7 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
           </div>
 
           <div className="font-mono font-black text-sm text-white">
-            {formatMYR(jersey.price)}
+            {formatIDR(jersey.price)}
           </div>
         </div>
       </div>

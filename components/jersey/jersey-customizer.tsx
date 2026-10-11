@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ShoppingBag, Truck, Check, QrCode } from "lucide-react";
-import { formatMYR } from "@/lib/utils";
+import { formatIDR } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart";
 import { NormalizedJersey } from "@/lib/data";
 import { Button } from "@/components/ui/button";
@@ -53,8 +53,8 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
   const basePrice = parseFloat(jersey.price);
   // fee only when a name is typed — matches server (order.ts) so display == checkout
   const hasNameset = enableNameset && namesetName.trim().length > 0;
-  const namesetFee = hasNameset ? 20.0 : 0.0;
-  const patchFee = enablePatch ? 10.0 : 0.0;
+  const namesetFee = hasNameset ? 70000 : 0;
+  const patchFee = enablePatch ? 35000 : 0;
   const unitTotal = basePrice + namesetFee + patchFee;
   const grandTotal = unitTotal * quantity;
 
@@ -74,9 +74,9 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
       quantity,
       namesetName: hasNameset ? namesetName.toUpperCase().trim() : undefined,
       namesetNumber: hasNameset ? namesetNumber.trim() : undefined,
-      namesetPrice: hasNameset ? 20.0 : 0.0,
+      namesetPrice: hasNameset ? 70000 : 0,
       patch: enablePatch ? selectedPatch : undefined,
-      patchPrice: enablePatch ? 10.0 : 0.0,
+      patchPrice: enablePatch ? 35000 : 0,
     });
 
     setIsAdded(true);
@@ -173,11 +173,11 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
 
           <div className="flex items-baseline gap-3">
             <span className="text-2xl sm:text-3xl font-black text-white font-mono">
-              {formatMYR(unitTotal)}
+              {formatIDR(unitTotal)}
             </span>
             {unitTotal > basePrice && (
               <span className="text-xs text-zinc-400 line-through font-mono">
-                Base: {formatMYR(basePrice)}
+                Base: {formatIDR(basePrice)}
               </span>
             )}
           </div>
@@ -253,7 +253,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
                 <span>Custom Player Name &amp; Number</span>
               </span>
               <span className="text-xs font-mono font-bold text-volt">
-                +RM 20.00
+                +Rp70.000
               </span>
             </label>
 
@@ -300,7 +300,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
                 <span>Sleeve Competition Patch</span>
               </span>
               <span className="text-xs font-mono font-bold text-volt">
-                +RM 10.00
+                +Rp35.000
               </span>
             </label>
 
@@ -364,7 +364,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
               ) : (
                 <>
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Bag: {formatMYR(grandTotal)}</span>
+                  <span>Add to Bag: {formatIDR(grandTotal)}</span>
                 </>
               )}
             </Button>
@@ -378,7 +378,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
             </div>
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <QrCode className="w-4 h-4 text-zinc-300 shrink-0" />
-              <span>DuitNow QR Pay</span>
+              <span>QRIS</span>
             </div>
           </div>
         </div>
@@ -392,7 +392,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
             isAdded ? "bg-volt text-black hover:bg-volt" : ""
           }`}
         >
-          {isAdded ? "Added to Bag!" : `Add to Bag · ${formatMYR(grandTotal)}`}
+          {isAdded ? "Added to Bag!" : `Add to Bag · ${formatIDR(grandTotal)}`}
         </Button>
       </div>
     </div>

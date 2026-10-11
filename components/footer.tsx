@@ -4,7 +4,7 @@ import { getSetting, getAllJerseys } from "@/lib/data";
 import { buildLeagueOptions } from "@/lib/leagues";
 
 export default async function Footer() {
-  const waNumber = (await getSetting("whatsappNumber", "60123456789")).replace(/[^0-9]/g, "");
+  const waNumber = (await getSetting("whatsappNumber", "6281234567890")).replace(/[^0-9]/g, "");
   const leagues = buildLeagueOptions(await getAllJerseys());
   return (
     <footer className="bg-[#09090B] border-t border-white/10 text-white pt-14 pb-12 text-xs">
@@ -37,10 +37,9 @@ export default async function Footer() {
               Delivery &amp; Logistics
             </h4>
             <ul className="space-y-2 text-zinc-400">
-              <li><span>Pos Laju Malaysia</span></li>
-              <li><span>J&amp;T Express Malaysia</span></li>
-              <li><span>Peninsular (1–2 Days)</span></li>
-              <li><span>East Malaysia (2–4 Days)</span></li>
+              <li><span>J&amp;T Express</span></li>
+              <li><span>Jawa (1–2 Hari)</span></li>
+              <li><span>Luar Jawa (2–4 Hari)</span></li>
               <li className="text-volt font-semibold"><span>Free Delivery on 2+ Kits</span></li>
             </ul>
           </div>
@@ -51,10 +50,10 @@ export default async function Footer() {
               Payment Support
             </h4>
             <ul className="space-y-2 text-zinc-400">
-              <li><span className="text-white font-medium">DuitNow QR Pay</span></li>
-              <li><span>Maybank MAE</span></li>
-              <li><span>CIMB OCTO</span></li>
-              <li><span>Touch &apos;n Go eWallet</span></li>
+              <li><span className="text-white font-medium">QRIS</span></li>
+              <li><span>GoPay</span></li>
+              <li><span>OVO</span></li>
+              <li><span>DANA</span></li>
               <li><span>Online Bank Transfer</span></li>
             </ul>
           </div>
@@ -84,13 +83,13 @@ export default async function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-400 text-[11px]">
           <div className="flex items-center gap-2">
             <Globe className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-white font-medium">Malaysia</span>
+            <span className="text-white font-medium">Indonesia</span>
             <span className="text-zinc-500">&bull;</span>
-            <span className="font-semibold text-zinc-300">MYR (RM)</span>
+            <span className="font-semibold text-zinc-300">IDR (Rp)</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-6">
-            <span>&copy; {new Date().getFullYear()} ProKick Store Malaysia. All rights reserved.</span>
+            <span>&copy; {new Date().getFullYear()} ProKick Store Indonesia. All rights reserved.</span>
             <Link href="/terms" className="hover:text-white transition-colors">Terms of Sale</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
           </div>

@@ -40,7 +40,7 @@ export default async function HomePage() {
         {/* 1. Cinematic Hero Carousel */}
         {banners.length > 2 && <HeroCarousel banners={banners.slice(2)} />}
 
-        {/* 2. Malaysian Store Trust & Benefit Strip */}
+        {/* 2. Store Trust & Benefit Strip */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="rounded-xl border border-white/8 bg-[#121217] p-4 sm:p-5 flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-[#E2F952]/10 border border-[#E2F952]/25 flex items-center justify-center text-[#E2F952] shrink-0">
@@ -51,7 +51,7 @@ export default async function HomePage() {
                 Free Nationwide Delivery
               </h4>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Automatically waived on 2+ shirts (Pos Laju &amp; J&amp;T)
+                Otomatis gratis di 2+ kaos (J&amp;T Express)
               </p>
             </div>
           </div>
@@ -62,10 +62,10 @@ export default async function HomePage() {
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-bold uppercase tracking-tight text-white font-display">
-                DuitNow QR &amp; eWallet
+                QRIS &amp; e-Wallet
               </h4>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Scan &amp; pay via Maybank MAE, CIMB OCTO &amp; TnG eWallet
+                Scan pakai GoPay, OVO, DANA, atau aplikasi bank
               </p>
             </div>
           </div>
@@ -230,19 +230,19 @@ export default async function HomePage() {
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
                 <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 1 • 2+ Kits</span>
                 <h4 className="text-xs font-bold text-white uppercase">Free Delivery</h4>
-                <p className="text-[11px] text-zinc-400">Save RM 8 – RM 15 shipping fee nationwide.</p>
+                <p className="text-[11px] text-zinc-400">Hemat Rp15.000–Rp30.000 ongkir ke seluruh Indonesia.</p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
                 <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 2 • 3+ Kits</span>
                 <h4 className="text-xs font-bold text-white uppercase">Free Official Patch</h4>
-                <p className="text-[11px] text-zinc-400">UCL Starball or EPL gold badge included (RM 10 off).</p>
+                <p className="text-[11px] text-zinc-400">Badge UCL Starball atau EPL gold termasuk (hemat Rp35.000).</p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
                 <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 3 • 5+ Kits</span>
                 <h4 className="text-xs font-bold text-white uppercase">Free Nameset</h4>
-                <p className="text-[11px] text-zinc-400">Custom player name &amp; number included (RM 20 off).</p>
+                <p className="text-[11px] text-zinc-400">Custom nama &amp; nomor pemain termasuk (hemat Rp70.000).</p>
               </div>
             </div>
           </div>

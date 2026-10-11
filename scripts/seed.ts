@@ -6,7 +6,7 @@ import { db, client } from "../lib/db";
 import { users, paymentMethods, jerseys, banners, settings } from "../db/schema";
 
 async function seed() {
-  console.log("Starting ProKick Store Malaysia seed script...");
+  console.log("Starting ProKick Store Indonesia seed script...");
 
   try {
     // 1. Seed Admin User
@@ -19,46 +19,53 @@ async function seed() {
     await db.insert(users).values({
       email: "admin@prokick.my",
       password: passwordHash,
-      name: "ProKick MY Administrator",
+      name: "ProKick ID Administrator",
       role: "ADMIN",
     }).onConflictDoNothing();
 
-    // 2. Seed Payment Methods (Malaysian Standards)
-    console.log("Seeding Malaysian payment methods...");
+    // 2. Seed Payment Methods (Indonesian Standards — placeholder, admin isi via Settings)
+    console.log("Seeding Indonesian payment methods...");
     await db.insert(paymentMethods).values([
       {
         type: "qr_pay",
-        label: "Instant QR Pay",
-        accountName: "PROKICK MALAYSIA ENTERPRISE",
-        accountNumber: "012-3456789",
+        label: "QRIS",
+        accountName: "ProKick Indonesia",
+        accountNumber: "",
         qrImageUrl: null,
         isActive: true,
       },
       {
         type: "bank_transfer",
-        label: "Maybank",
-        accountName: "PROKICK MALAYSIA ENTERPRISE",
-        accountNumber: "5140 1234 5678",
+        label: "BCA",
+        accountName: "ProKick Indonesia",
+        accountNumber: "0000000000",
         isActive: true,
       },
       {
         type: "bank_transfer",
-        label: "CIMB Bank",
-        accountName: "PROKICK MALAYSIA ENTERPRISE",
-        accountNumber: "8001 2345 6789",
+        label: "Mandiri",
+        accountName: "ProKick Indonesia",
+        accountNumber: "0000000000",
         isActive: true,
       },
       {
-        type: "duitnow_qr",
-        label: "Touch 'n Go eWallet",
-        accountName: "PROKICK MALAYSIA",
-        accountNumber: "012-3456789",
+        type: "bank_transfer",
+        label: "BRI",
+        accountName: "ProKick Indonesia",
+        accountNumber: "0000000000",
+        isActive: true,
+      },
+      {
+        type: "ewallet",
+        label: "GoPay / OVO / DANA",
+        accountName: "ProKick Indonesia",
+        accountNumber: "081234567890",
         isActive: true,
       },
     ]);
 
-    // 3. Seed Pure Football Jerseys (MYR Currency)
-    console.log("👕 Seeding football jerseys with Malaysian Ringgit pricing...");
+    // 3. Seed Pure Football Jerseys (IDR Currency)
+    console.log("Seeding football jerseys with IDR pricing...");
     await db.insert(jerseys).values([
       {
         name: "Real Madrid Home 2026/27 Player Issue",
@@ -67,7 +74,7 @@ async function seed() {
         season: "2026/2027",
         type: "Player Issue",
         category: "Klub",
-        price: "129.00",
+        price: "451500",
         description: "Official Player Issue edition featuring HEAT.RDY technology, ultra-lightweight breathable jacquard fabric, and heat-applied silicone crest.",
         image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
@@ -88,7 +95,7 @@ kitType: "Home",
         season: "2026/2027",
         type: "Player Issue",
         category: "Klub",
-        price: "129.00",
+        price: "451500",
         description: "Arsenal authentic home kit engineered with aerodynamic ventilation panels and golden cannon emblem.",
         image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
@@ -109,7 +116,7 @@ kitType: "Home",
         season: "2026/2027",
         type: "Fans Version",
         category: "Klub",
-        price: "89.00",
+        price: "311500",
         description: "Stadium edition in deep red with embroidered crest and moisture-wicking fabric.",
         image: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
@@ -130,7 +137,7 @@ kitType: "Home",
         season: "2026/2027",
         type: "Fans Version",
         category: "Klub",
-        price: "89.00",
+        price: "311500",
         description: "Classic red devil stadium jersey with crisp white accents and ribbed collar detailing.",
         image: "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
@@ -151,7 +158,7 @@ kitType: "Home",
         season: "2026/2027",
         type: "Player Issue",
         category: "Klub",
-        price: "129.00",
+        price: "451500",
         description: "Pro-fit away kit with dynamic electric pinstripes and metallic badge finish.",
         image: "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
@@ -172,7 +179,7 @@ kitType: "Away",
         season: "2026/2027",
         type: "Fans Version",
         category: "Klub",
-        price: "89.00",
+        price: "311500",
         description: "Split-stripe home shirt with inner neckline detail and embroidered crest.",
         image: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
@@ -193,7 +200,7 @@ kitType: "Home",
         season: "2026",
         type: "Fans Version",
         category: "Tim Nasional",
-        price: "79.00",
+        price: "276500",
         description: "Official national team tribute jersey featuring vibrant yellow & black tiger stripes with embroidered FAM crest.",
         image: "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
@@ -214,7 +221,7 @@ kitType: "Home",
         season: "1998/1999",
         type: "Retro",
         category: "Klub",
-        price: "109.00",
+        price: "381500",
         description: "1999 Champions League final shirt with SHARP sponsor and starry crest.",
         image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["M", "L", "XL"]),
@@ -235,7 +242,7 @@ kitType: "Home",
         season: "2003/2004",
         type: "Retro",
         category: "Klub",
-        price: "109.00",
+        price: "381500",
         description: "Commemorative shirt with O2 sponsor and Highbury gold trim.",
         image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL"]),
@@ -253,7 +260,7 @@ kitType: "Home",
       {
         image: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&auto=format&fit=crop&q=80",
         title: "NEW SEASON 2026/27 DROPS",
-        subtitle: "Official Player Issue & Fan Edition Kits Now in Malaysia",
+        subtitle: "Official Player Issue & Fan Edition Kits Now in Indonesia",
         link: "/jersey",
         active: true,
         displayOrder: 1,
@@ -263,13 +270,13 @@ kitType: "Home",
     // 5. Seed Settings
     console.log("Seeding store settings...");
     await db.insert(settings).values([
-      { key: "storeName", value: "ProKick Store Malaysia" },
-      { key: "currency", value: "RM" },
-      { key: "whatsappNumber", value: "60123456789" },
-      { key: "peninsularShippingCost", value: "8.00" },
-      { key: "eastShippingCost", value: "15.00" },
+      { key: "storeName", value: "ProKick Store Indonesia" },
+      { key: "currency", value: "IDR" },
+      { key: "whatsappNumber", value: "6281234567890" },
+      { key: "javaShippingCost", value: "15000" },
+      { key: "outsideJavaShippingCost", value: "30000" },
       { key: "freeShippingMinItems", value: "2" },
-      { key: "runningBannerText", value: "NEW SEASON 2026/27 DROPS | FREE DELIVERY ON 2+ SHIRTS | INSTANT PAYMENT ACCEPTED" },
+      { key: "runningBannerText", value: "NEW SEASON 2026/27 DROPS | GRATIS ONGKIR MIN. 2 Kaos | QRIS & E-WALLET" },
     ]).onConflictDoNothing();
 
     console.log("Seed completed successfully!");

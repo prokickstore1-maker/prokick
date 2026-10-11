@@ -1,6 +1,6 @@
 import { db, checkDbConnection } from "./db";
-import { jerseys, banners, paymentMethods, settings } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { jerseys, jerseyImages, banners, paymentMethods, settings } from "@/db/schema";
+import { eq, desc, inArray } from "drizzle-orm";
 import { MOCK_JERSEYS, MOCK_PAYMENT_METHODS, MOCK_BANNERS, MockBanner } from "./mock-data";
 
 export interface NormalizedJersey {
@@ -27,6 +27,25 @@ export interface NormalizedJersey {
   isNew?: boolean;
 }
 
+// Gambar galeri produk dari jersey_images (urut displayOrder); kosong = fallback single image
+async function loadImages(jerseyIds: string[]): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  if (jerseyIds.length === 0) return map;
+  try {
+    const rows = await db.select().from(jerseyImages)
+      .where(inArray(jerseyImages.jerseyId, jerseyIds))
+      .orderBy(jerseyImages.displayOrder);
+    for (const r of rows) {
+      const list = map.get(r.jerseyId) || [];
+      list.push(r.url);
+      map.set(r.jerseyId, list);
+    }
+  } catch (e) {
+    console.warn("Load jersey images failed:", e);
+  }
+  return map;
+}
+
 export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJersey[]> {
   const isDbOnline = await checkDbConnection();
 
@@ -38,11 +57,13 @@ export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJe
       });
 
       if (rows && rows.length > 0) {
+        const imageMap = await loadImages(rows.map((r) => r.id));
         return rows.map((r) => {
           const mockMatch = MOCK_JERSEYS.find((m) => m.name === r.name || m.id === r.id);
+          const gallery = imageMap.get(r.id)?.map((url) => ({ url }));
           return {
             ...r,
-            images: mockMatch?.images,
+            images: gallery?.length ? gallery : mockMatch?.images,
             sizes: typeof r.sizes === "string" ? JSON.parse(r.sizes) : (r.sizes || []),
             stockData: typeof r.stockData === "string" ? JSON.parse(r.stockData) : (r.stockData || {}),
             category: r.category || (r.league === "World Cup" ? "Tim Nasional" : "Klub"),
@@ -76,11 +97,20 @@ export async function getJerseyById(id: string): Promise<NormalizedJersey | null
       });
       if (row) {
         const mockMatch = MOCK_JERSEYS.find((m) => m.name === row.name || m.id === row.id);
+        const imageMap = await loadImages([row.id]);
+        const gallery = imageMap.get(row.id)?.map((url) => ({ url }));
+        const images = gallery?.length ? gallery : mockMatch?.images;
         return {
           ...row,
-          images: mockMatch?.images,
+          image: images?.[0]?.url || row.image,
+          images,
           sizes: typeof row.sizes === "string" ? JSON.parse(row.sizes) : (row.sizes || []),
           stockData: typeof row.stockData === "string" ? JSON.parse(row.stockData) : (row.stockData || {}),
+          category: row.category || (row.league === "World Cup" ? "Tim Nasional" : "Klub"),
+          country: row.country || (row.team === "Malaysia" ? "Malaysia" : "England"),
+          edition: row.edition || (row.type === "Retro" ? "Vintage" : "Current"),
+          kitType: row.kitType || "Home",
+          isNew: row.isNew ?? false,
         };
       }
     } catch (e) {
@@ -131,6 +161,20 @@ export async function getSetting(key: string, fallback: string) {
     }
   }
   return fallback;
+}
+
+// Ambil ongkir + threshold gratis ongkir dari settings admin
+export async function getShippingSettingsMap(): Promise<Record<string, string>> {
+  const isDbOnline = await checkDbConnection();
+  if (isDbOnline) {
+    try {
+      const rows = await db.select().from(settings);
+      return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    } catch (e) {
+      console.warn("Falling back to default shipping settings:", e);
+    }
+  }
+  return {};
 }
 
 export async function getPaymentMethods() {

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Plus, Minus, ExternalLink, Search } from "lucide-react";
 import { NormalizedJersey } from "@/lib/data";
-import { formatMYR } from "@/lib/utils";
+import { formatIDR } from "@/lib/utils";
 import { updateJerseyStockAction } from "@/app/actions/jersey";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +34,7 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
   );
 
   const handleStockAdjust = async (jerseyId: string, size: string, delta: number) => {
+    if (delta === 0) return;
     const key = `${jerseyId}-${size}`;
     setLoadingSize(key);
 
@@ -82,7 +83,7 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
               <TableRow className="hover:bg-transparent border-[#E5E5E5]">
                 <TableHead className="p-4">Jersey Edition</TableHead>
                 <TableHead className="p-4">Competition</TableHead>
-                <TableHead className="p-4">Price (MYR)</TableHead>
+                <TableHead className="p-4">Price (IDR)</TableHead>
                 <TableHead className="p-4">Per-Size Stock Control</TableHead>
                 <TableHead className="p-4 text-center">Total Stock</TableHead>
                 <TableHead className="p-4 text-right">View</TableHead>
@@ -121,7 +122,7 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
 
                   {/* Price */}
                   <TableCell className="p-4 font-mono font-black text-black text-sm">
-                    {formatMYR(j.price)}
+                    {formatIDR(j.price)}
                   </TableCell>
 
                   {/* Quick Adjust Buttons */}
@@ -140,13 +141,26 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
                             <span className="font-mono text-[10px] text-[#57534E] font-bold">
                               {size}:
                             </span>
-                            <span
-                              className={`font-mono text-xs font-bold ${
+                            <input
+                              type="number"
+                              min={0}
+                              aria-label={`Stok ${size} untuk ${j.name}`}
+                              defaultValue={stockVal}
+                              key={`${key}-${stockVal}`}
+                              disabled={isLoading}
+                              onBlur={(e) => {
+                                const parsed = Number(e.target.value);
+                                if (!Number.isInteger(parsed) || parsed < 0 || parsed === stockVal) {
+                                  e.target.value = String(stockVal);
+                                  return;
+                                }
+                                handleStockAdjust(j.id, size, parsed - stockVal);
+                              }}
+                              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                              className={`w-10 rounded border-none bg-transparent text-center font-mono text-xs font-bold focus:bg-white focus:ring-1 focus:ring-black ${
                                 stockVal > 0 ? "text-black" : "text-[#DC2626]"
                               }`}
-                            >
-                              {stockVal}
-                            </span>
+                            />
                             <div className="flex items-center gap-0.5 ml-1">
                               <button
                                 onClick={() => handleStockAdjust(j.id, size, -1)}

@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   // canonical/OG absolute URL dari env; fallback domain produksi
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://prokickstore1.com"),
-  title: "ProKick Store Malaysia | Official Football Kits & Retro Vault",
-  description: "Football kit store in Malaysia. 2026/27 club kits, Harimau Malaya stadium shirts, retro editions, with DuitNow QR checkout.",
-  keywords: ["football kits malaysia", "jersey harimau malaya", "player issue jersey", "retro football shirts", "duitnow qr jersey"],
+  title: "ProKick Store Indonesia | Jersey Bola Original & Retro",
+  description: "Toko jersey bola di Indonesia. Jersey klub 2026/27, tim nasional, dan koleksi retro. Bayar dengan QRIS, transfer bank, atau e-wallet.",
+  keywords: ["jersey bola", "jersey grade ori", "jersey timnas", "jersey klub", "jersey retro", "QRIS jersey"],
 };
 
 // viewportFit: "cover" wajib — tanpa ini env(safe-area-inset-*) selalu 0 di iOS,

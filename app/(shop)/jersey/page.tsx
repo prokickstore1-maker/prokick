@@ -125,8 +125,8 @@ export default async function JerseyCatalogPage({
     currentEdition && `Edition: ${currentEdition}`,
     currentKitType && `Kit: ${currentKitType}`,
     currentSize && `Size: ${currentSize}`,
-    minPrice > 0 && `Min RM ${minPrice}`,
-    maxPrice > 0 && `Max RM ${maxPrice}`,
+    minPrice > 0 && `Min Rp${minPrice}`,
+    maxPrice > 0 && `Max Rp${maxPrice}`,
     searchQuery && `“${searchQuery}”`,
   ].filter(Boolean) as string[];
 
@@ -300,25 +300,25 @@ export default async function JerseyCatalogPage({
             ))}
           </select>
 
-          {/* Price Range (RM) */}
+          {/* Price Range (IDR) */}
           <div className="flex items-center gap-1.5">
             <Input
               type="number"
               name="minPrice"
-              aria-label="Minimum price in Ringgit Malaysia"
+              aria-label="Harga minimum dalam Rupiah"
               min={0}
               defaultValue={resolvedParams.minPrice || ""}
-              placeholder="Min RM"
+              placeholder="Min Rp"
               className="w-full min-w-0 h-auto rounded-xl bg-[#181820] text-zinc-200 px-2.5 py-2 text-xs border-white/10 focus-visible:border-white/30 placeholder:text-zinc-400"
             />
             <span className="text-zinc-500 text-xs">&ndash;</span>
             <Input
               type="number"
               name="maxPrice"
-              aria-label="Maximum price in Ringgit Malaysia"
+              aria-label="Harga maksimum dalam Rupiah"
               min={0}
               defaultValue={resolvedParams.maxPrice || ""}
-              placeholder="Max RM"
+              placeholder="Max Rp"
               className="w-full min-w-0 h-auto rounded-xl bg-[#181820] text-zinc-200 px-2.5 py-2 text-xs border-white/10 focus-visible:border-white/30 placeholder:text-zinc-400"
             />
           </div>

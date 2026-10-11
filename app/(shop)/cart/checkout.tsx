@@ -14,9 +14,9 @@ import {
   QrCode,
 } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
-import { calculatePromoEngine } from "@/lib/promo";
-import { formatMYR } from "@/lib/utils";
-import { MALAYSIAN_STATES, getShippingZoneByState } from "@/lib/malaysia";
+import { calculatePromoEngine, toShippingSettings } from "@/lib/promo";
+import { formatIDR } from "@/lib/utils";
+import { INDONESIAN_PROVINCES, getShippingZoneByProvince } from "@/lib/indonesia";
 import { createOrderAction } from "@/app/actions/order";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ export interface PaymentOption {
 }
 
 
-export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }) {
+export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions: PaymentOption[]; shippingSettings: Record<string, string> }) {
   const router = useRouter();
   const { items, clearCart } = useCartStore();
 
@@ -49,7 +49,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
   const [streetAddress, setStreetAddress] = useState("");
   const [city, setCity] = useState("");
   const [postcode, setPostcode] = useState("");
-  const [state, setState] = useState("Selangor");
+  const [state, setState] = useState("DKI Jakarta");
 
   // Payment Selection
   // default = metode pertama yang aktif dari settings admin (bukan hardcode "qr-pay")
@@ -59,7 +59,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
   const idemKeyRef = useRef<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currentZone = getShippingZoneByState(state);
+  const currentZone = getShippingZoneByProvince(state);
 
   const promoItems = items.map((i) => ({
     id: i.id,
@@ -67,12 +67,13 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
     price: i.price,
     quantity: i.quantity,
     hasNameset: Boolean(i.namesetName && i.namesetName.trim()),
-    namesetPrice: i.namesetPrice ?? 20.0,
+    namesetPrice: i.namesetPrice ?? 70000,
     hasPatch: Boolean(i.patch && i.patch.trim()),
-    patchPrice: i.patchPrice ?? 10.0,
+    patchPrice: i.patchPrice ?? 35000,
   }));
 
-  const promoResult = calculatePromoEngine(promoItems, currentZone);
+  const promoResult = calculatePromoEngine(promoItems, currentZone, toShippingSettings(shippingSettings));
+  const shippingFeeValue = promoResult.freeShippingUnlocked ? 0 : toShippingSettings(shippingSettings)[currentZone === "Luar Jawa" ? "outsideJavaRate" : "javaRate"];
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +102,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
         postcode,
         state,
         paymentMethodId,
-        paymentMethodLabel: selectedPayment?.label || "Instant QR Pay",
+        paymentMethodLabel: selectedPayment?.label || "QRIS / Transfer",
         // stable per cart contents → double-submit / retry returns the same order
         idempotencyKey: (idemKeyRef.current ||= crypto.randomUUID()),
         items: items.map((i) => ({
@@ -144,7 +145,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
           Your Shopping Bag is Empty
         </h2>
         <p className="text-xs text-zinc-400 max-w-sm mb-6">
-          Orders of 2 or more shirts qualify for free nationwide delivery.
+          Pesan 2 kaos atau lebih dapat gratis ongkir ke seluruh Indonesia.
         </p>
         <Button asChild className="rounded-lg px-7 h-auto py-3 text-xs uppercase tracking-wider font-extrabold">
           <Link href="/jersey">Shop Kits</Link>
@@ -163,7 +164,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
               Checkout
             </span>
             <span>/</span>
-            <span>Delivery to Malaysia</span>
+            <span>Pengiriman ke seluruh Indonesia</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white font-display uppercase tracking-tight">
             Shipping &amp; Payment
@@ -186,7 +187,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
             <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-5">
               <h2 className="text-base font-bold text-white font-display uppercase tracking-wide flex items-center gap-2">
                 <Truck className="w-4 h-4 text-zinc-300" />
-                <span>1. Malaysian Delivery Address</span>
+                <span>1. Alamat Pengiriman</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -200,7 +201,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="e.g. Mohd Danial Bin Azman"
+                    placeholder="e.g. Budi Santoso"
                     className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium resize-none"
                   />
                 </div>
@@ -215,7 +216,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     required
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="e.g. +60 12-345 6789 or 0123456789"
+                    placeholder="e.g. 0812-3456-7890"
                     className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-medium"
                   />
                 </div>
@@ -230,14 +231,14 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     required
                     value={streetAddress}
                     onChange={(e) => setStreetAddress(e.target.value)}
-                    placeholder="e.g. No. 25, Jalan Kemuning 2, Seksyen 3"
+                    placeholder="e.g. Jl. Kemang Raya No. 25"
                     className="w-full px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="city" className="text-sm font-bold text-zinc-300">
-                    City / Town *
+                    Kota / Kabupaten *
                   </Label>
                   <Input
                     id="city"
@@ -245,14 +246,14 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     required
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="e.g. Shah Alam"
+                    placeholder="e.g. Jakarta Selatan"
                     className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="postcode" className="text-sm font-bold text-zinc-300">
-                    5-Digit Postcode *
+                    Kode Pos (5 digit) *
                   </Label>
                   <Input
                     id="postcode"
@@ -268,14 +269,14 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
 
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label className="text-sm font-bold text-zinc-300">
-                    State / Federal Territory *
+                    Provinsi *
                   </Label>
                   <Select value={state} onValueChange={setState}>
                     <SelectTrigger className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white focus-visible:border-volt">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {MALAYSIAN_STATES.map((s) => (
+                      {INDONESIAN_PROVINCES.map((s) => (
                         <SelectItem key={s.code} value={s.name}>
                           {s.name} ({s.zone})
                         </SelectItem>
@@ -288,12 +289,12 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
               {/* Shipping Zone & Courier Indicator */}
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/8 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-zinc-400 block text-[10px]">Logistics Zone:</span>
+                  <span className="text-zinc-400 block text-[10px]">Zona Pengiriman:</span>
                   <span className="font-bold text-white">{currentZone}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-zinc-400 block text-[10px]">Couriers:</span>
-                  <span className="text-sm font-bold text-zinc-300">Pos Laju &bull; J&amp;T Express MY</span>
+                  <span className="text-zinc-400 block text-[10px]">Kurir:</span>
+                  <span className="text-sm font-bold text-zinc-300">J&amp;T Express</span>
                 </div>
               </div>
             </div>
@@ -383,7 +384,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                       )}
                     </div>
                     <span className="font-mono font-bold text-white shrink-0">
-                      {formatMYR(item.price * item.quantity)}
+                      {formatIDR(item.price * item.quantity)}
                     </span>
                   </div>
                 ))}
@@ -414,13 +415,13 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
               <div className="space-y-2 text-xs pt-2 border-t border-white/10">
                 <div className="flex justify-between text-zinc-400">
                   <span>Subtotal</span>
-                  <span className="font-mono text-white font-semibold">{formatMYR(promoResult.rawSubtotal)}</span>
+                  <span className="font-mono text-white font-semibold">{formatIDR(promoResult.rawSubtotal)}</span>
                 </div>
 
                 {promoResult.customizationTotal > 0 && (
                   <div className="flex justify-between text-zinc-400">
                     <span>Customization (Nameset/Patch)</span>
-                    <span className="font-mono text-white font-semibold">{formatMYR(promoResult.customizationTotal)}</span>
+                    <span className="font-mono text-white font-semibold">{formatIDR(promoResult.customizationTotal)}</span>
                   </div>
                 )}
 
@@ -430,12 +431,12 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                     <span className="font-mono font-bold text-emerald-400 flex items-center gap-1.5">
                       <span>FREE</span>
                       <span className="line-through text-zinc-400 text-[10px]">
-                        {formatMYR(currentZone === "East Malaysia" ? 15 : 8)}
+                        {formatIDR(shippingFeeValue)}
                       </span>
                     </span>
                   ) : (
                     <span className="font-mono text-white font-semibold">
-                      {formatMYR(currentZone === "East Malaysia" ? 15 : 8)}
+                      {formatIDR(shippingFeeValue)}
                     </span>
                   )}
                 </div>
@@ -443,24 +444,24 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                 {promoResult.patchDiscount > 0 && (
                   <div className="flex justify-between text-zinc-300 font-medium">
                     <span>Bundle Promo (Free Patch)</span>
-                    <span className="font-mono">-{formatMYR(promoResult.patchDiscount)}</span>
+                    <span className="font-mono">-{formatIDR(promoResult.patchDiscount)}</span>
                   </div>
                 )}
 
                 {promoResult.namesetDiscount > 0 && (
                   <div className="flex justify-between text-zinc-300 font-medium">
                     <span>Bundle Promo (Free Nameset)</span>
-                    <span className="font-mono">-{formatMYR(promoResult.namesetDiscount)}</span>
+                    <span className="font-mono">-{formatIDR(promoResult.namesetDiscount)}</span>
                   </div>
                 )}
 
                 <div className="pt-3 border-t border-white/10 flex justify-between items-baseline">
                   <div>
                     <span className="text-sm font-bold text-white uppercase font-display">Grand Total</span>
-                    <p className="text-[10px] text-zinc-400">Malaysian Ringgit (MYR)</p>
+                    <p className="text-[10px] text-zinc-400">Rupiah (IDR)</p>
                   </div>
                   <span className="text-2xl font-black text-white font-mono">
-                    {formatMYR(promoResult.grandTotal)}
+                    {formatIDR(promoResult.grandTotal)}
                   </span>
                 </div>
               </div>
@@ -478,7 +479,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
                   </>
                 ) : (
                   <>
-                    <span>Confirm &amp; Pay ({formatMYR(promoResult.grandTotal)})</span>
+                    <span>Confirm &amp; Pay ({formatIDR(promoResult.grandTotal)})</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -486,7 +487,7 @@ export function Checkout({ paymentOptions }: { paymentOptions: PaymentOption[] }
 
               <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-400 pt-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Checkout via DuitNow QR &bull; Pos Laju Tracked Delivery</span>
+                <span>Checkout via QRIS &bull; J&amp;T Tracked Delivery</span>
               </div>
             </div>
           </div>

@@ -21,7 +21,7 @@ function refreshMockStock(jerseyId: string, size: string, delta: number) {
 
 export async function updateJerseyStockAction(jerseyId: string, size: string, delta: number) {
   if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
-  if (!jerseyId.trim() || !size.trim() || !Number.isInteger(delta) || Math.abs(delta) > 100) {
+  if (!jerseyId.trim() || !size.trim() || !Number.isInteger(delta) || Math.abs(delta) > 999) {
     return { success: false, error: "Invalid stock update" };
   }
 

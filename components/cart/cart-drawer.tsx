@@ -4,8 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus, Minus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
-import { calculatePromoEngine } from "@/lib/promo";
-import { formatMYR } from "@/lib/utils";
+import { calculatePromoEngine, toShippingSettings } from "@/lib/promo";
+import { formatIDR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,9 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-const SHIPPING_FEE = { "Peninsular Malaysia": 8, "East Malaysia": 15 } as const;
-
-export function CartDrawer() {
+export function CartDrawer({ shippingSettings }: { shippingSettings: Record<string, string> }) {
   const { items, isOpen, closeCart, updateQuantity, removeItem, shippingZone, setShippingZone } = useCartStore();
 
   // Convert cart items to promo calculation items
@@ -25,13 +23,14 @@ export function CartDrawer() {
     price: i.price,
     quantity: i.quantity,
     hasNameset: Boolean(i.namesetName && i.namesetName.trim()),
-    namesetPrice: i.namesetPrice ?? 20.0,
+    namesetPrice: i.namesetPrice ?? 70000,
     hasPatch: Boolean(i.patch && i.patch.trim()),
-    patchPrice: i.patchPrice ?? 10.0,
+    patchPrice: i.patchPrice ?? 35000,
   }));
 
-  const promoResult = calculatePromoEngine(promoItems, shippingZone);
-  const shippingFee = SHIPPING_FEE[shippingZone === "East Malaysia" ? "East Malaysia" : "Peninsular Malaysia"];
+  const promoResult = calculatePromoEngine(promoItems, shippingZone, toShippingSettings(shippingSettings));
+  const settings = toShippingSettings(shippingSettings);
+  const shippingFee = shippingZone === "Luar Jawa" ? settings.outsideJavaRate : settings.javaRate;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -84,7 +83,7 @@ export function CartDrawer() {
               </div>
               <h3 className="text-base font-bold text-white mb-1">Your bag is empty</h3>
               <p className="text-xs text-zinc-400 max-w-xs mb-6">
-                Add 2 or more football shirts to qualify for free nationwide delivery.
+                Tambah 2 kaos atau lebih untuk gratis ongkir ke seluruh Indonesia.
               </p>
               <Button asChild className="rounded-lg px-6 h-auto py-2.5 text-xs uppercase tracking-wider font-extrabold">
                 <Link href="/jersey" onClick={closeCart}>
@@ -127,7 +126,7 @@ export function CartDrawer() {
                       Size: <strong className="text-white">{item.size}</strong>
                     </span>
                     <span className="font-mono text-xs font-bold text-white">
-                      {formatMYR(item.price)}
+                      {formatIDR(item.price)}
                     </span>
                   </div>
 
@@ -181,33 +180,33 @@ export function CartDrawer() {
         {/* Drawer Footer & Checkout Action */}
         {items.length > 0 && (
           <div className="p-5 bg-[#181820] border-t border-white/10 space-y-3">
-            {/* Malaysian Shipping Zone Switcher */}
+            {/* Shipping Zone Switcher */}
             <div>
               <span className="text-[11px] text-zinc-400 font-semibold block mb-1.5 font-mono">
-                Shipping Destination:
+                Tujuan Pengiriman:
               </span>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
-                  onClick={() => setShippingZone("Peninsular Malaysia")}
-                  aria-pressed={shippingZone === "Peninsular Malaysia"}
+                  onClick={() => setShippingZone("Jawa")}
+                  aria-pressed={shippingZone === "Jawa"}
                   className={`px-3 py-2 min-h-11 rounded-lg border font-bold transition-all cursor-pointer ${
-                    shippingZone === "Peninsular Malaysia"
+                    shippingZone === "Jawa"
                       ? "bg-white border-white text-black"
                       : "bg-white/5 border-white/10 text-zinc-400 hover:text-white"
                   }`}
                 >
-                  Peninsular (WM)
+                  Jawa
                 </button>
                 <button
-                  onClick={() => setShippingZone("East Malaysia")}
-                  aria-pressed={shippingZone === "East Malaysia"}
+                  onClick={() => setShippingZone("Luar Jawa")}
+                  aria-pressed={shippingZone === "Luar Jawa"}
                   className={`px-3 py-2 min-h-11 rounded-lg border font-bold transition-all cursor-pointer ${
-                    shippingZone === "East Malaysia"
+                    shippingZone === "Luar Jawa"
                       ? "bg-white border-white text-black"
                       : "bg-white/5 border-white/10 text-zinc-400 hover:text-white"
                   }`}
                 >
-                  Sabah &amp; Sarawak (EM)
+                  Luar Jawa
                 </button>
               </div>
             </div>
@@ -216,13 +215,13 @@ export function CartDrawer() {
             <div className="space-y-1.5 text-xs pt-2 border-t border-white/10">
               <div className="flex justify-between text-zinc-400">
                 <span>Subtotal</span>
-                <span className="font-mono text-white font-semibold">{formatMYR(promoResult.rawSubtotal)}</span>
+                <span className="font-mono text-white font-semibold">{formatIDR(promoResult.rawSubtotal)}</span>
               </div>
 
               {promoResult.customizationTotal > 0 && (
                 <div className="flex justify-between text-zinc-400">
                   <span>Customization (Nameset/Patch)</span>
-                  <span className="font-mono text-white font-semibold">{formatMYR(promoResult.customizationTotal)}</span>
+                  <span className="font-mono text-white font-semibold">{formatIDR(promoResult.customizationTotal)}</span>
                 </div>
               )}
 
@@ -232,12 +231,12 @@ export function CartDrawer() {
                   <span className="font-mono font-bold text-emerald-400 flex items-center gap-1.5">
                     <span>FREE</span>
                     <span className="line-through text-zinc-400 text-[10px]">
-                      {formatMYR(shippingFee)}
+                      {formatIDR(shippingFee)}
                     </span>
                   </span>
                 ) : (
                   <span className="font-mono text-white font-semibold">
-                    {formatMYR(shippingFee)}
+                    {formatIDR(shippingFee)}
                   </span>
                 )}
               </div>
@@ -245,14 +244,14 @@ export function CartDrawer() {
               {promoResult.patchDiscount > 0 && (
                 <div className="flex justify-between text-zinc-300 font-medium">
                   <span>Bundle Promo (Free Patch)</span>
-                  <span className="font-mono">-{formatMYR(promoResult.patchDiscount)}</span>
+                  <span className="font-mono">-{formatIDR(promoResult.patchDiscount)}</span>
                 </div>
               )}
 
               {promoResult.namesetDiscount > 0 && (
                 <div className="flex justify-between text-zinc-300 font-medium">
                   <span>Bundle Promo (Free Nameset)</span>
-                  <span className="font-mono">-{formatMYR(promoResult.namesetDiscount)}</span>
+                  <span className="font-mono">-{formatIDR(promoResult.namesetDiscount)}</span>
                 </div>
               )}
 
@@ -262,7 +261,7 @@ export function CartDrawer() {
                   <p className="text-[10px] text-zinc-400">All discounts applied</p>
                 </div>
                 <span className="text-xl font-black text-white font-mono">
-                  {formatMYR(promoResult.grandTotal)}
+                  {formatIDR(promoResult.grandTotal)}
                 </span>
               </div>
             </div>

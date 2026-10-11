@@ -12,11 +12,11 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
 });
 
-// 2. Dynamic Payment Methods (Malaysian Bank Transfer & Instant QR Pay)
+// 2. Dynamic Payment Methods (QRIS / Bank Transfer / E-Wallet)
 export const paymentMethods = pgTable("payment_methods", {
   id: uuid("id").primaryKey().defaultRandom(),
   type: text("type").notNull(), // 'qr_pay' or 'bank_transfer'
-  label: text("label").notNull(), // "Instant QR Pay", "Maybank", "CIMB Bank", "Touch 'n Go eWallet"
+  label: text("label").notNull(), // "QRIS", "BCA", "Mandiri", "BRI", "GoPay / OVO / DANA"
   accountName: text("account_name"),
   accountNumber: text("account_number"),
   qrImageUrl: text("qr_image_url"), // S3 image URL for QR barcode
@@ -37,7 +37,7 @@ export const jerseys = pgTable("jerseys", {
   country: text("country").default("England").notNull(),
   edition: text("edition").default("Current").notNull(), // "Current" | "Vintage"
   kitType: text("kit_type").default("Home").notNull(), // "Home" | "Away" | "Third" | "Training"
-  price: numeric("price", { precision: 12, scale: 2 }).notNull(), // Base price in MYR
+  price: numeric("price", { precision: 12, scale: 2 }).notNull(), // Base price in IDR
   description: text("description"),
   image: text("image"), // Primary Image URL
   sizes: text("sizes").notNull(), // JSON string array: ["S", "M", "L", "XL", "XXL"]
@@ -69,18 +69,20 @@ export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderNumber: text("order_number").notNull().unique(), // e.g. "PK-20260922-8491"
   customerName: text("customer_name").notNull(),
-  customerPhone: text("customer_phone").notNull(), // Malaysian WhatsApp contact (+60...)
+  customerPhone: text("customer_phone").notNull(), // Indonesian WhatsApp contact (+62...)
   customerAddress: text("customer_address").notNull(), // Street, City, State, Postcode
-  shippingZone: text("shipping_zone").notNull(), // "Peninsular Malaysia" or "East Malaysia"
+  shippingZone: text("shipping_zone").notNull(), // zona ongkir saat checkout: "Jawa" | "Luar Jawa" (order lama mungkin masih berisi nilai Malaysia)
   shippingCost: numeric("shipping_cost", { precision: 12, scale: 2 }).default("0.00").notNull(),
   subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
-  totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(), // Grand total in MYR
+  totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(), // Grand total in IDR
   paymentMethodId: uuid("payment_method_id").references(() => paymentMethods.id, { onDelete: "set null" }),
+  // snapshot metode bayar saat checkout (QR/rekening) — invoice order lama tidak ikut berubah kalau admin ganti settings
+  paymentSnapshot: text("payment_snapshot"),
   paymentProofUrl: text("payment_proof_url"), // S3 object key, served via /api/orders/[orderId]/receipt
   idempotencyKey: text("idempotency_key").unique(), // prevents duplicate checkout from double-submit
   paymentStatus: text("payment_status").default("PENDING").notNull(), // "PENDING", "PAID", "FAILED"
   orderStatus: text("order_status").default("PENDING_PAYMENT").notNull(), // "PENDING_PAYMENT", "PROCESSING", "SHIPPED", "COMPLETED", "CANCELLED"
-  trackingNumber: text("tracking_number"), // Pos Laju, J&T Express MY, Ninja Van MY tracking code
+  trackingNumber: text("tracking_number"), // Resi J&T Express (nomor AWB)
   adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
@@ -93,7 +95,7 @@ export const orderItems = pgTable("order_items", {
   jerseyId: uuid("jersey_id").references(() => jerseys.id, { onDelete: "set null" }),
   size: text("size").notNull(), // "S", "M", "L", "XL", "XXL"
   quantity: integer("quantity").notNull(),
-  unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(), // Price in MYR
+  unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(), // Price in IDR
   namesetName: text("nameset_name"), // Custom player name on back
   namesetNumber: text("nameset_number"), // Custom squad number
   namesetPrice: numeric("nameset_price", { precision: 12, scale: 2 }).default("0.00").notNull(),

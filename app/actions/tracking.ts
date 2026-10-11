@@ -3,11 +3,11 @@
 import { getOrderById } from "@/lib/orders-store";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
-// "+60123456789" and "0123456789" are the same number; the UI placeholder offers both
+// "+6281234567890" and "081234567890" are the same number; the UI placeholder offers both
 function samePhone(a: string, b: string) {
   const strip = (p: string) => {
     const digits = p.replace(/[^0-9]/g, "");
-    return digits.startsWith("60") ? `0${digits.slice(2)}` : digits;
+    return digits.startsWith("62") ? `0${digits.slice(2)}` : digits;
   };
   const left = strip(a);
   return left.length > 5 && left === strip(b);
