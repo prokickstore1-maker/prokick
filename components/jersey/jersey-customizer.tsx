@@ -6,6 +6,8 @@ import { ShoppingBag, Truck, Check, QrCode } from "lucide-react";
 import { formatIDR } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart";
 import { NormalizedJersey } from "@/lib/data";
+import { SizeGuideModal } from "@/components/jersey/size-guide-modal";
+import { getAvailablePatches } from "@/lib/patches";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -20,13 +22,25 @@ import {
 
 interface JerseyCustomizerProps {
   jersey: NormalizedJersey;
+  namesetFee: number;
+  patchFee: number;
+  freeShippingMinItems?: number;
 }
 
-export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
+export function JerseyCustomizer({
+  jersey,
+  namesetFee,
+  patchFee,
+  freeShippingMinItems = 2,
+}: JerseyCustomizerProps) {
   const addItem = useCartStore((state) => state.addItem);
 
-  // Size Selection
-  const [selectedSize, setSelectedSize] = useState<string>(jersey.sizes[0] || "M");
+  // Size Selection — default ke ukuran pertama yang berstok (konsisten jersey-card)
+  const firstInStock = jersey.sizes.find((s) => {
+    const stock = jersey.stockData?.[s];
+    return stock === undefined || stock > 0;
+  }) || jersey.sizes[0] || "M";
+  const [selectedSize, setSelectedSize] = useState<string>(firstInStock);
 
   // Customization States
   const [enableNameset, setEnableNameset] = useState(false);
@@ -34,16 +48,13 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
   const [namesetNumber, setNamesetNumber] = useState("");
 
   const [enablePatch, setEnablePatch] = useState(false);
-  const [selectedPatch, setSelectedPatch] = useState(
-    jersey.league === "La Liga"
-      ? "La Liga Starball Patch"
-      : jersey.league === "Premier League"
-      ? "Premier League Golden Badge"
-      : "UEFA Champions League Starball + Foundation"
-  );
+  const patchOptions = getAvailablePatches(jersey);
+  const [selectedPatch, setSelectedPatch] = useState(patchOptions[0].label);
 
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  // per-gambar: "main" = foto utama, angka = index thumbnail. false = gagal load
+  const [imgOk, setImgOk] = useState<Record<string, boolean>>({});
 
   // Gallery Active View
   const [activeImage, setActiveImage] = useState(
@@ -51,11 +62,11 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
   );
 
   const basePrice = parseFloat(jersey.price);
-  // fee only when a name is typed — matches server (order.ts) so display == checkout
+  // fee hanya saat nama diketik — sama dengan server (order.ts)
   const hasNameset = enableNameset && namesetName.trim().length > 0;
-  const namesetFee = hasNameset ? 70000 : 0;
-  const patchFee = enablePatch ? 35000 : 0;
-  const unitTotal = basePrice + namesetFee + patchFee;
+  const namesetCost = hasNameset ? namesetFee : 0;
+  const patchCost = enablePatch ? patchFee : 0;
+  const unitTotal = basePrice + namesetCost + patchCost;
   const grandTotal = unitTotal * quantity;
 
   // Available stock for selected size (undefined = no real count, show nothing)
@@ -74,9 +85,9 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
       quantity,
       namesetName: hasNameset ? namesetName.toUpperCase().trim() : undefined,
       namesetNumber: hasNameset ? namesetNumber.trim() : undefined,
-      namesetPrice: hasNameset ? 70000 : 0,
+      namesetPrice: hasNameset ? namesetFee : 0,
       patch: enablePatch ? selectedPatch : undefined,
-      patchPrice: enablePatch ? 35000 : 0,
+      patchPrice: enablePatch ? patchFee : 0,
     });
 
     setIsAdded(true);
@@ -91,12 +102,12 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
           { url: "/images/hero/nike-hero.jpg" },
         ];
 
-  const patchOptions = [
-    "UEFA Champions League Starball + Foundation",
-    "Premier League golden badge",
-    "La Liga emblem",
-    "FIFA World Cup Champions Badge",
-  ];
+  // resolved source: fallback ke gambar default kalau URL aktif/izin gagal load
+  const activeIdx = gallery.findIndex((g) => g.url === activeImage);
+  const mainSrc =
+    activeIdx >= 0 && imgOk[String(activeIdx)] !== false && imgOk.main !== false
+      ? activeImage
+      : "/images/jerseys/madrid-home.jpg";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 text-white">
@@ -107,10 +118,11 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
         {/* Main Display Container - Studio Spotlight */}
         <div className="studio-stage relative aspect-[3/4] sm:aspect-[4/3] w-full rounded-3xl overflow-hidden border border-white/10 flex items-center justify-center p-6 sm:p-12 shadow-2xl">
           <Image
-            src={activeImage}
+            src={mainSrc}
             alt={jersey.name}
             fill
             priority
+            onError={() => setImgOk((p) => ({ ...p, main: false }))}
             className="object-contain p-4 sm:p-8 transition-all duration-300"
             sizes="(max-width: 1024px) 100vw, 60vw"
           />
@@ -139,8 +151,9 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
                 >
                   <div className="relative w-full h-full">
                     <Image
-                      src={img.url}
+                      src={imgOk[String(idx)] === false ? "/images/jerseys/madrid-home.jpg" : img.url}
                       alt={jersey.name}
+                      onError={() => setImgOk((p) => ({ ...p, [String(idx)]: false }))}
                       fill
                       className="object-contain p-1"
                       sizes="96px"
@@ -194,11 +207,14 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
         <div className="space-y-3 pt-4 border-t border-white/10">
           <div className="flex justify-between items-center text-xs">
             <span className="font-bold text-white uppercase tracking-wider font-display">Select Size:</span>
-            {stockForSelectedSize !== undefined && (
-              <span className="text-volt font-mono text-xs font-semibold">
-                {stockForSelectedSize} In Stock ({selectedSize})
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {stockForSelectedSize !== undefined && (
+                <span className="text-volt font-mono text-xs font-semibold">
+                  {stockForSelectedSize} In Stock ({selectedSize})
+                </span>
+              )}
+              <SizeGuideModal />
+            </div>
           </div>
 
           <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
@@ -253,7 +269,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
                 <span>Custom Player Name &amp; Number</span>
               </span>
               <span className="text-xs font-mono font-bold text-volt">
-                +Rp70.000
+                +{formatIDR(namesetFee)}
               </span>
             </label>
 
@@ -300,7 +316,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
                 <span>Sleeve Competition Patch</span>
               </span>
               <span className="text-xs font-mono font-bold text-volt">
-                +Rp35.000
+                +{formatIDR(patchFee)}
               </span>
             </label>
 
@@ -312,8 +328,8 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {patchOptions.map((opt) => (
-                      <SelectItem key={opt} value={opt}>
-                        {opt}
+                      <SelectItem key={opt.id} value={opt.label}>
+                        {opt.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -374,7 +390,7 @@ export function JerseyCustomizer({ jersey }: JerseyCustomizerProps) {
           <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400 pt-2">
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <Truck className="w-4 h-4 text-volt shrink-0" />
-              <span>Free Delivery on 2+ Kits</span>
+              <span>Free Delivery on {freeShippingMinItems}+ Kits</span>
             </div>
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <QrCode className="w-4 h-4 text-zinc-300 shrink-0" />

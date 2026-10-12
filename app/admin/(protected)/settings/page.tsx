@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminSettingsPage() {
   if (!(await isAdmin())) redirect("/");
   if (!(await checkDbConnection())) {
-    return <div className="rounded-xl border border-[#E5E5E5] bg-white p-6 text-sm">Database is unavailable. Settings require an active database connection.</div>;
+    return <div className="rounded-xl border border-[#27272A] bg-[#121217] p-6 text-sm">Database is unavailable. Settings require an active database connection.</div>;
   }
 
   const [storedSettings, storedBanners, storedPayments] = await Promise.all([

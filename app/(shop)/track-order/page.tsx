@@ -119,7 +119,7 @@ export default function TrackOrderPage() {
                 </div>
                 <Button asChild className="rounded-lg px-3 h-auto py-1.5 text-[11px] gap-1 font-bold">
                   <a
-                    href={`https://www.jtexpress.id/tracking?billcode=${result.trackingNumber}`}
+                    href={`https://www.jtexpress.id/tracking?billcode=${encodeURIComponent(result.trackingNumber.replace(/^.*?:\s*/, ""))}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

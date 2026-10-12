@@ -237,8 +237,10 @@ export async function getOrderById(id: string): Promise<StoredOrder | null> {
 
   if (isDbOnline) {
     try {
+      const cleanId = id.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
       const row = await db.query.orders.findFirst({
-        where: eq(orders.id, id),
+        where: isUuid ? eq(orders.id, cleanId) : eq(orders.orderNumber, cleanId.toUpperCase()),
         with: {
           items: { with: { jersey: true } },
           paymentMethod: true,

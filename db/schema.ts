@@ -28,8 +28,8 @@ export const paymentMethods = pgTable("payment_methods", {
 // 3. Pure Football Jerseys
 export const jerseys = pgTable("jerseys", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(), // e.g. "Real Madrid Home 2026/27 Player Issue", "Harimau Malaya Special Edition"
-  team: text("team").notNull(), // e.g. "Real Madrid", "Arsenal", "Malaysia"
+  name: text("name").notNull(), // e.g. "Real Madrid Home 2026/27 Player Issue", "Timnas Indonesia Special Edition"
+  team: text("team").notNull(), // e.g. "Real Madrid", "Arsenal", "Indonesia"
   league: text("league").notNull(), // "Premier League", "La Liga", "Serie A", "World Cup", "Retro Classic"
   season: text("season").notNull(), // "2026/2027", "1998/1999"
   type: text("type").notNull(), // "Player Issue", "Fans Version", "Retro", "Kids"

@@ -41,6 +41,10 @@ export interface ShippingSettings {
   javaRate: number;
   outsideJavaRate: number;
   freeShippingMinItems: number;
+  namesetFee: number;
+  patchFee: number;
+  freePatchMinItems: number;
+  freeNamesetMinItems: number;
 }
 
 export function toShippingSettings(settings: Record<string, string>): ShippingSettings {
@@ -52,6 +56,10 @@ export function toShippingSettings(settings: Record<string, string>): ShippingSe
     javaRate: num(settings.javaShippingCost ?? settings.peninsularShippingCost, BASE_SHIPPING_RATES.Jawa),
     outsideJavaRate: num(settings.outsideJavaShippingCost ?? settings.eastShippingCost, BASE_SHIPPING_RATES["Luar Jawa"]),
     freeShippingMinItems: Math.max(1, Math.floor(num(settings.freeShippingMinItems, 2))),
+    namesetFee: num(settings.namesetFee, STANDARD_NAMESET_FEE),
+    patchFee: num(settings.patchFee, STANDARD_PATCH_FEE),
+    freePatchMinItems: Math.max(2, Math.floor(num(settings.freePatchMinItems, 3))),
+    freeNamesetMinItems: Math.max(2, Math.floor(num(settings.freeNamesetMinItems, 5))),
   };
 }
 
@@ -72,12 +80,14 @@ export function calculatePromoEngine(
   // Customization costs
   let totalNamesetCost = 0;
   let totalPatchCost = 0;
+  const namesetFee = settings?.namesetFee ?? STANDARD_NAMESET_FEE;
+  const patchFee = settings?.patchFee ?? STANDARD_PATCH_FEE;
   items.forEach((item) => {
     if (item.hasNameset) {
-      totalNamesetCost += (item.namesetPrice ?? STANDARD_NAMESET_FEE) * item.quantity;
+      totalNamesetCost += (item.namesetPrice ?? namesetFee) * item.quantity;
     }
     if (item.hasPatch) {
-      totalPatchCost += (item.patchPrice ?? STANDARD_PATCH_FEE) * item.quantity;
+      totalPatchCost += (item.patchPrice ?? patchFee) * item.quantity;
     }
   });
 
@@ -93,13 +103,15 @@ export function calculatePromoEngine(
   const shippingDiscount = freeShippingUnlocked ? baseShipping : 0;
   const shippingCost = freeShippingUnlocked ? 0 : baseShipping;
 
-  // Tier 2: Buy 3+ -> Free Sleeve Patch (up to standard patch fee)
-  const freePatchUnlocked = totalQuantity >= 3;
-  const patchDiscount = freePatchUnlocked ? Math.min(totalPatchCost, STANDARD_PATCH_FEE) : 0;
+  // Tier 2: Buy N+ (default 3, diatur admin) -> Free Sleeve Patch (up to standard patch fee)
+  const freePatchMin = settings?.freePatchMinItems ?? 3;
+  const freePatchUnlocked = totalQuantity >= freePatchMin;
+  const patchDiscount = freePatchUnlocked ? Math.min(totalPatchCost, patchFee) : 0;
 
-  // Tier 3: Buy 5+ -> Free Nameset (bonus jersey not implemented)
-  const freeNamesetUnlocked = totalQuantity >= 5;
-  const namesetDiscount = freeNamesetUnlocked ? Math.min(totalNamesetCost, STANDARD_NAMESET_FEE) : 0;
+  // Tier 3: Buy N+ (default 5, diatur admin) -> Free Nameset
+  const freeNamesetMin = settings?.freeNamesetMinItems ?? 5;
+  const freeNamesetUnlocked = totalQuantity >= freeNamesetMin;
+  const namesetDiscount = freeNamesetUnlocked ? Math.min(totalNamesetCost, namesetFee) : 0;
   const bonusJerseyUnlocked = false;
   const bonusJerseyDiscount = 0;
 
@@ -119,14 +131,15 @@ export function calculatePromoEngine(
     nextTierMessage = `Add ${needed} more jersey${needed > 1 ? "s" : ""} for free J&T delivery.`;
     progressPercent = Math.round((totalQuantity / freeShippingMin) * 50);
     promoBadgeText = `${totalQuantity} Jersey${totalQuantity > 1 ? "s" : ""}`;
-  } else if (totalQuantity < 3) {
-    nextTierMessage = "Free shipping active. Add 1 more jersey for a free sleeve patch.";
-    progressPercent = 66;
+  } else if (totalQuantity < freePatchMin) {
+    const needed = freePatchMin - totalQuantity;
+    nextTierMessage = `Add ${needed} more jersey${needed > 1 ? "s" : ""} for a free sleeve patch.`;
+    progressPercent = Math.round((totalQuantity / freePatchMin) * 75);
     promoBadgeText = "Free Shipping Active";
-  } else if (totalQuantity >= 3 && totalQuantity < 5) {
-    const needed = 5 - totalQuantity;
+  } else if (totalQuantity < freeNamesetMin) {
+    const needed = freeNamesetMin - totalQuantity;
     nextTierMessage = `Add ${needed} more jersey${needed > 1 ? "s" : ""} for a free custom nameset.`;
-    progressPercent = totalQuantity === 3 ? 75 : 85;
+    progressPercent = Math.round((totalQuantity / freeNamesetMin) * 95);
     promoBadgeText = "Free Shipping + Patch Active";
   } else {
     nextTierMessage = "All volume discounts active: free delivery, free sleeve patch, and free nameset.";

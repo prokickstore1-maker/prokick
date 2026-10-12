@@ -1,3 +1,5 @@
+import { toIntlPhone } from "@/lib/utils";
+
 export interface TelegramOrderNotification {
   orderNumber: string;
   customerName: string;
@@ -53,8 +55,8 @@ export async function sendTelegramNotification(data: TelegramOrderNotification):
 
   try {
     const receiptUrl = safeReceiptUrl(data.paymentProofUrl);
-    const cleanPhone = data.customerPhone.replace(/[^0-9]/g, "");
-    const waLink = `https://wa.me/${cleanPhone.startsWith("62") ? cleanPhone : "62" + cleanPhone.replace(/^0/, "")}`;
+    const intlPhone = toIntlPhone(data.customerPhone);
+    const waLink = `https://wa.me/${intlPhone}`;
 
     const itemsListHtml = data.items
       .map(
@@ -70,7 +72,7 @@ export async function sendTelegramNotification(data: TelegramOrderNotification):
 ━━━━━━━━━━━━━━━━━━━━━━
 <b>Order Number:</b> <code>#${escapeHtml(data.orderNumber)}</code>
 <b>Customer:</b> ${escapeHtml(data.customerName)}
-<b>WhatsApp:</b> <a href="${waLink}">+${cleanPhone}</a>
+<b>WhatsApp:</b> <a href="${waLink}">+${intlPhone}</a>
 <b>Shipping Zone:</b> ${escapeHtml(data.shippingZone)}
 <b>Address:</b> ${escapeHtml(data.customerAddress)}
 

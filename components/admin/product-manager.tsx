@@ -51,6 +51,7 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const filtered = products.filter((p) => `${p.name} ${p.team} ${p.league}`.toLowerCase().includes(query.toLowerCase()));
   const update = (key: keyof ProductInput, value: string | boolean | string[]) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -83,9 +84,23 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
   async function handleImageSelect(files: File[]) {
     for (const file of files) {
       if (!file.type.startsWith("image/")) { setMessage("File harus berupa gambar."); continue; }
+      const preview = URL.createObjectURL(file);
+      // blokir keras: admin gudang kadang upload foto kecil — tapi semua rasio diterima,
+      // cukup sisi terpendek ≥800px; kartu pakai object-contain jadi rasio bebas
+      const ok = await new Promise<boolean>((resolve) => {
+        const probe = new window.Image();
+        probe.onload = () => resolve(Math.min(probe.width, probe.height) >= 800);
+        probe.onerror = () => resolve(false);
+        probe.src = preview;
+      });
+      if (!ok) {
+        URL.revokeObjectURL(preview);
+        setMessage(`Foto "${file.name}" terlalu kecil atau rusak — minimal sisi 800px (semua rasio diterima). Dilewati.`);
+        continue;
+      }
       setImages((prev) => {
-        if (prev.length >= 8) { setMessage("Maksimal 8 foto per produk."); return prev; }
-        return [...prev, { file, preview: URL.createObjectURL(file) }];
+        if (prev.length >= 8) { URL.revokeObjectURL(preview); setMessage("Maksimal 8 foto per produk."); return prev; }
+        return [...prev, { file, preview }];
       });
     }
   }
@@ -115,7 +130,7 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
       }
       const payload = { ...form, images: urls, image: urls[0] || form.image };
       const result = editing ? await updateProductAction(editing, payload) : await createProductAction(payload);
-      setMessage(result.success ? "Product saved" : result.error || "Save failed");
+      setMessage(result.success ? "Produk tersimpan" : result.error || "Gagal menyimpan");
       if (result.success) window.location.reload();
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Simpan gagal");
@@ -125,10 +140,17 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
   }
 
   async function remove(id: string) {
-    if (!window.confirm("Delete this product?")) return;
-    const result = await deleteProductAction(id);
-    setMessage(result.success ? "Product deleted" : result.error || "Delete failed");
-    if (result.success) setProducts((prev) => prev.filter((p) => p.id !== id));
+    if (!window.confirm("Hapus produk ini?")) return;
+    setIsDeletingId(id);
+    try {
+      const result = await deleteProductAction(id);
+      setMessage(result.success ? "Produk dihapus" : result.error || "Gagal menghapus");
+      if (result.success) setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Gagal menghapus");
+    } finally {
+      setIsDeletingId(null);
+    }
   }
 
   function startEdit(p: NormalizedJersey) {
@@ -178,7 +200,10 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
 
       {/* 2. Foto */}
       <fieldset className="space-y-3">
-        <legend className="text-xs font-black uppercase tracking-wider text-[#0C0A09] mb-2">2 · Foto</legend>
+        <legend className="text-xs font-black uppercase tracking-wider text-[#0C0A09] mb-1">2 · Foto Produk</legend>
+        <p className="text-[11px] text-[#78716C] leading-relaxed">
+          Rekomendasi format: <strong>Portrait 3:4</strong> atau <strong>Kotak 1:1</strong>, resolusi optimal <strong>900 × 1200 px</strong> (min. 600 × 800 px) dengan objek terpusat di latar bersih/studio. Maksimal 8 foto, otomatis dioptimasi.
+        </p>
         <div className="flex flex-wrap items-start gap-4">
           <div className="space-y-2">
             <input
@@ -200,13 +225,13 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
               value={form.image.startsWith("data:") ? "" : form.image}
               onChange={(e) => { update("image", e.target.value); setImages(e.target.value ? [{ url: e.target.value }] : []); }}
             />
-            <span className="text-xs text-[#57534E]">Maksimal 8 foto. Foto pertama menjadi foto utama. Foto diunggah saat Simpan.</span>
+            <span className="text-xs text-[#57534E]">Maksimal 8 foto. Semua rasio diterima, minimal sisi 800px (di bawah itu ditolak); disarankan potret 3:4. Foto pertama menjadi foto utama. Foto diunggah saat Simpan.</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {images.map((item, index) => (
               <div key={item.url || item.preview || index} className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.preview || item.url} alt={`Foto produk ${index + 1}`} className={`h-24 w-24 rounded-lg object-cover border ${index === 0 ? "border-black ring-2 ring-black/10" : "border-[#E5E5E5]"}`} />
+                <img src={item.preview || item.url} alt={`Foto produk ${index + 1}`} className={`h-24 w-24 rounded-lg object-contain bg-[#FAFAF9] border ${index === 0 ? "border-black ring-2 ring-black/10" : "border-[#E5E5E5]"}`} />
                 <button type="button" onClick={() => removeImage(index)} aria-label={`Hapus foto ${index + 1}`} className="absolute -right-1 -top-1 rounded-full bg-black px-1.5 text-xs text-white">×</button>
                 {index === 0 && <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[9px] text-white">Utama</span>}
               </div>
@@ -218,8 +243,8 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
       {/* 3. Klasifikasi */}
       <fieldset className="space-y-3">
         <legend className="text-xs font-black uppercase tracking-wider text-[#0C0A09] mb-2">3 · Klasifikasi</legend>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Label className="space-y-1 text-xs font-bold uppercase tracking-wider text-[#57534E]">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+          <Label className="space-y-1 text-xs font-bold uppercase tracking-wider text-[#57534E] col-span-2 sm:col-span-3">
             Liga / kompetisi
             <Input className="font-normal normal-case tracking-normal text-sm" list="league-options" placeholder="Pilih yang sudah ada atau ketik baru" value={form.league} onChange={(e) => update("league", e.target.value)} />
             <span className="font-normal normal-case tracking-normal text-[10px] text-[#A8A29E]">Pilih yang sudah ada, atau ketik nama baru</span>
@@ -270,16 +295,16 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
       {/* 5. Sorotan */}
       <fieldset className="space-y-3">
         <legend className="text-xs font-black uppercase tracking-wider text-[#0C0A09] mb-2">5 · Sorotan di beranda</legend>
-        <div className="flex flex-wrap gap-4 text-sm">
+        <div className="rounded-lg border border-[#E5E5E5] bg-[#FAFAF9] p-3 flex flex-col sm:flex-row sm:flex-wrap gap-3 text-sm">
           {([["isBestSeller", "Paling laris"], ["isFeatured", "Unggulan"], ["isNew", "Baru datang"]] as const).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-2 font-medium">
+            <label key={key} className="flex items-center gap-2 font-medium min-h-11 cursor-pointer">
               <Checkbox checked={form[key] as boolean} onCheckedChange={(c) => update(key, c === true)} /> {label}
             </label>
           ))}
         </div>
       </fieldset>
 
-      <div className="flex gap-2 border-t border-[#E5E5E5] pt-4"><Button className="h-auto px-5 py-2 text-xs uppercase tracking-wider font-bold" disabled={isSaving} onClick={save}>{isSaving ? "Menyimpan…" : editing ? "Simpan perubahan" : "Simpan produk"}</Button>{editing && <Button variant="outline" className="h-auto px-5 py-2 text-xs uppercase tracking-wider font-bold" disabled={isSaving} onClick={() => { setEditing(null); setForm(empty); setImages((prev) => { prev.forEach((i) => i.preview && URL.revokeObjectURL(i.preview)); return []; }); }}>Batal</Button>}</div>
+      <div className="flex gap-2 border-t border-[#E5E5E5] pt-4"><Button className="h-auto min-h-11 flex-1 sm:flex-none px-5 py-3 sm:py-2 text-xs uppercase tracking-wider font-bold bg-[#0C0A09] text-white hover:bg-black" disabled={isSaving} onClick={save}>{isSaving ? "Menyimpan…" : editing ? "Simpan perubahan" : "Simpan produk"}</Button>{editing && <Button variant="outline" className="h-auto min-h-11 flex-1 sm:flex-none px-5 py-3 sm:py-2 text-xs uppercase tracking-wider font-bold" disabled={isSaving} onClick={() => { setEditing(null); setForm(empty); setImages((prev) => { prev.forEach((i) => i.preview && URL.revokeObjectURL(i.preview)); return []; }); }}>Batal</Button>}</div>
     </section>
     <Input aria-label="Cari produk" className="text-sm" placeholder="Cari produk…" value={query} onChange={(e) => setQuery(e.target.value)} />
     <div className="overflow-x-auto rounded-xl border border-[#E5E5E5] bg-white">
@@ -299,8 +324,8 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
                 <TableCell>{p.league}</TableCell>
                 <TableCell>Rp {p.price}</TableCell>
                 <TableCell className="text-right space-x-2">
-                  <button className="underline" onClick={() => startEdit(p)}>Edit</button>
-                  <button className="text-[#DC2626] underline" onClick={() => remove(p.id)}>Delete</button>
+                  <button className="underline" disabled={isDeletingId !== null} onClick={() => startEdit(p)}>Edit</button>
+                  <button className="text-[#DC2626] underline disabled:opacity-50" disabled={isDeletingId !== null} onClick={() => remove(p.id)}>{isDeletingId === p.id ? "Menghapus…" : "Hapus"}</button>
                 </TableCell>
               </TableRow>
             ))}

@@ -13,7 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { StoredOrder } from "@/lib/orders-store";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, toIntlPhone } from "@/lib/utils";
 import { updateOrderAdminNotesAction, updateOrderStatusAction } from "@/app/actions/order";
 import { JNT_COURIER } from "@/lib/indonesia";
 import { Button } from "@/components/ui/button";
@@ -198,8 +198,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                 </TableRow>
               ) : (
                 filteredOrders.map((order) => {
-                  const cleanPhone = order.customerPhone.replace(/[^0-9]/g, "");
-                  const waUrl = `https://wa.me/${cleanPhone.startsWith("62") ? cleanPhone : "62" + cleanPhone.replace(/^0/, "")}`;
+                  const waUrl = `https://wa.me/${toIntlPhone(order.customerPhone)}`;
 
                   return (
                     <TableRow key={order.id} className="hover:bg-[#F9F9F9] transition-colors border-[#E5E5E5]">

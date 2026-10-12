@@ -9,7 +9,22 @@ import { useCartStore } from "@/stores/cart";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { LeagueOption } from "@/lib/leagues";
 
-export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
+const DEFAULT_TICKER =
+  "Free Nationwide Delivery on 2+ Kits | QRIS & e-Wallet | J&T Express";
+
+export function Navbar({
+  leagues,
+  shippingSettings,
+}: {
+  leagues: LeagueOption[];
+  shippingSettings?: Record<string, string>;
+}) {
+  const freeMin = Math.max(1, Number(shippingSettings?.freeShippingMinItems) || 2);
+  const banner =
+    shippingSettings?.runningBannerText?.trim() ||
+    DEFAULT_TICKER.replace("2+", `${freeMin}+`);
+  // split | jadi fragmen; mobile hanya fragmen pertama
+  const tickerParts = banner.split("|").map((s) => s.trim()).filter(Boolean);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const router = useRouter();
@@ -31,14 +46,15 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#09090B]/90 backdrop-blur-md border-b border-white/10 shadow-[0_1px_0_0_rgba(255,255,255,0.04)]">
-      {/* 1. High-Impact Matchday Ticker */}
+      {/* 1. High-Impact Matchday Ticker — teks dari settings, fallback statis */}
       <div className="bg-[#181820] border-b border-white/6 py-1.5 px-4 text-center">
-        <p className="text-[10px] sm:text-xs font-semibold text-zinc-400 tracking-wider uppercase flex items-center justify-center gap-2">
-          <span>Free Nationwide Delivery on 2+ Kits</span>
-          <span className="text-zinc-500 hidden sm:inline">•</span>
-          <span className="hidden sm:inline text-zinc-300">QRIS &amp; e-Wallet</span>
-          <span className="text-zinc-500 hidden md:inline">•</span>
-          <span className="hidden md:inline text-zinc-400">J&amp;T Express</span>
+        <p className="text-[10px] sm:text-xs font-semibold text-zinc-400 tracking-wider uppercase flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+          {tickerParts.map((part, i) => (
+            <span key={i} className={i === 0 ? "" : i === 1 ? "hidden sm:inline text-zinc-300" : "hidden md:inline text-zinc-400"}>
+              {i > 0 && <span className="text-zinc-500 mr-2">•</span>}
+              {part}
+            </span>
+          ))}
         </p>
       </div>
 
@@ -65,14 +81,9 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
             <Link
               key={l.value}
               href={`/jersey?league=${encodeURIComponent(l.value)}`}
-              className={
-                l.isHarimau
-                  ? "hover:text-harimau transition-colors flex items-center gap-1.5"
-                  : "hover:text-white transition-colors"
-              }
+              className="hover:text-white transition-colors flex items-center gap-1.5"
             >
               <span>{l.label}</span>
-              {l.isHarimau && <span className="w-1.5 h-1.5 rounded-full bg-harimau"></span>}
             </Link>
           ))}
         </nav>
@@ -164,14 +175,9 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
                     key={l.value}
                     href={`/jersey?league=${encodeURIComponent(l.value)}`}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`min-h-11 flex items-center border-b border-white/5 justify-between ${
-                      l.isHarimau ? "text-harimau" : "hover:text-white"
-                    }`}
+                    className={`min-h-11 flex items-center border-b border-white/5 justify-between hover:text-white`}
                   >
                     <span>{l.label}</span>
-                    {l.isHarimau && (
-                      <span className="text-[10px] font-bold bg-harimau/20 text-harimau px-2 py-0.5 rounded-lg border border-harimau/30">Official</span>
-                    )}
                   </Link>
                 ))}
               </nav>

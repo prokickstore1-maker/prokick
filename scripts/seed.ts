@@ -1,5 +1,4 @@
-import * as dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config";
 
 import bcrypt from "bcryptjs";
 import { db, client } from "../lib/db";
@@ -11,8 +10,8 @@ async function seed() {
   try {
     // 1. Seed Admin User
     const adminPassword = process.env.ADMIN_SEED_PASSWORD;
-    if (!adminPassword || adminPassword.length < 12) {
-      throw new Error("ADMIN_SEED_PASSWORD must be set and contain at least 12 characters.");
+    if (!adminPassword || adminPassword.length < 8) {
+      throw new Error("ADMIN_SEED_PASSWORD must be set and contain at least 8 characters.");
     }
     const passwordHash = await bcrypt.hash(adminPassword, 12);
     console.log("Seeding admin user...");
@@ -194,22 +193,22 @@ kitType: "Home",
       },
 
       {
-        name: "Harimau Malaya Special Stadium Edition 2026",
-        team: "Malaysia",
+        name: "Timnas Indonesia Special Stadium Edition 2026",
+        team: "Indonesia",
         league: "World Cup",
         season: "2026",
         type: "Fans Version",
         category: "Tim Nasional",
         price: "276500",
-        description: "Official national team tribute jersey featuring vibrant yellow & black tiger stripes with embroidered FAM crest.",
+        description: "Official national team stadium jersey with red & white accents and embroidered PSSI crest.",
         image: "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?w=800&auto=format&fit=crop&q=80",
         sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
         stockData: JSON.stringify({ S: 25, M: 35, L: 30, XL: 15, XXL: 10 }),
         stock: 115,
-        tags: "malaysia, harimau malaya, national team, stadium",
+        tags: "indonesia, timnas, national team, stadium",
         isBestSeller: true,
         isFeatured: true,
-      country: "Malaysia",
+      country: "Indonesia",
 edition: "Current",
 kitType: "Home",
       },
@@ -273,9 +272,16 @@ kitType: "Home",
       { key: "storeName", value: "ProKick Store Indonesia" },
       { key: "currency", value: "IDR" },
       { key: "whatsappNumber", value: "6281234567890" },
+      { key: "telegramUsername", value: "" },
       { key: "javaShippingCost", value: "15000" },
       { key: "outsideJavaShippingCost", value: "30000" },
       { key: "freeShippingMinItems", value: "2" },
+      { key: "namesetFee", value: "70000" },
+      { key: "patchFee", value: "35000" },
+      { key: "freePatchMinItems", value: "3" },
+      { key: "freeNamesetMinItems", value: "5" },
+      { key: "sulawesiBlocked", value: "0" },
+      { key: "invoiceChatButtons", value: "both" },
       { key: "runningBannerText", value: "NEW SEASON 2026/27 DROPS | GRATIS ONGKIR MIN. 2 Kaos | QRIS & E-WALLET" },
     ]).onConflictDoNothing();
 

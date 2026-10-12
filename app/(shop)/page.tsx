@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getAllJerseys, getActiveBanners } from "@/lib/data";
+import { getAllJerseys, getActiveBanners, getShippingSettingsMap } from "@/lib/data";
+import { toShippingSettings } from "@/lib/promo";
+import { formatIDR } from "@/lib/utils";
 import { buildLeagueOptions } from "@/lib/leagues";
 import { flagUrl } from "@/lib/countries";
 import { JerseyCard } from "@/components/jersey/jersey-card";
@@ -8,17 +10,18 @@ import { HeroCarousel } from "@/components/home/hero-carousel";
 import { ChevronRight, ShieldCheck, QrCode, Truck } from "lucide-react";
 
 export default async function HomePage() {
-  const [allJerseys, banners] = await Promise.all([
+  const [allJerseys, banners, rawSettings] = await Promise.all([
     getAllJerseys(),
     getActiveBanners(),
+    getShippingSettingsMap(),
   ]);
+  const ship = toShippingSettings(rawSettings);
   const trending = allJerseys.filter((j) => j.isBestSeller).slice(0, 8);
   const newArrivals = allJerseys.filter((j) => j.isNew).slice(0, 8);
 
   const leaguePills = buildLeagueOptions(allJerseys).map((l) => ({
     name: l.label,
     href: l.value ? `/jersey?league=${encodeURIComponent(l.value)}` : "/jersey",
-    highlight: l.isHarimau,
   }));
 
   // Featured = 2 banner pertama; hero carousel pakai sisanya (task H-5)
@@ -51,7 +54,7 @@ export default async function HomePage() {
                 Free Nationwide Delivery
               </h4>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Otomatis gratis di 2+ kaos (J&amp;T Express)
+                Otomatis gratis di {ship.freeShippingMinItems}+ kaos (J&amp;T Express)
               </p>
             </div>
           </div>
@@ -148,8 +151,6 @@ export default async function HomePage() {
                 className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   idx === 0
                     ? "bg-white text-black font-extrabold shadow-md hover:bg-zinc-200"
-                    : comp.highlight
-                    ? "bg-harimau/15 text-harimau border border-harimau/30 hover:bg-harimau/25"
                     : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/8"
                 }`}
               >
@@ -228,21 +229,21 @@ export default async function HomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 text-left">
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
-                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 1 • 2+ Kits</span>
+                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 1 • {ship.freeShippingMinItems}+ Kits</span>
                 <h4 className="text-xs font-bold text-white uppercase">Free Delivery</h4>
-                <p className="text-[11px] text-zinc-400">Hemat Rp15.000–Rp30.000 ongkir ke seluruh Indonesia.</p>
+                <p className="text-[11px] text-zinc-400">Hemat {formatIDR(ship.javaRate)}–{formatIDR(ship.outsideJavaRate)} ongkir ke seluruh Indonesia.</p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
-                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 2 • 3+ Kits</span>
+                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 2 • {ship.freePatchMinItems}+ Kits</span>
                 <h4 className="text-xs font-bold text-white uppercase">Free Official Patch</h4>
-                <p className="text-[11px] text-zinc-400">Badge UCL Starball atau EPL gold termasuk (hemat Rp35.000).</p>
+                <p className="text-[11px] text-zinc-400">Badge UCL Starball atau EPL gold termasuk (hemat {formatIDR(ship.patchFee)}).</p>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
-                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 3 • 5+ Kits</span>
+                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 3 • {ship.freeNamesetMinItems}+ Kits</span>
                 <h4 className="text-xs font-bold text-white uppercase">Free Nameset</h4>
-                <p className="text-[11px] text-zinc-400">Custom nama &amp; nomor pemain termasuk (hemat Rp70.000).</p>
+                <p className="text-[11px] text-zinc-400">Custom nama &amp; nomor pemain termasuk (hemat {formatIDR(ship.namesetFee)}).</p>
               </div>
             </div>
           </div>

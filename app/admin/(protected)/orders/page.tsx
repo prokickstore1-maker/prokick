@@ -10,21 +10,21 @@ export default async function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E5E5] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#27272A] pb-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#57534E] block mb-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 block mb-1">
             Order Fulfillment • Indonesia Domestic
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-black font-display uppercase tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-[#FAFAFA] font-display uppercase tracking-tight">
             Orders Verification &amp; Dispatch
           </h1>
         </div>
 
         <Link
           href="/admin/orders"
-          className="self-start sm:self-auto px-4 py-2 rounded-lg bg-white border border-[#E5E5E5] text-black text-xs font-bold hover:bg-[#F5F5F5] inline-flex items-center gap-1.5 transition-colors shadow-xs"
+          className="self-start sm:self-auto px-4 py-2 rounded-lg bg-[#121217] border border-[#27272A] text-[#FAFAFA] text-xs font-bold hover:bg-white/5 inline-flex items-center gap-1.5 transition-colors shadow-xs"
         >
-          <RefreshCw className="w-3.5 h-3.5 text-black" />
+          <RefreshCw className="w-3.5 h-3.5 text-[#FAFAFA]" />
           <span>Refresh Orders</span>
         </Link>
       </div>

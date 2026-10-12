@@ -57,7 +57,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
                           Matchday Bundle Tier
             </span>
             <span className="font-mono text-[11px] text-zinc-400 font-semibold">
-              {promoResult.totalQuantity}/5 Kits
+              {promoResult.totalQuantity}/{settings.freeNamesetMinItems} Kits
             </span>
           </div>
 
@@ -83,7 +83,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
               </div>
               <h3 className="text-base font-bold text-white mb-1">Your bag is empty</h3>
               <p className="text-xs text-zinc-400 max-w-xs mb-6">
-                Tambah 2 kaos atau lebih untuk gratis ongkir ke seluruh Indonesia.
+                Tambah {settings.freeShippingMinItems} kaos atau lebih untuk gratis ongkir ke seluruh Indonesia.
               </p>
               <Button asChild className="rounded-lg px-6 h-auto py-2.5 text-xs uppercase tracking-wider font-extrabold">
                 <Link href="/jersey" onClick={closeCart}>
@@ -135,7 +135,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
                     <div className="mt-1.5 space-y-0.5">
                       {item.namesetName && (
                         <div className="text-[10px] text-zinc-400 flex items-center gap-1 font-mono">
-                          <span className="text-harimau font-bold">Nameset:</span>
+                          <span className="text-volt font-bold">Nameset:</span>
                           <span className="text-zinc-200 font-semibold">{item.namesetName} #{item.namesetNumber || "0"}</span>
                         </div>
                       )}

@@ -12,5 +12,89 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  return <main className="min-h-screen flex items-center justify-center bg-[#FAFAF9] p-4 text-[#0C0A09]"><form className="w-full max-w-sm space-y-4 rounded-2xl border border-[#E5E5E5] bg-white p-6" onSubmit={async (e) => { e.preventDefault(); setLoading(true); setError(""); try { const result = await loginAdminAction(email, password); if (result.success) router.push("/admin/orders"); else { setError(result.error || "Login failed"); setLoading(false); } } catch { setError("Something went wrong. Try again."); setLoading(false); } }}><h1 className="text-2xl font-black font-display">Admin login</h1>{error && <p role="alert" className="text-sm text-[#DC2626]">{error}</p>}<Label htmlFor="email" className="text-sm font-semibold">Email</Label><Input id="email" required type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} /><Label htmlFor="password" className="text-sm font-semibold">Password</Label><Input id="password" required type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} /><Button type="submit" disabled={loading} className="w-full h-auto py-3 text-xs uppercase tracking-wider font-extrabold">{loading ? "Signing in..." : "Sign in"}</Button></form></main>;
+
+  return (
+    <main className="admin-surface min-h-screen flex items-center justify-center bg-[#09090B] p-4 text-[#FAFAFA]">
+      <form
+        className="w-full max-w-sm space-y-5 rounded-2xl border border-[#27272A] bg-[#121217] p-6 sm:p-8 shadow-2xl"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setLoading(true);
+          setError("");
+          try {
+            const result = await loginAdminAction(email, password);
+            if (result.success) {
+              router.push("/admin/orders");
+            } else {
+              setError(result.error || "Gagal masuk");
+              setLoading(false);
+            }
+          } catch {
+            setError("Terjadi kesalahan. Coba lagi.");
+            setLoading(false);
+          }
+        }}
+      >
+        <div className="flex items-center gap-3 border-b border-[#27272A] pb-4">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#E2F952] text-[#09090B] text-xs font-black font-display tracking-tight">
+            PK
+          </span>
+          <div>
+            <h1 className="text-lg font-black font-display tracking-tight text-[#FAFAFA]">
+              Admin ProKick
+            </h1>
+            <p className="text-[10px] text-zinc-400 font-semibold uppercase">
+              Operasional Indonesia
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <p role="alert" className="rounded-lg bg-red-950/40 border border-red-500/30 p-3 text-xs text-red-300">
+            {error}
+          </p>
+        )}
+
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-xs font-bold text-zinc-300">
+            Email
+          </Label>
+          <Input
+            id="email"
+            required
+            type="email"
+            autoComplete="email"
+            placeholder="admin@prokick.id"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="bg-[#09090B] border-[#27272A] text-sm text-white placeholder:text-zinc-500 focus-visible:border-[#E2F952]"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-xs font-bold text-zinc-300">
+            Password
+          </Label>
+          <Input
+            id="password"
+            required
+            type="password"
+            autoComplete="current-password"
+            placeholder="••••••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="bg-[#09090B] border-[#27272A] text-sm text-white placeholder:text-zinc-500 focus-visible:border-[#E2F952]"
+          />
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full h-auto py-3 text-xs uppercase tracking-wider font-extrabold bg-[#E2F952] text-[#09090B] hover:bg-[#d6ed47] transition-colors"
+        >
+          {loading ? "Memproses..." : "Masuk ke Admin"}
+        </Button>
+      </form>
+    </main>
+  );
 }

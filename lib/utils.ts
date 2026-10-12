@@ -14,3 +14,12 @@ export function formatIDR(amount: number | string): string {
   if (isNaN(num)) return "Rp0";
   return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(num).replace(/^/, "Rp");
 }
+
+// "0812-3456-7890" / "+62 812 3456 7890" / "62812..." -> "62812345678"
+// Dipakai untuk simpan nomor, wa.me link, dan bandingkan nomor tracking.
+export function toIntlPhone(raw: string): string {
+  const digits = (raw || "").replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("62")) return digits;
+  return `62${digits.replace(/^0+/, "")}`;
+}

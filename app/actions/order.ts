@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getJerseyById, getShippingSettingsMap, getPaymentMethods } from "@/lib/data";
-import { calculatePromoEngine, ShippingZone, toShippingSettings, STANDARD_NAMESET_FEE, STANDARD_PATCH_FEE } from "@/lib/promo";
-import { getShippingZoneByProvince } from "@/lib/indonesia";
+import { calculatePromoEngine, ShippingZone, toShippingSettings } from "@/lib/promo";
+import { getShippingZoneByProvince, isSulawesiProvince } from "@/lib/indonesia";
 import { createOrderWithStock, getOrderByIdempotencyKey, updateOrderPaymentProof, updateOrderStatus, updateOrderAdminNotes, StoredOrder, getOrderById } from "@/lib/orders-store";
 import { uploadToS3, getReceiptUrl } from "@/lib/s3";
 import { sendTelegramNotification } from "@/lib/telegram";
@@ -11,6 +11,7 @@ import crypto from "node:crypto";
 import { isAdmin } from "@/lib/admin-auth";
 import { grantOrderAccess, canAccessOrder } from "@/lib/order-auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { toIntlPhone } from "@/lib/utils";
 
 export interface CreateOrderInput {
   customerName: string;
@@ -64,6 +65,15 @@ export async function createOrderAction(input: CreateOrderInput) {
       return { success: false, error: "Your shopping cart is empty." };
     }
 
+    // Ambil settings sekali: fee nameset/patch, tier promo, blokir Sulawesi
+    const rawSettings = await getShippingSettingsMap();
+    const shipSettings = toShippingSettings(rawSettings);
+
+    // Tutup sementara Sulawesi (on/off via admin: setting sulawesiBlocked)
+    if (rawSettings.sulawesiBlocked === "1" && isSulawesiProvince(input.state)) {
+      return { success: false, error: "Pengiriman ke Sulawesi sedang ditutup sementara. Silakan pilih provinsi lain atau hubungi admin." };
+    }
+
     // 1. Authoritative Server-Side Price Verification
     const verifiedItems = [];
     const promoItemsForCalculation = [];
@@ -80,6 +90,8 @@ export async function createOrderAction(input: CreateOrderInput) {
         return { success: false, error: "Product unavailable." };
       }
       const verifiedName = dbJersey.name;
+      const hasNameset = Boolean(item.namesetName && item.namesetName.trim());
+      const hasPatch = Boolean(item.patch && item.patch.trim());
 
       verifiedItems.push({
         id: crypto.randomUUID(),
@@ -90,9 +102,9 @@ export async function createOrderAction(input: CreateOrderInput) {
         unitPrice: verifiedPrice.toFixed(2),
         namesetName: item.namesetName?.trim() || null,
         namesetNumber: item.namesetNumber?.trim() || null,
-        namesetPrice: item.namesetName ? STANDARD_NAMESET_FEE.toFixed(2) : "0.00",
+        namesetPrice: hasNameset ? shipSettings.namesetFee.toFixed(2) : "0.00",
         patch: item.patch?.trim() || null,
-        patchPrice: item.patch ? STANDARD_PATCH_FEE.toFixed(2) : "0.00",
+        patchPrice: hasPatch ? shipSettings.patchFee.toFixed(2) : "0.00",
       });
 
       promoItemsForCalculation.push({
@@ -100,19 +112,19 @@ export async function createOrderAction(input: CreateOrderInput) {
         name: verifiedName,
         price: verifiedPrice,
         quantity: item.quantity,
-        hasNameset: Boolean(item.namesetName && item.namesetName.trim()),
-        namesetPrice: STANDARD_NAMESET_FEE,
-        hasPatch: Boolean(item.patch && item.patch.trim()),
-        patchPrice: STANDARD_PATCH_FEE,
+        hasNameset,
+        namesetPrice: shipSettings.namesetFee,
+        hasPatch,
+        patchPrice: shipSettings.patchFee,
       });
     }
 
     // 2. Authoritative Shipping Zone & Promo Calculation
     const shippingZone: ShippingZone = getShippingZoneByProvince(input.state);
-    const promoResult = calculatePromoEngine(promoItemsForCalculation, shippingZone, toShippingSettings(await getShippingSettingsMap()));
+    const promoResult = calculatePromoEngine(promoItemsForCalculation, shippingZone, shipSettings);
 
     // 3. Construct Verified Order Record
-    const orderId = `pk-${crypto.randomUUID()}`;
+    const orderId = crypto.randomUUID();
     const orderNumber = generateOrderNumber();
     const fullAddress = [input.streetAddress, input.city, input.postcode, input.state, "Indonesia"]
       .map((part) => part.trim().slice(0, 200))
@@ -133,7 +145,7 @@ export async function createOrderAction(input: CreateOrderInput) {
       id: orderId,
       orderNumber,
       customerName: input.customerName.trim().slice(0, 120),
-      customerPhone: input.customerPhone.trim().slice(0, 25),
+      customerPhone: toIntlPhone(input.customerPhone) || input.customerPhone.trim().slice(0, 25),
       customerAddress: fullAddress.slice(0, 500),
       shippingZone,
       shippingCost: promoResult.shippingCost.toFixed(2),
@@ -208,7 +220,7 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
 
     // Update order status to PROCESSING (throws kalau status order sudah bukan PENDING_PAYMENT)
     try {
-      await updateOrderPaymentProof(orderId, proofUrl);
+      await updateOrderPaymentProof(order.id, proofUrl);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Order no longer accepts payment proof.";
       console.error("Payment proof update rejected:", msg);
@@ -235,7 +247,8 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
       paymentProofUrl: await getReceiptUrl(proofUrl),
     }).catch((err) => console.error("Telegram background notification failed:", err));
 
-    revalidatePath(`/invoice/${orderId}`);
+    revalidatePath(`/invoice/${order.id}`);
+    if (order.orderNumber) revalidatePath(`/invoice/${order.orderNumber}`);
     revalidatePath("/admin/orders");
 
     return { success: true, proofUrl };

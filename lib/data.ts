@@ -67,7 +67,7 @@ export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJe
             sizes: typeof r.sizes === "string" ? JSON.parse(r.sizes) : (r.sizes || []),
             stockData: typeof r.stockData === "string" ? JSON.parse(r.stockData) : (r.stockData || {}),
             category: r.category || (r.league === "World Cup" ? "Tim Nasional" : "Klub"),
-            country: r.country || (r.team === "Malaysia" ? "Malaysia" : "England"),
+            country: r.country || "England",
             edition: r.edition || (r.type === "Retro" ? "Vintage" : "Current"),
             kitType: r.kitType || "Home",
             isNew: r.isNew ?? false,
@@ -79,7 +79,9 @@ export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJe
     }
   }
 
-  // Fallback to mock data
+  // DB online tapi kosong/error = kondisi sah — jangan fallback mock,
+  // kalau tidak produk yang dihapus admin "hidup lagi" dari mock. Mock hanya saat DB offline.
+  if (isDbOnline) return [];
   let result = MOCK_JERSEYS;
   if (filterLeague) {
     result = result.filter((j) => j.league.toLowerCase() === filterLeague.toLowerCase());
@@ -91,9 +93,12 @@ export async function getJerseyById(id: string): Promise<NormalizedJersey | null
   const isDbOnline = await checkDbConnection();
 
   if (isDbOnline) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id.trim());
+    if (!isUuid) return null;
+
     try {
       const row = await db.query.jerseys.findFirst({
-        where: eq(jerseys.id, id),
+        where: eq(jerseys.id, id.trim()),
       });
       if (row) {
         const mockMatch = MOCK_JERSEYS.find((m) => m.name === row.name || m.id === row.id);
@@ -107,7 +112,7 @@ export async function getJerseyById(id: string): Promise<NormalizedJersey | null
           sizes: typeof row.sizes === "string" ? JSON.parse(row.sizes) : (row.sizes || []),
           stockData: typeof row.stockData === "string" ? JSON.parse(row.stockData) : (row.stockData || {}),
           category: row.category || (row.league === "World Cup" ? "Tim Nasional" : "Klub"),
-          country: row.country || (row.team === "Malaysia" ? "Malaysia" : "England"),
+          country: row.country || "England",
           edition: row.edition || (row.type === "Retro" ? "Vintage" : "Current"),
           kitType: row.kitType || "Home",
           isNew: row.isNew ?? false,
@@ -118,6 +123,9 @@ export async function getJerseyById(id: string): Promise<NormalizedJersey | null
     }
   }
 
+  // DB online + produk tidak ditemukan = produk terhapus, bukan mock.
+  // Fallback mock hanya saat DB offline/error.
+  if (isDbOnline) return null;
   const mock = MOCK_JERSEYS.find((j) => j.id === id);
   return mock || null;
 }

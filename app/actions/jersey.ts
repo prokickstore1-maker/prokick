@@ -26,12 +26,14 @@ export async function updateJerseyStockAction(jerseyId: string, size: string, de
   }
 
   const isDbOnline = await checkDbConnection();
-  if (isDbOnline) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jerseyId.trim());
+
+  if (isDbOnline && isUuid) {
     try {
       // read-modify-write inside a row lock: two concurrent admin edits serialize
       // instead of silently overwriting each other
       await db.transaction(async (tx) => {
-        const [row] = await tx.select().from(jerseys).where(eq(jerseys.id, jerseyId)).for("update");
+        const [row] = await tx.select().from(jerseys).where(eq(jerseys.id, jerseyId.trim())).for("update");
         if (!row) throw new Error("Product not found");
         const stockObj = typeof row.stockData === "string" ? JSON.parse(row.stockData) : (row.stockData || {});
         stockObj[size] = applyDelta(stockObj[size] || 0, delta);

@@ -53,7 +53,15 @@ export function getShippingZoneByProvince(provinceName: string): ShippingZone {
   const match = INDONESIAN_PROVINCES.find(
     (s) => s.name.toLowerCase() === provinceName.toLowerCase() || s.code.toLowerCase() === provinceName.toLowerCase()
   );
-  return match?.zone ?? "Jawa";
+  return match?.zone ?? "Luar Jawa";
+}
+
+// Wilayah Pulau Sulawesi (termasuk Gorontalo) — bisa ditutup sementara lewat setting `sulawesiBlocked`
+export function isSulawesiProvince(provinceName: string): boolean {
+  const match = INDONESIAN_PROVINCES.find(
+    (s) => s.name.toLowerCase() === provinceName.toLowerCase() || s.code.toLowerCase() === provinceName.toLowerCase()
+  );
+  return !!match && (match.name.startsWith("Sulawesi") || match.code === "GO");
 }
 
 export const JNT_COURIER = {

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
 import { calculatePromoEngine, toShippingSettings } from "@/lib/promo";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, toIntlPhone } from "@/lib/utils";
 import { INDONESIAN_PROVINCES, getShippingZoneByProvince } from "@/lib/indonesia";
 import { createOrderAction } from "@/app/actions/order";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,8 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
 
       const result = await createOrderAction({
         customerName,
-        customerPhone,
+        // disimpan sudah dalam format internasional — wa.me invoice/admin tak perlu tebak lagi
+        customerPhone: toIntlPhone(customerPhone),
         streetAddress,
         city,
         postcode,
@@ -136,6 +137,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
   };
 
   if (items.length === 0) {
+    const freeMin = Math.max(1, Number(shippingSettings.freeShippingMinItems) || 2);
     return (
       <div className="min-h-[70vh] bg-[#09090B] text-white flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 mb-4">
@@ -145,7 +147,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
           Your Shopping Bag is Empty
         </h2>
         <p className="text-xs text-zinc-400 max-w-sm mb-6">
-          Pesan 2 kaos atau lebih dapat gratis ongkir ke seluruh Indonesia.
+          Pesan {freeMin} kaos atau lebih dapat gratis ongkir ke seluruh Indonesia.
         </p>
         <Button asChild className="rounded-lg px-7 h-auto py-3 text-xs uppercase tracking-wider font-extrabold">
           <Link href="/jersey">Shop Kits</Link>

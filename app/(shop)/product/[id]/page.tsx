@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getJerseyById, getAllJerseys } from "@/lib/data";
+import { getJerseyById, getAllJerseys, getShippingSettingsMap } from "@/lib/data";
+import { toShippingSettings, STANDARD_NAMESET_FEE, STANDARD_PATCH_FEE } from "@/lib/promo";
 import { JerseyCustomizer } from "@/components/jersey/jersey-customizer";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { ChevronRight } from "lucide-react";
@@ -57,6 +58,9 @@ export default async function ProductDetailPage({
     .filter((j) => j.id !== jersey.id && (j.league === jersey.league || j.isBestSeller))
     .slice(0, 4);
 
+  // fee nameset/patch dari settings admin — sinkron dengan server checkout
+  const shipSettings = toShippingSettings(await getShippingSettingsMap());
+
   return (
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] py-8 px-4 sm:px-8 lg:px-12">
       <div className="max-w-[1540px] mx-auto space-y-12">
@@ -74,7 +78,12 @@ export default async function ProductDetailPage({
         </nav>
 
         {/* Product Customizer Section */}
-        <JerseyCustomizer jersey={jersey} />
+        <JerseyCustomizer
+          jersey={jersey}
+          namesetFee={shipSettings.namesetFee || STANDARD_NAMESET_FEE}
+          patchFee={shipSettings.patchFee || STANDARD_PATCH_FEE}
+          freeShippingMinItems={shipSettings.freeShippingMinItems}
+        />
 
         {/* Related Kits Section */}
         {relatedKits.length > 0 && (

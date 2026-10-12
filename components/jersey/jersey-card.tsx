@@ -15,12 +15,21 @@ interface JerseyCardProps {
 export function JerseyCard({ jersey }: JerseyCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const [justAdded, setJustAdded] = useState(false);
+  const [imgOk, setImgOk] = useState(true);
+
+  // Konsisten dengan customizer: out hanya jika stock didefinisikan dan <= 0.
+  const firstInStock = jersey.sizes.find((s) => {
+    const stock = jersey.stockData?.[s];
+    return stock === undefined || stock > 0;
+  });
+  const soldOut = !firstInStock;
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const defaultSize = jersey.sizes[0] || "M";
+    // Pilih ukuran pertama yang berstok; customizer menolak out-of-stock.
+    const defaultSize = firstInStock || jersey.sizes[0] || "M";
     addItem({
       jerseyId: jersey.id,
       name: jersey.name,
@@ -39,9 +48,10 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
   const imageSrc = jersey.image || "/images/jerseys/madrid-home.jpg";
 
   // Derive contextual badge
-  const isHarimau = jersey.team.toLowerCase().includes("malaysia") || jersey.league.toLowerCase().includes("world cup");
   const isRetro = jersey.edition?.toLowerCase() === "vintage" || jersey.league.toLowerCase().includes("retro");
   const isPlayerIssue = jersey.type?.toLowerCase().includes("player");
+  // "2026/2027" → "'26"; tanpa musim → "Retro"
+  const retroYear = jersey.season?.match(/(\d{4})/)?.[1]?.slice(2);
 
   return (
     <div className="group flex flex-col justify-between h-full bg-[#121217] hover:bg-[#181820] border border-white/8 hover:border-white/20 rounded-xl overflow-hidden transition-all duration-300 select-none shadow-sm hover:shadow-md">
@@ -49,22 +59,19 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
         {/* Studio Jersey Stage with Radial Ambiance */}
         <div className="studio-stage relative aspect-[3/4] w-full p-2 sm:p-6">
           <Image
-            src={imageSrc}
+            src={imgOk ? imageSrc : "/images/jerseys/madrid-home.jpg"}
             alt={jersey.name}
             fill
+            onError={() => setImgOk(false)}
             className="object-contain p-0.5 sm:p-4 group-hover:scale-108 transition-transform duration-500"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
 
           {/* Top-Left Authentic Tag */}
           <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
-            {isHarimau ? (
-              <span className="inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-harimau border border-harimau/40">
-                Harimau Malaya
-              </span>
-            ) : isRetro ? (
+            {isRetro ? (
               <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
-                Retro &apos;99
+                Retro{retroYear ? ` '${retroYear}` : ""}
               </span>
             ) : isPlayerIssue ? (
               <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
@@ -78,28 +85,37 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
           </div>
 
           {/* Quick Add Button */}
-          <button
-            onClick={handleQuickAdd}
-            className={`absolute bottom-3 right-3 min-w-11 min-h-11 p-2 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer z-10 ${
-              justAdded
-                ? "bg-volt text-black"
-                : "bg-white text-black hover:bg-zinc-200 active:scale-95 opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
-            }`}
-            title="Quick add to bag"
-            aria-label="Quick add to bag"
-          >
-            {justAdded ? (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-[11px] font-bold">Added</span>
-              </>
-            ) : (
-              <>
-                <Plus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-[11px] font-bold">Add</span>
-              </>
-            )}
-          </button>
+          {soldOut ? (
+            <span
+              className="absolute bottom-3 right-3 min-h-11 px-3 py-1.5 rounded-full font-bold text-xs flex items-center bg-zinc-800 text-zinc-400 border border-white/10 z-10"
+              aria-label="Sold out"
+            >
+              Sold Out
+            </span>
+          ) : (
+            <button
+              onClick={handleQuickAdd}
+              className={`absolute bottom-3 right-3 min-w-11 min-h-11 p-2 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer z-10 ${
+                justAdded
+                  ? "bg-volt text-black"
+                  : "bg-white text-black hover:bg-zinc-200 active:scale-95 opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
+              }`}
+              title="Quick add to bag"
+              aria-label="Quick add to bag"
+            >
+              {justAdded ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[11px] font-bold">Added</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[11px] font-bold">Add</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </Link>
 

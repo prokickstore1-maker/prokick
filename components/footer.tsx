@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Globe } from "lucide-react";
 import { getSetting, getAllJerseys } from "@/lib/data";
 import { buildLeagueOptions } from "@/lib/leagues";
+import { toIntlPhone } from "@/lib/utils";
 
 export default async function Footer() {
-  const waNumber = (await getSetting("whatsappNumber", "6281234567890")).replace(/[^0-9]/g, "");
+  const waNumber = toIntlPhone(await getSetting("whatsappNumber", "6281234567890"));
+  const freeMin = Math.max(1, Number(await getSetting("freeShippingMinItems", "2")) || 2);
   const leagues = buildLeagueOptions(await getAllJerseys());
   return (
     <footer className="bg-[#09090B] border-t border-white/10 text-white pt-14 pb-12 text-xs">
@@ -22,7 +24,7 @@ export default async function Footer() {
                 <li key={l.value}>
                   <Link
                     href={`/jersey?league=${encodeURIComponent(l.value)}`}
-                    className={l.isHarimau ? "hover:text-harimau transition-colors" : "hover:text-white transition-colors"}
+                    className="hover:text-white transition-colors"
                   >
                     {l.label}
                   </Link>
@@ -40,7 +42,7 @@ export default async function Footer() {
               <li><span>J&amp;T Express</span></li>
               <li><span>Jawa (1–2 Hari)</span></li>
               <li><span>Luar Jawa (2–4 Hari)</span></li>
-              <li className="text-volt font-semibold"><span>Free Delivery on 2+ Kits</span></li>
+              <li className="text-volt font-semibold"><span>Free Delivery on {freeMin}+ Kits</span></li>
             </ul>
           </div>
 

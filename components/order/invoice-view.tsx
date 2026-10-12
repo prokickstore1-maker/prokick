@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StoredOrder } from "@/lib/orders-store";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, toIntlPhone } from "@/lib/utils";
 import { uploadReceiptAction } from "@/app/actions/order";
 import { orderStatusLabel } from "@/lib/order-status";
 
@@ -220,7 +220,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
           </div>
           <Button asChild className="rounded-lg px-4 h-auto py-2 text-xs uppercase tracking-wider gap-1.5 self-start sm:self-auto font-extrabold">
             <a
-              href={`https://www.jtexpress.id/tracking?billcode=${order.trackingNumber}`}
+              href={`https://www.jtexpress.id/tracking?billcode=${encodeURIComponent(order.trackingNumber.replace(/^.*?:\s*/, ""))}`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -415,7 +415,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
             {showWa && (
               <Button asChild variant="outline" className="w-full h-auto rounded-xl px-4 py-3 text-xs font-bold gap-2 bg-white/5 text-white border-white/10 hover:bg-white/10 hover:text-white">
                 <a
-                  href={`https://wa.me/${waNumber}?text=${waHelpMessage}`}
+                  href={`https://wa.me/${toIntlPhone(waNumber)}?text=${waHelpMessage}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

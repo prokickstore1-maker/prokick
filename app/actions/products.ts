@@ -18,11 +18,14 @@ export interface ProductInput {
 // Rapikan input teks admin: trim + collapse spasi ganda, cegah "Premier  League" dsb.
 function clean(input: ProductInput): ProductInput {
   const tidy = (v: string) => v.trim().replace(/\s+/g, " ");
+  // Normalisasi harga Rupiah: hapus 'Rp', spasi, titik ribuan (mis. 'Rp 350.000' -> '350000')
+  const cleanPrice = input.price ? input.price.replace(/[^0-9]/g, "") : "0";
   return {
     ...input,
     name: tidy(input.name), team: tidy(input.team), league: tidy(input.league), season: tidy(input.season),
     type: tidy(input.type), category: tidy(input.category), country: tidy(input.country),
     edition: tidy(input.edition), kitType: tidy(input.kitType),
+    price: cleanPrice,
   };
 }
 
@@ -85,10 +88,28 @@ export async function updateProductAction(id: string, input: ProductInput) {
 
 export async function deleteProductAction(id: string) {
   if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
-  if (!(await checkDbConnection())) return { success: false, error: "Database unavailable" };
-  await db.delete(jerseys).where(eq(jerseys.id, id));
-  revalidatePath("/admin/products"); revalidatePath("/jersey");
-  return { success: true };
+  if (!(await checkDbConnection())) return { success: false, error: "Database offline" };
+
+  // ID produk mock (mis. "madrid-home-2026") bukan UUID — query ke kolom uuid akan error fatal
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return {
+      success: false,
+      error: "Produk demo (mock data) tidak tersimpan di database dan tidak dapat dihapus via DB. Jalankan seed untuk mengisi database dengan produk asli.",
+    };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.delete(jerseyImages).where(eq(jerseyImages.jerseyId, id));
+      await tx.delete(jerseys).where(eq(jerseys.id, id));
+    });
+    revalidatePath("/admin/products"); revalidatePath("/admin/jerseys");
+    revalidatePath("/jersey"); revalidatePath("/");
+    return { success: true };
+  } catch (err) {
+    console.error("Gagal menghapus produk:", err);
+    return { success: false, error: err instanceof Error ? err.message : "Gagal menghapus produk dari database." };
+  }
 }
 
 // Upload foto produk ke object storage. Sama ketatnya dengan receipt:

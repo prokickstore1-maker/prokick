@@ -13,7 +13,7 @@ export default async function AdminLayout({
   if (!(await isAdmin())) redirect("/admin/login");
 
   return (
-    <div className="admin-surface min-h-screen bg-[#FAFAF9] text-[#0C0A09] flex flex-col">
+    <div className="admin-surface min-h-screen bg-[#09090B] text-[#FAFAFA] flex flex-col">
       <AdminHeader />
       <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">{children}</main>
     </div>

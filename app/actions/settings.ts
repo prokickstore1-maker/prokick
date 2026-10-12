@@ -55,3 +55,38 @@ export async function updatePaymentMethodAction(id: string, input: { label: stri
   revalidatePath("/admin/settings");
   return { success: true };
 }
+
+function validPaymentInput(input: { label: string; accountName: string; accountNumber: string; qrImageUrl?: string | null }) {
+  return typeof input.label === "string" && input.label.trim().length > 0 && input.label.length <= 100 &&
+    typeof input.accountName === "string" && input.accountName.length <= 120 &&
+    typeof input.accountNumber === "string" && input.accountNumber.length <= 80 &&
+    (typeof input.qrImageUrl !== "string" || input.qrImageUrl.length <= 500);
+}
+
+// tipe harus dikenali UI checkout — tipe asing bikin metode tak tampil/gagal di checkout
+const PAYMENT_TYPES = new Set(["qr_pay", "bank_transfer", "ewallet"]);
+
+export async function createPaymentMethodAction(type: string, input: { label: string; accountName: string; accountNumber: string; qrImageUrl?: string | null }) {
+  const error = await guard();
+  if (error) return { success: false, error };
+  if (typeof type !== "string" || !PAYMENT_TYPES.has(type) || !input || typeof input !== "object" || !validPaymentInput(input)) {
+    return { success: false, error: "Invalid payment method" };
+  }
+  await db.insert(paymentMethods).values({ ...input, label: input.label.trim(), type, isActive: true });
+  revalidatePath("/cart");
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+// Order lama aman: paymentMethods.id di orders FK set null, snapshot tetap tampil
+export async function deletePaymentMethodAction(id: string) {
+  const error = await guard();
+  if (error) return { success: false, error };
+  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return { success: false, error: "Invalid payment method" };
+  }
+  await db.delete(paymentMethods).where(eq(paymentMethods.id, id));
+  revalidatePath("/cart");
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
