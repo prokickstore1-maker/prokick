@@ -12,6 +12,8 @@ export interface ProductInput {
   country: string; edition: string; kitType: string;
   price: string; description: string; image: string; sizes: string[];
   images?: string[];
+  // stok per ukuran dari form produk — {"S":10,"M":25}; absen = 0 (konsisten perilaku lama)
+  stockData?: Record<string, number>;
   isBestSeller: boolean; isFeatured: boolean; isNew: boolean;
 }
 
@@ -48,24 +50,33 @@ async function guard(input: ProductInput) {
   return null;
 }
 
+// stok per ukuran dari form; angka <0 atau non-integer dibuang. Ukuran tanpa input = 0
+function buildStockData(sizes: string[], input?: Record<string, number>) {
+  const entries = sizes.map((size) => {
+    const v = input?.[size];
+    const n = Number.isInteger(v) && (v as number) >= 0 ? (v as number) : 0;
+    return [size, n] as const;
+  });
+  return { json: JSON.stringify(Object.fromEntries(entries)), total: entries.reduce((a, [, n]) => a + n, 0) };
+}
+
 export async function createProductAction(input: ProductInput) {
   const data = clean(input);
   const error = await guard(data);
   if (error) return { success: false, error };
-  // sizes start at 0 so the storefront shows "Out" instead of an unbuyable size
-  const stockData = JSON.stringify(Object.fromEntries(data.sizes.map((size) => [size, 0])));
-  const { images, ...rest } = data;
+  const { json: stockData, total } = buildStockData(data.sizes, data.stockData);
+  const { images, stockData: _omit, ...rest } = data;
   const gallery = images ?? (data.image ? [data.image] : []);
   await db.transaction(async (tx) => {
     const [row] = await tx.insert(jerseys).values({
       ...rest, image: gallery[0] || data.image,
-      price: Number(data.price).toFixed(2), sizes: JSON.stringify(data.sizes), stockData, stock: 0, tags: "",
+      price: Number(data.price).toFixed(2), sizes: JSON.stringify(data.sizes), stockData, stock: total, tags: "",
     }).returning({ id: jerseys.id });
     if (gallery.length) {
       await tx.insert(jerseyImages).values(gallery.map((url, index) => ({ jerseyId: row.id, url, displayOrder: index })));
     }
   });
-  revalidatePath("/admin/products"); revalidatePath("/jersey"); revalidatePath("/");
+  revalidatePath("/admin/products"); revalidatePath("/admin/jerseys"); revalidatePath("/jersey"); revalidatePath("/");
   return { success: true };
 }
 
@@ -73,16 +84,22 @@ export async function updateProductAction(id: string, input: ProductInput) {
   const data = clean(input);
   const error = await guard(data);
   if (error) return { success: false, error };
-  const { images, ...rest } = data;
+  const { images, stockData: _omit, ...rest } = data;
   const gallery = images ?? (data.image ? [data.image] : []);
+  // stok hanya ditimpa kalau form mengirimnya — edit dari jalur lain tak menghapus stok
+  const stock = data.stockData ? buildStockData(data.sizes, data.stockData) : null;
   await db.transaction(async (tx) => {
-    await tx.update(jerseys).set({ ...rest, image: gallery[0] || data.image, price: Number(data.price).toFixed(2), sizes: JSON.stringify(data.sizes) }).where(eq(jerseys.id, id));
+    await tx.update(jerseys).set({
+      ...rest, image: gallery[0] || data.image, price: Number(data.price).toFixed(2),
+      sizes: JSON.stringify(data.sizes),
+      ...(stock ? { stockData: stock.json, stock: stock.total } : {}),
+    }).where(eq(jerseys.id, id));
     await tx.delete(jerseyImages).where(eq(jerseyImages.jerseyId, id));
     if (gallery.length) {
       await tx.insert(jerseyImages).values(gallery.map((url, index) => ({ jerseyId: id, url, displayOrder: index })));
     }
   });
-  revalidatePath("/admin/products"); revalidatePath("/jersey"); revalidatePath(`/product/${id}`);
+  revalidatePath("/admin/products"); revalidatePath("/admin/jerseys"); revalidatePath("/jersey"); revalidatePath(`/product/${id}`);
   return { success: true };
 }
 

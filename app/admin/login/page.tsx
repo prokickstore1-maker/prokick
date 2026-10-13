@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
           try {
             const result = await loginAdminAction(email, password);
             if (result.success) {
-              router.push("/admin/orders");
+              router.push("/admin");
             } else {
               setError(result.error || "Gagal masuk");
               setLoading(false);

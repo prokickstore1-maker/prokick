@@ -37,17 +37,17 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments 
   }
 
   return (
-    <div className="space-y-8 text-[#0C0A09]">
-      <header className="border-b border-[#E5E5E5] pb-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-[#57534E]">Store configuration</p>
-        <h1 className="text-3xl font-black font-display">Settings</h1>
-        <p className="mt-1 text-sm text-[#57534E]">Manage homepage content, payment methods, and delivery rules.</p>
+    <div className="space-y-8 text-[#FAFAFA]">
+      <header className="border-b border-[#27272A] pb-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">Store configuration</p>
+        <h1 className="text-3xl font-black font-display text-white">Settings</h1>
+        <p className="mt-1 text-sm text-zinc-400">Manage homepage content, payment methods, and delivery rules.</p>
       </header>
 
-      {status && <p role="status" className="rounded-lg bg-[#FAFAF9] p-3 text-sm">{status}</p>}
+      {status && <p role="status" className="rounded-lg border border-[#27272A] bg-[#181820] p-3 text-sm text-zinc-200">{status}</p>}
 
-      <section className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
-        <h2 className="text-lg font-bold">Delivery</h2>
+      <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
+        <h2 className="text-lg font-bold text-white">Delivery</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           {[['Ongkir Jawa (IDR)', 'javaShippingCost', shipping, setShipping], ['Ongkir Luar Jawa (IDR)', 'outsideJavaShippingCost', eastShipping, setEastShipping], ['Gratis ongkir setelah', 'freeShippingMinItems', freeItems, setFreeItems]].map(([label, key, value, setter]) => (
             <Label key={key as string} className="space-y-1 text-sm font-semibold">
@@ -56,8 +56,8 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments 
             </Label>
           ))}
         </div>
-        <h3 className="pt-2 text-sm font-bold uppercase tracking-wider text-[#57534E]">Fee kustomisasi</h3>
-        <div className="grid gap-4 sm:grid-cols-4">
+        <h3 className="pt-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Fee kustomisasi</h3>
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
           {[['Fee nameset (IDR)', 'namesetFee', namesetFee, setNamesetFee], ['Fee patch (IDR)', 'patchFee', patchFee, setPatchFee], ['Gratis patch mulai', 'freePatchMinItems', freePatchItems, setFreePatchItems], ['Gratis nameset mulai', 'freeNamesetMinItems', freeNamesetItems, setFreeNamesetItems]].map(([label, key, value, setter]) => (
             <Label key={key as string} className="space-y-1 text-sm font-semibold">
               {label as string}
@@ -65,21 +65,27 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments 
             </Label>
           ))}
         </div>
-        <h3 className="pt-2 text-sm font-bold uppercase tracking-wider text-[#57534E]">Ticker navbar (berjalan)</h3>
-        <Label className="space-y-1 text-sm font-semibold">
-          Teks running banner
-          <Input className="font-normal" value={runningBanner} onChange={(event) => setRunningBanner(event.target.value)} onBlur={() => saveSetting("runningBannerText", runningBanner.slice(0, 500))} placeholder="NEW SEASON 2026/27 DROPS | GRATIS ONGKIR MIN. 2 Kaos | QRIS & E-WALLET" />
-          <span className="font-normal text-xs text-[#A8A29E]">Pisahkan fragmen dengan <code>|</code> — mobile hanya tampilkan fragmen pertama. Kosongkan untuk pakai teks bawaan.</span>
-        </Label>
-        <h3 className="pt-2 text-sm font-bold uppercase tracking-wider text-[#57534E]">Blokir pengiriman</h3>
+        <h3 className="pt-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Ticker navbar (berjalan)</h3>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-bold uppercase tracking-wider text-zinc-300">Teks running banner</Label>
+          <Input
+            className="w-full font-normal"
+            value={runningBanner}
+            onChange={(event) => setRunningBanner(event.target.value)}
+            onBlur={() => saveSetting("runningBannerText", runningBanner.slice(0, 500))}
+            placeholder="NEW SEASON 2026/27 DROPS | GRATIS ONGKIR MIN. 2 Kaos | QRIS & E-WALLET"
+          />
+          <p className="text-[11px] text-zinc-400">Pisahkan fragmen dengan tanda pipa <code>|</code> — mobile hanya menampilkan fragmen pertama. Kosongkan untuk pakai teks bawaan.</p>
+        </div>
+        <h3 className="pt-2 text-sm font-bold uppercase tracking-wider text-zinc-400">Blokir pengiriman</h3>
         <label className="flex items-center gap-2 text-sm font-medium">
           <Checkbox checked={sulawesiBlocked} onCheckedChange={(c) => { const on = c === true; setSulawesiBlocked(on); saveSetting("sulawesiBlocked", on ? "1" : "0"); }} />
           Tutup sementara pengiriman ke Sulawesi (Gorontalo termasuk) — checkout dari provinsi tersebut ditolak
         </label>
       </section>
 
-      <section className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
-        <h2 className="text-lg font-bold">Contact</h2>
+      <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
+        <h2 className="text-lg font-bold text-white">Contact</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Label className="space-y-1 text-sm font-semibold">
             WhatsApp number
@@ -100,17 +106,17 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments 
             ))}
           </div>
         </Label>
-        <p className="text-xs text-[#57534E]">WhatsApp: format internasional tanpa &quot;+&quot; — 6281234567890. Telegram: username tanpa @. Tombol invoice hanya tampil kalau kontaknya terisi.</p>
+        <p className="text-xs text-zinc-400">WhatsApp: format internasional tanpa &quot;+&quot; — 6281234567890. Telegram: username tanpa @. Tombol invoice hanya tampil kalau kontaknya terisi.</p>
       </section>
 
-      <section className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
-        <h2 className="text-lg font-bold">Homepage banners</h2>
+      <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
+        <h2 className="text-lg font-bold text-white">Homepage banners</h2>
         {initialBanners.map((banner) => <BannerEditor key={banner.id} banner={banner} onStatus={setStatus} />)}
       </section>
 
-      <section className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
-        <h2 className="text-lg font-bold">Payment methods</h2>
-        {initialPayments.length === 0 && <p className="text-sm text-[#57534E]">Belum ada metode pembayaran.</p>}
+      <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
+        <h2 className="text-lg font-bold text-white">Payment methods</h2>
+        {initialPayments.length === 0 && <p className="text-sm text-zinc-400">Belum ada metode pembayaran.</p>}
         {initialPayments.map((payment) => <PaymentEditor key={payment.id} payment={payment} onStatus={setStatus} />)}
         <NewPaymentEditor onStatus={setStatus} />
       </section>
@@ -180,7 +186,7 @@ function BannerEditor({ banner, onStatus }: { banner: Banner; onStatus: (message
     onStatus(r.success ? "Banner saved" : r.error || "Save failed");
   }
 
-  return <div className="grid gap-3 border-t border-[#E5E5E5] pt-4">
+  return <div className="grid gap-3 border-t border-[#27272A] pt-4">
     <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px_auto]">
       <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Banner title" />
       <Input value={subtitle} onChange={(e) => setSubtitle(e.target.value)} aria-label="Banner subtitle" />
@@ -190,12 +196,12 @@ function BannerEditor({ banner, onStatus }: { banner: Banner; onStatus: (message
     <div className="grid gap-3 sm:grid-cols-[1fr_110px_auto]">
       <div className="flex gap-2">
         <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="URL gambar banner" aria-label="URL gambar banner" className="font-normal" />
-        <label className="shrink-0 cursor-pointer rounded-lg border border-[#E5E5E5] bg-[#FAFAF9] px-3 py-2 text-xs font-bold hover:bg-[#F5F5F5]">
+        <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-3 py-2 text-xs font-bold text-white hover:bg-[#27272A]">
           {isUploading ? "..." : "Upload"}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.currentTarget.value = ""; }} />
         </label>
       </div>
-      <Label className="space-y-1 text-xs font-semibold text-[#57534E]">
+      <Label className="space-y-1 text-xs font-semibold text-zinc-400">
         Urutan
         <Input className="font-normal" type="number" min={0} value={displayOrder} onChange={(e) => setDisplayOrder(e.target.value)} />
       </Label>
@@ -226,14 +232,14 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
     setIsUploadingQr(false);
   }
 
-  return <div className="grid gap-3 border-t border-[#E5E5E5] pt-4">
+  return <div className="grid gap-3 border-t border-[#27272A] pt-4">
     <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_1.3fr_auto]">
       <Input value={label} onChange={(e) => setLabel(e.target.value)} aria-label="Payment label" />
       <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} aria-label="Account name" />
       <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} aria-label="Account number" />
       <div className="flex gap-2">
         <Input value={qrImageUrl} onChange={(e) => setQrImageUrl(e.target.value)} placeholder="QR image URL" aria-label="QR image URL" />
-        <label className="shrink-0 cursor-pointer rounded-lg border border-[#E5E5E5] bg-[#FAFAF9] px-2.5 py-2 text-xs font-bold hover:bg-[#F5F5F5] flex items-center">
+        <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-2.5 py-2 text-xs font-bold text-white hover:bg-[#27272A] flex items-center">
           {isUploadingQr ? "..." : "Upload QR"}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQrUpload(f); e.currentTarget.value = ""; }} />
         </label>
@@ -274,9 +280,9 @@ function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void })
     setIsUploadingQr(false);
   }
 
-  return <div className="grid gap-3 border-t border-[#E5E5E5] pt-4">
+  return <div className="grid gap-3 border-t border-[#27272A] pt-4">
     <div className="grid gap-3 sm:grid-cols-[140px_1fr_1fr_1fr_1.3fr_auto]">
-      <select className="h-9 rounded-lg border border-[#E5E5E5] bg-white px-2 text-sm" value={type} onChange={(e) => setType(e.target.value)} aria-label="Payment type">
+      <select className="h-9 rounded-lg border border-[#27272A] bg-[#181820] text-white px-2 text-sm" value={type} onChange={(e) => setType(e.target.value)} aria-label="Payment type">
         <option value="qr_pay">QR Pay</option>
         <option value="bank_transfer">Bank transfer</option>
         <option value="ewallet">E-wallet</option>
@@ -286,7 +292,7 @@ function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void })
       <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nomor rekening" aria-label="Account number baru" />
       <div className="flex gap-2">
         <Input value={qrImageUrl} onChange={(e) => setQrImageUrl(e.target.value)} placeholder="QR image URL (opsional)" aria-label="QR image URL baru" />
-        <label className="shrink-0 cursor-pointer rounded-lg border border-[#E5E5E5] bg-[#FAFAF9] px-2.5 py-2 text-xs font-bold hover:bg-[#F5F5F5] flex items-center">
+        <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-2.5 py-2 text-xs font-bold text-white hover:bg-[#27272A] flex items-center">
           {isUploadingQr ? "..." : "Upload QR"}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQrUpload(f); e.currentTarget.value = ""; }} />
         </label>

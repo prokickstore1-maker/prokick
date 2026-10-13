@@ -15,12 +15,20 @@ async function seed() {
     }
     const passwordHash = await bcrypt.hash(adminPassword, 12);
     console.log("Seeding admin user...");
-    await db.insert(users).values({
-      email: "admin@prokick.my",
-      password: passwordHash,
-      name: "ProKick ID Administrator",
-      role: "ADMIN",
-    }).onConflictDoNothing();
+    await db.insert(users).values([
+      {
+        email: "prokickstore1@gmail.com",
+        password: passwordHash,
+        name: "ProKick Administrator",
+        role: "ADMIN",
+      },
+      {
+        email: "admin@prokick.my",
+        password: passwordHash,
+        name: "ProKick ID Administrator",
+        role: "ADMIN",
+      },
+    ]).onConflictDoNothing();
 
     // 2. Seed Payment Methods (Indonesian Standards — placeholder, admin isi via Settings)
     console.log("Seeding Indonesian payment methods...");

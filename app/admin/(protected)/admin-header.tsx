@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Package, ShoppingBag, ArrowLeft, Settings, LogOut, Menu } from "lucide-react";
+import { Package, ShoppingBag, ArrowLeft, Settings, LogOut, Menu, Home } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { logoutAdminAction } from "@/app/actions/admin-auth";
 
 const navItems = [
+  { href: "/admin", label: "Beranda", icon: Home },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/jerseys", label: "Inventory", icon: Package },
@@ -21,7 +22,7 @@ function Nav({ onNavigate, vertical }: { onNavigate?: () => void; vertical?: boo
     <>
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+        const isActive = item.href === "/admin" ? pathname === "/admin" : pathname === item.href || pathname.startsWith(item.href + "/");
         return (
           <Link
             key={item.href}
@@ -29,12 +30,15 @@ function Nav({ onNavigate, vertical }: { onNavigate?: () => void; vertical?: boo
             onClick={onNavigate}
             className={cn(
               vertical
-                ? "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
+                ? "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
                 : "flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors",
-              !vertical &&
-                (isActive
+              vertical
+                ? isActive
                   ? "bg-[#E2F952] text-[#09090B]"
-                  : "bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white")
+                  : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                : isActive
+                  ? "bg-[#E2F952] text-[#09090B]"
+                  : "bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white"
             )}
           >
             <Icon className={vertical ? "w-4 h-4" : "w-3.5 h-3.5"} />

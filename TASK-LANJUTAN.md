@@ -2,7 +2,7 @@
 
 > Untuk agent baru. Baca dulu AGENTS.md, lalu file ini. Kerja dalam Bahasa Indonesia. PONYTAIL + CAVEMAN mode aktif. Tidak commit/push/build tanpa izin user. Verifikasi dengan `node_modules/.bin/tsc --noEmit`.
 
-## Status: migrasi kode SELESAI + fitur dynamic settings SELESAI (uncommitted, tsc EXIT=0). User push sendiri.
+## Status: migrasi kode SELESAI + fitur dynamic settings SELESAI + batch audit SELESAI + batch 4 fitur admin SELESAI (uncommitted, tsc EXIT=0). User push sendiri.
 
 ### Yang sudah selesai (jangan diulang)
 - Semua task 1 & 2 dari versi sebelumnya DONE:
@@ -73,7 +73,24 @@
 - [x] Customizer foto fallback: `onError` per-gambar (main + thumbnail) → `/images/jerseys/madrid-home.jpg`, state `imgOk` per index.
 - [x] Admin thumbnail produk: `object-contain` + latar terang — foto rasio apa pun tak terpotong di grid galeri.
 
-### 4. Verifikasi manual dev (user minta)
+### 3f. Batch Audit 6 Item (sesi terkini, uncommitted)
+- [x] Header admin tak terbaca di latar gelap: `product-manager.tsx` header/section/label/input/hint/tombol diseragamkan ke token gelap (`#121217`/`#27272A`/`#181820`, teks `#FAFAFA`/zinc-400, tombol `bg-volt text-black`).
+- [x] Tabel produk terpotong di HP: `product-manager.tsx` kartu mobile (`sm:hidden`, thumbnail 56px + Edit/Hapus `min-h-11`) + tabel desktop `hidden sm:block`.
+- [x] Stok +/- hilang di HP: `jersey-stock-table.tsx` kartu stok mobile (`sm:hidden`) — grid ukuran 2 kolom, tombol ± `w-8 h-8` (+ volt), tabel desktop tetap.
+- [x] Validasi foto terlalu kaku: ambang turun 800px → 300px (`product-manager.tsx` `resolve(Math.min(probe.width, probe.height) >= 300)`); semua rasio tetap diterima.
+- [x] Input running banner terjepit ("NEW SEASO"): wrapper `space-y-1.5` + Label terpisah + `Input className="w-full"` (`settings-form.tsx`).
+- [x] Tema Frankenstein admin: seluruh section Contact/Banners/Payments + `BannerEditor`/`PaymentEditor`/`NewPaymentEditor` + `orders-table.tsx` (tabel, tab filter, dua modal) dikonversi ke token gelap DESIGN.md.
+- [x] Kartu order HP: `orders-table.tsx` kartu mobile (`sm:hidden`) — nomor order + waktu, badge status, nama + tombol WA (`toIntlPhone`), total `formatIDR`, tombol slip, item + nameset/patch, tracking, catatan admin, tombol aksi `min-h-11`.
+- Verifikasi: `node_modules/.bin/tsc --noEmit` EXIT=0.
+
+### 4. Batch 4 fitur admin (sesi terkini, uncommitted)
+- [x] Input stok langsung di form produk: fieldset "4 · Harga, ukuran & stok" render input number per ukuran (pcs, min 0); `stockData` dikirim di payload; server `buildStockData()` di `app/actions/products.ts` — create & update menulis `jerseys.stockData` + `stock` total; ukuran tanpa input = 0; update hanya timpa stok kalau form kirim `stockData`.
+- [x] Dropzone foto ramah HP: area `border-2 border-dashed` min-h-32 (drag & drop + tap), ikon `ImagePlus`, copy "Sentuh atau tarik foto produk ke sini (Maksimal 8 foto)"; badge **UTAMA** volt di foto pertama; status Simpan: "Mengompres foto N/M…" → "Mengunggah…" → "Menyimpan produk…". Field URL manual dihapus (YAGNI).
+- [x] Dashboard Command Center `/admin`: ganti `redirect("/admin/orders")` — 4 kartu (Perlu Diproses=PROCESSING, Sedang Dikirim=SHIPPED, Stok Kritis `<3`, Total Penjualan omset COMPLETED) + 4 tombol pintas (Tambah Produk/Cek Pesanan/Kelola Stok/Pengaturan) + 5 pesanan terkini (nama, total formatIDR, badge status, tombol WA `toIntlPhone`).
+- [x] Form produk terpisah: `components/admin/product-form.tsx` (extract dari product-manager); rute baru `/admin/products/new` (create) + `/admin/products/[id]` (edit, guard UUID via `getJerseyById` → notFound); `/admin/products` murni list + tombol [+ Tambah Produk Baru] + kolom Stok di tabel.
+- Verifikasi: `node_modules/.bin/tsc --noEmit` EXIT=0.
+
+### 5. Verifikasi manual dev (user minta)
 - Checkout Jawa (15k) vs Luar Jawa (30k); free shipping ≥2 item.
 - Fee nameset 70k / patch 35k; upload bukti → invoice Rp + Telegram.
 - Admin ganti ongkir settings → terbaca.
