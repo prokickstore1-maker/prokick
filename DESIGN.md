@@ -1,13 +1,23 @@
 # ProKick Store — Design Direction
 
-Dokumen ini adalah **satu-satunya sumber arah visual** untuk ProKick.
+Dokumen ini adalah **sumber arah visual** untuk ProKick: aturan keras di bawah mengikat, sisanya bebas dikreasikan.
 `antislop.md` adalah filter; dokumen ini adalah jiwanya.
+
+---
+
+## 0. Terkunci vs bebas
+
+**Terkunci (jangan dilanggar):** palet §2, radius §4, aturan pill §4, tipografi §3 (mono hanya untuk data), larangan warna tambahan.
+
+**Bebas (kreasikan, selama tak melanggar yang terkunci):** komposisi section, urutan section, ukuran/rasio tile, gaya hero, jumlah kolom grid, copywriting, ikon, motion selama masih MOTION 1.
+
+Aturan yang tak tercantum di sini = bebas. Ragu? Pilih yang lebih sederhana.
 
 ---
 
 ## 1. Identitas
 
-- **Produk:** toko jersey bola Malaysia (ProKick), publik belanja, mobile-first.
+- **Produk:** toko jersey bola Indonesia (ProKick), publik belanja, mobile-first.
 - **Karakter:** *matchday terrace* — keras, kontras tinggi, siap lapangan. Bukan SaaS studio, bukan lifestyle boutique.
 - **Rasa:** stadion malam hari. Hitam pekat, satu lampu sorot ke jersey, aksen kuning volt seperti ban stadion.
 - **Satu kalimat:** "Toko kit bola yang terlihat seperti dinding ruang ganti, bukan dashboard."
@@ -22,16 +32,14 @@ Dokumen ini adalah **satu-satunya sumber arah visual** untuk ProKick.
 | `text` | `#FAFAFA` | teks utama |
 | `muted` | `#A1A1AA` | teks sekunder |
 | **accent** | `volt #E2F952` | **satu-satunya** aksen kuat: CTA, harga, progres, stok hidup, status aktif |
-| `harimau` | `#F59E0B` | **hanya** konteks Malaysia/Harimau Malaya (badge liga World Cup, nav, kartu nasional) |
 
 **Alasan:** hitam = fokus ke produk; kuning volt = warna ring / ban stadion, membedakan dari biru-ungu default AI.
 
-**Aturan keras — warna tambahan DILARANG. Empat aturan ini menutup semua kasus:**
+**Aturan keras — warna tambahan DILARANG. Tiga aturan ini menutup semua kasus:**
 
 1. **Aksen tunggal.** Volt (`#E2F952`) untuk semua yang butuh penekanan: CTA, harga total, progres bundle, "In Stock", status aktif. Tidak ada aksen kedua di storefront.
-2. **`harimau` hanya untuk Malaysia.** Kalau komponennya bukan tentang timnas/Harimau Malaya, jangan pakai. Amber mentah (`text-amber-300`, `from-amber-400`) dilarang di mana pun — pakai token `--harimau` atau jangan sama sekali.
-3. **Status semantik = emerald + cyan saja.** `emerald` = berhasil/terkirim/selesai/lunas. `cyan` = sedang diproses/verifikasi. Status lain (menunggu, dibatalkan, nonaktif) = `zinc` netral. `red` hanya untuk error dan retur — bukan badge.
-4. **Kelipatan keempat = hapus.** Kalau sebuah section butuh warna di luar volt/harimau/emerald/cyan/zinc/red, section itu salah — pecah atau hapus.
+2. **Status semantik = emerald + cyan saja.** `emerald` = berhasil/terkirim/selesai/lunas. `cyan` = sedang diproses/verifikasi. Status lain (menunggu, dibatalkan, nonaktif) = `zinc` netral. `red` hanya untuk error dan retur — bukan badge.
+3. **Kelipatan ketiga = hapus.** Kalau sebuah section butuh warna di luar volt/emerald/cyan/zinc/red, section itu salah — pecah atau hapus.
 
 ## 3. Tipografi
 
@@ -50,7 +58,7 @@ Dokumen ini adalah **satu-satunya sumber arah visual** untuk ProKick.
 
 ## 5. Dials
 
-> Reading this as: e-commerce jersey olahraga untuk fan Malaysia, bahasa terrace-stadium gelap, dial **ENERGY 2 / RHYTHM 2 / MOTION 1**.
+> Reading this as: e-commerce jersey olahraga untuk fan, bahasa terrace-stadium gelap, dial **ENERGY 2 / RHYTHM 2 / MOTION 1**.
 
 - **ENERGY 2** — kontras tinggi, teks tebal uppercase di judul, tapi tidak eksperimental.
 - **RHYTHM 2** — grid katalog konsisten, variasi pada hero + 1 section promo saja. Bukan tiap section beda gaya.
@@ -64,7 +72,7 @@ Dokumen ini adalah **satu-satunya sumber arah visual** untuk ProKick.
 
 ## 7. Konten
 
-- Semua klaim layanan (contoh: "Free Delivery on 2+ Kits", "DuitNow QR") harus nyata dan bisa diverifikasi dari data/checkout.
+- Semua klaim layanan (contoh: "Free Delivery on 2+ Kits", "QRIS") harus nyata dan bisa diverifikasi dari data/checkout.
 - Copy pakai bahasa faktual dan spesifik produk. Hindari hype/urgensi yang tidak bisa dibuktikan: "Elite", "Iconic", "Trending", "Drop", "Revolutionary", "Unleash", "Best" (kecuali label data best-seller), dan CTA generik "Explore/Discover".
 - Hindari pengulangan klaim lintas halaman; sebut benefit di lokasi yang membantu keputusan pembelian, bukan di setiap komponen.
 - Deskripsi produk tanpa data → kosongkan, jangan isi template generik.
@@ -73,7 +81,7 @@ Dokumen ini adalah **satu-satunya sumber arah visual** untuk ProKick.
 ## 8. Alasan keputusan (R-31, ringkas)
 
 - **Kenapa hitam?** Fokus produk, bukan brand biru-ungu.
-- **Kenapa volt?** Satu aksen = identitas; amber pengganti hanya konteks Malaysia.
+- **Kenapa volt?** Satu aksen = identitas; satu keluar dari biru-ungu default.
 - **Kenapa pill hanya untuk CTA?** Satu bentuk istimewa menandai aksi beli.
 - **Kenapa mono terbatas?** Mono = data (harga/ukuran), bukan dekorasi.
 - **Kenapa motion 1?** Toko belanja, kecepatan > efek.

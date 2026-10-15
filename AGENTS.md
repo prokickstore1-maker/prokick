@@ -8,6 +8,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+## Mulai sesi
+
+1. Baca `00-DOCS.md` — peta dokumen, status proyek, backlog prioritas, aturan main.
+2. Status bug: lihat `bug-audit/AUDIT.md` sebelum mengklaim sesuatu sudah/belum difix.
+3. Verifikasi sebelum klaim selesai: `node_modules/.bin/tsc --noEmit` harus EXIT=0.
+4. Jangan commit/push/build/migration tanpa izin user.
+
 <!-- antislop:start -->
 ## antislop
 Untuk kerja UI, copy, people, mobile layout, atau code comment, baca `.claude/skills/antislop/SKILL.md` (core) lalu skill untuk tugasnya:

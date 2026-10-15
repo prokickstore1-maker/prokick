@@ -130,7 +130,7 @@ export const testimonials = pgTable("testimonials", {
   rating: integer("rating").default(5).notNull(),
   comment: text("comment").notNull(),
   club: text("club"),
-  proofImage: text("proof_image"),
+  proofImage: text("proof_image"), // screenshot WhatsApp dari admin (URL hasil upload)
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

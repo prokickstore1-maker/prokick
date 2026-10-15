@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { updateBannerAction, updatePaymentMethodAction, updateStoreSettingAction, createPaymentMethodAction, deletePaymentMethodAction } from "@/app/actions/settings";
+import { createTestimonialAction, updateBannerAction, updatePaymentMethodAction, updateStoreSettingAction, createPaymentMethodAction, deletePaymentMethodAction, updateTestimonialAction, deleteTestimonialAction } from "@/app/actions/settings";
 import { uploadProductImageAction } from "@/app/actions/products";
-import type { Banner, PaymentMethod, Setting } from "@/db/schema";
+import type { Banner, PaymentMethod, Setting, Testimonial } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,10 @@ interface Props {
   initialSettings: Setting[];
   initialBanners: Banner[];
   initialPayments: PaymentMethod[];
+  initialTestimonials: Testimonial[];
 }
 
-export function SettingsForm({ initialSettings, initialBanners, initialPayments }: Props) {
+export function SettingsForm({ initialSettings, initialBanners, initialPayments, initialTestimonials }: Props) {
   const [status, setStatus] = useState("");
   const settingMap = Object.fromEntries(initialSettings.map((item) => [item.key, item.value]));
   const [shipping, setShipping] = useState(settingMap.javaShippingCost || "15000");
@@ -119,6 +120,13 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments 
         {initialPayments.length === 0 && <p className="text-sm text-zinc-400">Belum ada metode pembayaran.</p>}
         {initialPayments.map((payment) => <PaymentEditor key={payment.id} payment={payment} onStatus={setStatus} />)}
         <NewPaymentEditor onStatus={setStatus} />
+      </section>
+
+      <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
+        <h2 className="text-lg font-bold text-white">Testimoni pembeli</h2>
+        <p className="text-xs text-zinc-400">Screenshot chat WhatsApp pembeli, diisi admin. Tampil di atas footer storefront.</p>
+        {initialTestimonials.map((t) => <TestimonialEditor key={t.id} testimonial={t} onStatus={setStatus} />)}
+        <NewTestimonialEditor onStatus={setStatus} />
       </section>
     </div>
   );
@@ -304,4 +312,98 @@ function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void })
       }}>Tambah</Button>
     </div>
   </div>;
+}
+
+type TestimonialDraft = { name: string; rating: number; comment: string; club: string; proofImage: string };
+
+function TestimonialFields({ draft, setDraft, onStatus }: { draft: TestimonialDraft; setDraft: (d: TestimonialDraft) => void; onStatus: (m: string) => void }) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  async function handleProofUpload(file: File) {
+    setIsUploading(true);
+    const result = await resizeAndUploadImage(file, 1400);
+    if (result.success && result.url) {
+      setDraft({ ...draft, proofImage: result.url });
+      onStatus("Screenshot terupload — klik Simpan.");
+    } else {
+      onStatus(result.error || "Upload screenshot gagal");
+    }
+    setIsUploading(false);
+  }
+
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_100px]">
+        <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Nama pembeli" aria-label="Nama pembeli" />
+        <Input value={draft.club} onChange={(e) => setDraft({ ...draft, club: e.target.value })} placeholder="Klub (opsional)" aria-label="Klub" />
+        <Label className="space-y-1 text-xs font-semibold text-zinc-400">
+          Rating
+          <select
+            value={draft.rating}
+            onChange={(e) => setDraft({ ...draft, rating: Number(e.target.value) })}
+            aria-label="Rating"
+            className="w-full rounded-lg border border-[#27272A] bg-[#181820] px-3 py-2 text-sm text-white"
+          >
+            {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </Label>
+      </div>
+      <Input value={draft.comment} onChange={(e) => setDraft({ ...draft, comment: e.target.value })} placeholder="Isi testimoni (ringkas dari chat)" aria-label="Isi testimoni" className="font-normal" />
+      <div className="flex gap-2">
+        <Input value={draft.proofImage} onChange={(e) => setDraft({ ...draft, proofImage: e.target.value })} placeholder="URL screenshot WhatsApp (opsional)" aria-label="URL screenshot" className="font-normal" />
+        <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-3 py-2 text-xs font-bold text-white hover:bg-[#27272A] flex items-center">
+          {isUploading ? "..." : "Upload screenshot"}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleProofUpload(f); e.currentTarget.value = ""; }} />
+        </label>
+      </div>
+    </>
+  );
+}
+
+function TestimonialEditor({ testimonial, onStatus }: { testimonial: Testimonial; onStatus: (m: string) => void }) {
+  const [draft, setDraft] = useState<TestimonialDraft>({
+    name: testimonial.name,
+    rating: testimonial.rating,
+    comment: testimonial.comment,
+    club: testimonial.club || "",
+    proofImage: testimonial.proofImage || "",
+  });
+  const [isActive, setIsActive] = useState(testimonial.active);
+
+  return (
+    <div className="space-y-3 border-t border-[#27272A] pt-4">
+      <TestimonialFields draft={draft} setDraft={setDraft} onStatus={onStatus} />
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <Checkbox checked={isActive} onCheckedChange={(c) => setIsActive(c === true)} /> Tampil di storefront
+        </label>
+        <Button className="h-auto px-4 py-2 text-xs uppercase tracking-wider font-bold" onClick={async () => {
+          const r = await updateTestimonialAction(testimonial.id, { ...draft, club: draft.club || undefined, proofImage: draft.proofImage || undefined }, isActive);
+          onStatus(r.success ? "Testimoni tersimpan" : r.error || "Save failed");
+        }}>Simpan</Button>
+        <Button variant="outline" className="h-auto px-4 py-2 text-xs uppercase tracking-wider font-bold border-red-900 text-red-300 hover:bg-red-950/40 hover:text-red-200" onClick={async () => {
+          if (!window.confirm(`Hapus testimoni dari ${testimonial.name}?`)) return;
+          const r = await deleteTestimonialAction(testimonial.id);
+          if (r.success) { onStatus("Testimoni dihapus"); window.location.reload(); }
+          else onStatus(r.error || "Delete failed");
+        }}>Hapus</Button>
+      </div>
+    </div>
+  );
+}
+
+function NewTestimonialEditor({ onStatus }: { onStatus: (m: string) => void }) {
+  const [draft, setDraft] = useState<TestimonialDraft>({ name: "", rating: 5, comment: "", club: "", proofImage: "" });
+
+  return (
+    <div className="space-y-3 border-t border-[#27272A] pt-4">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">Tambah testimoni</h3>
+      <TestimonialFields draft={draft} setDraft={setDraft} onStatus={onStatus} />
+      <Button variant="outline" className="h-auto px-4 py-2 text-xs uppercase tracking-wider font-bold" onClick={async () => {
+        const r = await createTestimonialAction({ ...draft, club: draft.club || undefined, proofImage: draft.proofImage || undefined });
+        if (r.success) { onStatus("Testimoni ditambahkan"); window.location.reload(); }
+        else onStatus(r.error || "Add failed");
+      }}>Tambah</Button>
+    </div>
+  );
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
-import { banners, paymentMethods, settings } from "@/db/schema";
+import { banners, paymentMethods, settings, testimonials } from "@/db/schema";
 import { db, checkDbConnection } from "@/lib/db";
 import { isAdmin } from "@/lib/admin-auth";
 
@@ -87,6 +87,77 @@ export async function deletePaymentMethodAction(id: string) {
   }
   await db.delete(paymentMethods).where(eq(paymentMethods.id, id));
   revalidatePath("/cart");
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+// —— Testimonials (diisi & dimoderasi admin, tampil di atas footer) ——
+
+export interface TestimonialInput {
+  name: string;
+  rating: number;
+  comment: string;
+  club?: string;
+  proofImage?: string;
+}
+
+function validTestimonialInput(input: TestimonialInput) {
+  return typeof input === "object" && input !== null &&
+    typeof input.name === "string" && input.name.trim().length > 0 && input.name.length <= 80 &&
+    Number.isInteger(input.rating) && input.rating >= 1 && input.rating <= 5 &&
+    typeof input.comment === "string" && input.comment.trim().length > 0 && input.comment.length <= 600 &&
+    (input.club === undefined || input.club.length <= 80) &&
+    (input.proofImage === undefined || input.proofImage === null ||
+      ((input.proofImage.startsWith("/") || /^https?:\/\//.test(input.proofImage)) && input.proofImage.length <= 500));
+}
+
+export async function createTestimonialAction(input: TestimonialInput) {
+  const error = await guard();
+  if (error) return { success: false, error };
+  if (!validTestimonialInput(input)) return { success: false, error: "Invalid testimonial" };
+
+  await db.insert(testimonials).values({
+    name: input.name.trim(),
+    rating: input.rating,
+    comment: input.comment.trim(),
+    club: input.club?.trim() || null,
+    proofImage: input.proofImage || null,
+    active: true,
+  });
+  revalidatePath("/");
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function updateTestimonialAction(id: string, input: TestimonialInput, active: boolean) {
+  const error = await guard();
+  if (error) return { success: false, error };
+  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ||
+      !validTestimonialInput(input) || typeof active !== "boolean") {
+    return { success: false, error: "Invalid testimonial" };
+  }
+
+  await db.update(testimonials).set({
+    name: input.name.trim(),
+    rating: input.rating,
+    comment: input.comment.trim(),
+    club: input.club?.trim() || null,
+    proofImage: input.proofImage || null,
+    active,
+  }).where(eq(testimonials.id, id));
+  revalidatePath("/");
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function deleteTestimonialAction(id: string) {
+  const error = await guard();
+  if (error) return { success: false, error };
+  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return { success: false, error: "Invalid testimonial" };
+  }
+  await db.delete(testimonials).where(eq(testimonials.id, id));
+  revalidatePath("/");
   revalidatePath("/admin/settings");
   return { success: true };
 }

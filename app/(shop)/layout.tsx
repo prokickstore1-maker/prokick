@@ -1,6 +1,7 @@
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
+import { TestimonialsSection } from "@/components/testimonials/testimonials-section";
 import { getAllJerseys, getShippingSettingsMap } from "@/lib/data";
 import { buildLeagueOptions } from "@/lib/leagues";
 
@@ -17,6 +18,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       </a>
       <Navbar leagues={leagues} shippingSettings={shippingSettings} />
       <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
+      <TestimonialsSection />
       <Footer />
       <CartDrawer shippingSettings={shippingSettings} />
     </>

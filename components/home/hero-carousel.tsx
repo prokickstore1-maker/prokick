@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MockBanner } from "@/lib/mock-data";
+import type { BannerView } from "@/lib/data";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HeroCarouselProps {
-  banners: MockBanner[];
+  banners: BannerView[];
 }
 
 export function HeroCarousel({ banners }: HeroCarouselProps) {
@@ -47,7 +47,7 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
         fill
         priority
         sizes="(max-width: 1540px) 100vw, 1540px"
-        className="object-cover object-[center_25%] brightness-[0.72] transition-transform duration-1000 ease-out group-hover:scale-105"
+        className="object-cover object-[center_25%] brightness-[0.72] transition-transform duration-300 ease-out group-hover:scale-105 motion-reduce:transition-none"
       />
       {/* Scrim: lebih pekat di kiri/bawah agar copy terbaca di semua slide (M-04) */}
       <div className="absolute inset-0 bg-gradient-to-t from-[#09090B] via-[#09090B]/50 to-transparent" />

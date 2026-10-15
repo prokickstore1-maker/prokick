@@ -1,6 +1,5 @@
 import { db, checkDbConnection } from "./db";
 import { orders, orderItems, jerseys } from "@/db/schema";
-import { MOCK_JERSEYS } from "@/lib/mock-data";
 import { eq, desc } from "drizzle-orm";
 
 export interface StoredOrderItem {
@@ -44,72 +43,18 @@ export interface StoredOrder {
   items: StoredOrderItem[];
 }
 
-// In-memory dev cache fallback
-const globalOrders = globalThis as unknown as {
-  mockOrders: StoredOrder[] | undefined;
-  mockJerseys: typeof MOCK_JERSEYS | undefined;
-};
-
-if (!globalOrders.mockJerseys) globalOrders.mockJerseys = MOCK_JERSEYS;
-
-if (!globalOrders.mockOrders) {
-  globalOrders.mockOrders = [
-    {
-      id: "demo-order-1",
-      orderNumber: "PK-20260922-8491",
-      customerName: "Ahmad Farhan",
-      customerPhone: "+6281234567890",
-      customerAddress: "Jl. Kemang Raya No. 12, Jakarta Selatan, 12730, DKI Jakarta, Indonesia",
-      shippingZone: "Jawa",
-      shippingCost: "0",
-      subtotal: "763000",
-      totalAmount: "763000",
-      paymentMethodId: "qr-pay",
-      paymentMethodLabel: "QRIS",
-      paymentProofUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80",
-      paymentStatus: "PAID",
-      orderStatus: "PROCESSING",
-      trackingNumber: null,
-      adminNotes: "Customer requested UCL font style",
-      createdAt: new Date(Date.now() - 3600000),
-      items: [
-        {
-          id: "item-1",
-          name: "Real Madrid Home 2026/27 Player Issue",
-          size: "L",
-          quantity: 1,
-          unitPrice: "451500",
-          namesetName: "MBAPPE",
-          namesetNumber: "9",
-          namesetPrice: "70000",
-        },
-        {
-          id: "item-2",
-          name: "Liverpool Home 2026/27 Fans Version",
-          size: "M",
-          quantity: 1,
-          unitPrice: "311500",
-          patch: "UCL Starball + Foundation",
-          patchPrice: "0.00",
-        },
-      ],
-    },
-  ];
-}
-
 export async function getOrderByIdempotencyKey(key: string): Promise<StoredOrder | null> {
   const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) return null;
 
-  if (isDbOnline) {
-    try {
-      const row = await db.query.orders.findFirst({ where: eq(orders.idempotencyKey, key), columns: { id: true } });
-      if (row) return getOrderById(row.id);
-    } catch (e) {
-      console.warn("Idempotency lookup failed:", e);
-    }
+  try {
+    const row = await db.query.orders.findFirst({ where: eq(orders.idempotencyKey, key), columns: { id: true } });
+    if (row) return getOrderById(row.id);
+  } catch (e) {
+    console.warn("Idempotency lookup failed:", e);
   }
 
-  return globalOrders.mockOrders?.find((o) => o.idempotencyKey === key) || null;
+  return null;
 }
 
 /**
@@ -118,85 +63,58 @@ export async function getOrderByIdempotencyKey(key: string): Promise<StoredOrder
  */
 export async function createOrderWithStock(order: StoredOrder): Promise<StoredOrder> {
   const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) throw new Error("Database offline. Order not saved.");
 
-  if (isDbOnline) {
-    await db.transaction(async (tx) => {
-      for (const item of order.items) {
-        if (!item.jerseyId) throw new Error("Product unavailable");
-        // FOR UPDATE: two concurrent checkouts of the last unit must serialize here,
-        // otherwise both read the same stock and both pass the check.
-        const [row] = await tx.select().from(jerseys).where(eq(jerseys.id, item.jerseyId)).for("update");
-        if (!row) throw new Error("Product unavailable");
-        const stockData = typeof row.stockData === "string" ? JSON.parse(row.stockData) : row.stockData || {};
-        const current = Number(stockData[item.size] || 0);
-        if (current < item.quantity) throw new Error(`Insufficient stock for size ${item.size}`);
-        stockData[item.size] = current - item.quantity;
-        const stock = Object.values(stockData).reduce((sum: number, value) => sum + Number(value || 0), 0);
-        await tx.update(jerseys).set({ stockData: JSON.stringify(stockData), stock }).where(eq(jerseys.id, item.jerseyId));
-      }
+  await db.transaction(async (tx) => {
+    for (const item of order.items) {
+      if (!item.jerseyId) throw new Error("Product unavailable");
+      // FOR UPDATE: two concurrent checkouts of the last unit must serialize here,
+      // otherwise both read the same stock and both pass the check.
+      const [row] = await tx.select().from(jerseys).where(eq(jerseys.id, item.jerseyId)).for("update");
+      if (!row) throw new Error("Product unavailable");
+      const stockData = typeof row.stockData === "string" ? JSON.parse(row.stockData) : row.stockData || {};
+      const current = Number(stockData[item.size] || 0);
+      if (current < item.quantity) throw new Error(`Insufficient stock for size ${item.size}`);
+      stockData[item.size] = current - item.quantity;
+      const stock = Object.values(stockData).reduce((sum: number, value) => sum + Number(value || 0), 0);
+      await tx.update(jerseys).set({ stockData: JSON.stringify(stockData), stock }).where(eq(jerseys.id, item.jerseyId));
+    }
 
-      await tx.insert(orders).values({
-        id: order.id,
-        orderNumber: order.orderNumber,
-        customerName: order.customerName,
-        customerPhone: order.customerPhone,
-        customerAddress: order.customerAddress,
-        shippingZone: order.shippingZone,
-        shippingCost: order.shippingCost,
-        subtotal: order.subtotal,
-        totalAmount: order.totalAmount,
-        paymentMethodId: order.paymentMethodId,
-        paymentSnapshot: order.paymentSnapshot,
-        paymentProofUrl: order.paymentProofUrl,
-        paymentStatus: order.paymentStatus,
-        orderStatus: order.orderStatus,
-        trackingNumber: order.trackingNumber,
-        adminNotes: order.adminNotes,
-        idempotencyKey: order.idempotencyKey,
-      });
-
-      for (const item of order.items) {
-        await tx.insert(orderItems).values({
-          orderId: order.id,
-          jerseyId: item.jerseyId,
-          size: item.size,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          namesetName: item.namesetName,
-          namesetNumber: item.namesetNumber,
-          namesetPrice: item.namesetPrice || "0.00",
-          patch: item.patch,
-          patchPrice: item.patchPrice || "0.00",
-        });
-      }
+    await tx.insert(orders).values({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      customerAddress: order.customerAddress,
+      shippingZone: order.shippingZone,
+      shippingCost: order.shippingCost,
+      subtotal: order.subtotal,
+      totalAmount: order.totalAmount,
+      paymentMethodId: order.paymentMethodId,
+      paymentSnapshot: order.paymentSnapshot,
+      paymentProofUrl: order.paymentProofUrl,
+      paymentStatus: order.paymentStatus,
+      orderStatus: order.orderStatus,
+      trackingNumber: order.trackingNumber,
+      adminNotes: order.adminNotes,
+      idempotencyKey: order.idempotencyKey,
     });
 
-    return order;
-  }
-
-  // Offline/dev: validate against the in-memory catalog, then commit both
-  const snapshot = order.items.map((item) => {
-    const product = globalOrders.mockJerseys?.find((j) => j.id === item.jerseyId);
-    return { item, product, previous: product ? product.stockData[item.size] : undefined };
+    for (const item of order.items) {
+      await tx.insert(orderItems).values({
+        orderId: order.id,
+        jerseyId: item.jerseyId,
+        size: item.size,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        namesetName: item.namesetName,
+        namesetNumber: item.namesetNumber,
+        namesetPrice: item.namesetPrice || "0.00",
+        patch: item.patch,
+        patchPrice: item.patchPrice || "0.00",
+      });
+    }
   });
-
-  for (const { item, product } of snapshot) {
-    // unknown id = forged/stale cart; block instead of creating an order for nothing
-    if (!product) throw new Error("Product unavailable");
-    if ((product.stockData[item.size] || 0) < item.quantity) throw new Error(`Insufficient stock for size ${item.size}`);
-  }
-
-  try {
-    for (const { item, product } of snapshot) {
-      if (product) product.stockData[item.size] = (product.stockData[item.size] || 0) - item.quantity;
-    }
-    globalOrders.mockOrders?.unshift(order);
-  } catch (e) {
-    for (const { item, product, previous } of snapshot) {
-      if (product && previous !== undefined) product.stockData[item.size] = previous;
-    }
-    throw e;
-  }
 
   return order;
 }
@@ -234,145 +152,132 @@ function paymentFromSnapshot(order: {
 
 export async function getOrderById(id: string): Promise<StoredOrder | null> {
   const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) return null;
 
-  if (isDbOnline) {
-    try {
-      const cleanId = id.trim();
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
-      const row = await db.query.orders.findFirst({
-        where: isUuid ? eq(orders.id, cleanId) : eq(orders.orderNumber, cleanId.toUpperCase()),
-        with: {
-          items: { with: { jersey: true } },
-          paymentMethod: true,
-        },
-      });
+  try {
+    const cleanId = id.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+    const row = await db.query.orders.findFirst({
+      where: isUuid ? eq(orders.id, cleanId) : eq(orders.orderNumber, cleanId.toUpperCase()),
+      with: {
+        items: { with: { jersey: true } },
+        paymentMethod: true,
+      },
+    });
 
-      if (row) {
-        return {
-          id: row.id,
-          orderNumber: row.orderNumber,
-          customerName: row.customerName,
-          customerPhone: row.customerPhone,
-          customerAddress: row.customerAddress,
-          shippingZone: row.shippingZone,
-          shippingCost: row.shippingCost,
-          subtotal: row.subtotal,
-          totalAmount: row.totalAmount,
-          paymentMethodId: row.paymentMethodId,
-          ...paymentFromSnapshot(row),
-          paymentSnapshot: row.paymentSnapshot,
-          paymentProofUrl: row.paymentProofUrl,
-          paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
-          orderStatus: row.orderStatus as StoredOrder["orderStatus"],
-          trackingNumber: row.trackingNumber,
-          adminNotes: row.adminNotes,
-          createdAt: row.createdAt || new Date(),
-          items: row.items.map((i) => ({
-            id: i.id,
-            jerseyId: i.jerseyId,
-            name: i.jersey?.name || "Jersey Edition",
-            size: i.size,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-            namesetName: i.namesetName,
-            namesetNumber: i.namesetNumber,
-            namesetPrice: i.namesetPrice,
-            patch: i.patch,
-            patchPrice: i.patchPrice,
-          })),
-        };
-      }
-    } catch (e) {
-      console.warn("DB query order error, checking dev memory:", e);
+    if (row) {
+      return {
+        id: row.id,
+        orderNumber: row.orderNumber,
+        customerName: row.customerName,
+        customerPhone: row.customerPhone,
+        customerAddress: row.customerAddress,
+        shippingZone: row.shippingZone,
+        shippingCost: row.shippingCost,
+        subtotal: row.subtotal,
+        totalAmount: row.totalAmount,
+        paymentMethodId: row.paymentMethodId,
+        ...paymentFromSnapshot(row),
+        paymentSnapshot: row.paymentSnapshot,
+        paymentProofUrl: row.paymentProofUrl,
+        paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
+        orderStatus: row.orderStatus as StoredOrder["orderStatus"],
+        trackingNumber: row.trackingNumber,
+        adminNotes: row.adminNotes,
+        createdAt: row.createdAt || new Date(),
+        items: row.items.map((i) => ({
+          id: i.id,
+          jerseyId: i.jerseyId,
+          name: i.jersey?.name || "Jersey Edition",
+          size: i.size,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          namesetName: i.namesetName,
+          namesetNumber: i.namesetNumber,
+          namesetPrice: i.namesetPrice,
+          patch: i.patch,
+          patchPrice: i.patchPrice,
+        })),
+      };
     }
+  } catch (e) {
+    console.warn("DB query order error:", e);
   }
 
-  const found = globalOrders.mockOrders?.find((o) => o.id === id || o.orderNumber === id);
-  return found || null;
+  return null;
 }
 
 export async function getAllOrders(): Promise<StoredOrder[]> {
   const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) return [];
 
-  if (isDbOnline) {
-    try {
-      const rows = await db.query.orders.findMany({
-        orderBy: [desc(orders.createdAt)],
-        with: {
-          items: { with: { jersey: true } },
-          paymentMethod: true,
-        },
-      });
+  try {
+    const rows = await db.query.orders.findMany({
+      orderBy: [desc(orders.createdAt)],
+      with: {
+        items: { with: { jersey: true } },
+        paymentMethod: true,
+      },
+    });
 
-      if (rows && rows.length > 0) {
-        return rows.map((row) => ({
-          id: row.id,
-          orderNumber: row.orderNumber,
-          customerName: row.customerName,
-          customerPhone: row.customerPhone,
-          customerAddress: row.customerAddress,
-          shippingZone: row.shippingZone,
-          shippingCost: row.shippingCost,
-          subtotal: row.subtotal,
-          totalAmount: row.totalAmount,
-          paymentMethodId: row.paymentMethodId,
-          ...paymentFromSnapshot(row),
-          paymentSnapshot: row.paymentSnapshot,
-          paymentProofUrl: row.paymentProofUrl,
-          paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
-          orderStatus: row.orderStatus as StoredOrder["orderStatus"],
-          trackingNumber: row.trackingNumber,
-          adminNotes: row.adminNotes,
-          createdAt: row.createdAt || new Date(),
-          items: row.items.map((i) => ({
-            id: i.id,
-            jerseyId: i.jerseyId,
-            name: i.jersey?.name || "Jersey Edition",
-            size: i.size,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-            namesetName: i.namesetName,
-            namesetNumber: i.namesetNumber,
-            namesetPrice: i.namesetPrice,
-            patch: i.patch,
-            patchPrice: i.patchPrice,
-          })),
-        }));
-      }
-    } catch (e) {
-      console.warn("DB query all orders error:", e);
+    if (rows && rows.length > 0) {
+      return rows.map((row) => ({
+        id: row.id,
+        orderNumber: row.orderNumber,
+        customerName: row.customerName,
+        customerPhone: row.customerPhone,
+        customerAddress: row.customerAddress,
+        shippingZone: row.shippingZone,
+        shippingCost: row.shippingCost,
+        subtotal: row.subtotal,
+        totalAmount: row.totalAmount,
+        paymentMethodId: row.paymentMethodId,
+        ...paymentFromSnapshot(row),
+        paymentSnapshot: row.paymentSnapshot,
+        paymentProofUrl: row.paymentProofUrl,
+        paymentStatus: row.paymentStatus as StoredOrder["paymentStatus"],
+        orderStatus: row.orderStatus as StoredOrder["orderStatus"],
+        trackingNumber: row.trackingNumber,
+        adminNotes: row.adminNotes,
+        createdAt: row.createdAt || new Date(),
+        items: row.items.map((i) => ({
+          id: i.id,
+          jerseyId: i.jerseyId,
+          name: i.jersey?.name || "Jersey Edition",
+          size: i.size,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          namesetName: i.namesetName,
+          namesetNumber: i.namesetNumber,
+          namesetPrice: i.namesetPrice,
+          patch: i.patch,
+          patchPrice: i.patchPrice,
+        })),
+      }));
     }
+  } catch (e) {
+    console.warn("DB query all orders error:", e);
   }
 
-  return globalOrders.mockOrders || [];
+  return [];
 }
 
 // Upload bukti hanya untuk order yang masih menunggu pembayaran —
 // tanpa guard ini order CANCELLED/COMPLETED bisa dinaikkan ke PROCESSING lagi oleh upload telat.
 export async function updateOrderPaymentProof(orderId: string, proofUrl: string) {
   const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) throw new Error("Database offline. Proof not saved.");
 
-  if (isDbOnline) {
-    await db.transaction(async (tx) => {
-      const [order] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
-      if (!order) throw new Error("Order tidak ditemukan.");
-      if (order.orderStatus !== "PENDING_PAYMENT") {
-        throw new Error(`Order berstatus ${order.orderStatus} tidak lagi menerima unggahan bukti pembayaran.`);
-      }
-      await tx.update(orders)
-        .set({ paymentProofUrl: proofUrl, orderStatus: "PROCESSING" })
-        .where(eq(orders.id, orderId));
-    });
-  }
-
-  const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
-  if (order) {
+  await db.transaction(async (tx) => {
+    const [order] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
+    if (!order) throw new Error("Order tidak ditemukan.");
     if (order.orderStatus !== "PENDING_PAYMENT") {
       throw new Error(`Order berstatus ${order.orderStatus} tidak lagi menerima unggahan bukti pembayaran.`);
     }
-    order.paymentProofUrl = proofUrl;
-    order.orderStatus = "PROCESSING";
-  }
+    await tx.update(orders)
+      .set({ paymentProofUrl: proofUrl, orderStatus: "PROCESSING" })
+      .where(eq(orders.id, orderId));
+  });
 }
 
 // Cancel hanya dari status pre-shipment; retur order SHIPPED = alur terpisah (belum ada).
@@ -403,63 +308,29 @@ async function cancelOrderWithStock(orderId: string) {
   });
 }
 
-function cancelMockOrder(orderId: string) {
-  const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
-  if (!order) throw new Error("Order tidak ditemukan.");
-  if (!CANCELABLE.includes(order.orderStatus)) {
-    throw new Error(`Order berstatus ${order.orderStatus} tidak bisa dibatalkan.`);
-  }
-  const restores = order.items.map((item) => {
-    const product = globalOrders.mockJerseys?.find((j) => j.id === item.jerseyId);
-    if (!product) throw new Error("Produk untuk item order sudah tidak ada — stok tidak bisa dikembalikan.");
-    return { item, product };
-  });
-  for (const { item, product } of restores) {
-    product.stockData[item.size] = (product.stockData[item.size] || 0) + item.quantity;
-  }
-  order.orderStatus = "CANCELLED";
-  order.paymentStatus = "PENDING";
-}
-
 export async function updateOrderStatus(orderId: string, status: StoredOrder["orderStatus"], tracking?: string) {
   const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) throw new Error("Database offline. Status not saved.");
 
-  if (isDbOnline) {
-    if (status === "CANCELLED") {
-      await cancelOrderWithStock(orderId);
-      return;
-    }
-    // PROCESSING = admin confirmed payment (the only transition that marks PAID);
-    // SHIPPED/COMPLETED leave paymentStatus untouched — shipping is not payment.
-    const paymentStatus =
-      status === "PROCESSING" ? "PAID" : undefined;
-    await db.update(orders)
-      .set({
-        orderStatus: status,
-        trackingNumber: tracking || undefined,
-        ...(paymentStatus ? { paymentStatus } : {}),
-      })
-      .where(eq(orders.id, orderId));
-  } else if (status === "CANCELLED") {
-    cancelMockOrder(orderId);
+  if (status === "CANCELLED") {
+    await cancelOrderWithStock(orderId);
     return;
   }
-
-  const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
-  if (order) {
-    order.orderStatus = status;
-    if (tracking) order.trackingNumber = tracking;
-    if (status === "PROCESSING") order.paymentStatus = "PAID";
-  }
+  // PROCESSING = admin confirmed payment (the only transition that marks PAID);
+  // SHIPPED/COMPLETED leave paymentStatus untouched — shipping is not payment.
+  const paymentStatus = status === "PROCESSING" ? "PAID" : undefined;
+  await db.update(orders)
+    .set({
+      orderStatus: status,
+      trackingNumber: tracking || undefined,
+      ...(paymentStatus ? { paymentStatus } : {}),
+    })
+    .where(eq(orders.id, orderId));
 }
 
 export async function updateOrderAdminNotes(orderId: string, notes: string) {
   const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) throw new Error("Database offline. Note not saved.");
 
-  if (isDbOnline) {
-    await db.update(orders).set({ adminNotes: notes }).where(eq(orders.id, orderId));
-  }
-
-  const order = globalOrders.mockOrders?.find((o) => o.id === orderId);
-  if (order) order.adminNotes = notes;
+  await db.update(orders).set({ adminNotes: notes }).where(eq(orders.id, orderId));
 }

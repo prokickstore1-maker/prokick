@@ -4,7 +4,6 @@
 export const COUNTRY_FLAGS: Record<string, string> = {
   England: "gb-eng", // flagcdn punya varian khusus Inggris
   Spain: "es",
-  Malaysia: "my",
   France: "fr",
   Germany: "de",
   Italy: "it",
@@ -28,11 +27,7 @@ export const COUNTRY_FLAGS: Record<string, string> = {
   Singapore: "sg",
 };
 
-export function flagCode(country: string): string | null {
-  return COUNTRY_FLAGS[country] || null;
-}
-
 export function flagUrl(country: string, width = 80): string | null {
-  const code = flagCode(country);
+  const code = COUNTRY_FLAGS[country];
   return code ? `https://flagcdn.com/w${width}/${code}.png` : null;
 }

@@ -63,7 +63,7 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
             alt={jersey.name}
             fill
             onError={() => setImgOk(false)}
-            className="object-contain p-0.5 sm:p-4 group-hover:scale-108 transition-transform duration-500"
+            className="object-contain p-0.5 sm:p-4 group-hover:scale-108 transition-transform duration-200 motion-reduce:transition-none"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
 

@@ -15,8 +15,8 @@ export default async function CartPage() {
       m.type === "qr_pay"
         ? "Scan pakai GoPay, OVO, DANA, atau aplikasi bank apa pun"
         : m.type === "ewallet"
-        ? `Transfer ke e-wallet${m.accountNumber ? ` — ${m.accountNumber}` : ""}`
-        : `Transfer bank${m.accountNumber ? ` — Rek: ${m.accountNumber}` : ""}`,
+        ? `Transfer ke e-wallet${m.accountNumber ? ` (${m.accountNumber})` : ""}`
+        : `Transfer bank${m.accountNumber ? ` (Rek: ${m.accountNumber})` : ""}`,
     badge: m.type === "qr_pay" ? "Tanpa Biaya Admin" : m.accountNumber || undefined,
   }));
 

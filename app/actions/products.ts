@@ -107,7 +107,7 @@ export async function deleteProductAction(id: string) {
   if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
   if (!(await checkDbConnection())) return { success: false, error: "Database offline" };
 
-  // ID produk mock (mis. "madrid-home-2026") bukan UUID — query ke kolom uuid akan error fatal
+  // Guard UUID: id non-UUID (dari URL/klik lama) bikin query ke kolom uuid error fatal
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
     return {
       success: false,

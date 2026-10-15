@@ -186,7 +186,7 @@ export async function createOrderAction(input: CreateOrderInput) {
     console.error("Order creation failed:", error);
     // surface actionable failures (stock, unknown product); only true unknowns get the generic line
     const message = error instanceof Error ? error.message : "";
-    if (/^Insufficient stock|^Product unavailable/.test(message)) {
+    if (/^Insufficient stock|^Product unavailable|^Database offline/.test(message)) {
       return { success: false, error: message };
     }
     return { success: false, error: "An unexpected error occurred while placing order. Please try again." };

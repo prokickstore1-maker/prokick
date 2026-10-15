@@ -1,7 +1,16 @@
 import { db, checkDbConnection } from "./db";
-import { jerseys, jerseyImages, banners, paymentMethods, settings } from "@/db/schema";
+import { jerseys, jerseyImages, banners, paymentMethods, settings, testimonials } from "@/db/schema";
 import { eq, desc, inArray } from "drizzle-orm";
-import { MOCK_JERSEYS, MOCK_PAYMENT_METHODS, MOCK_BANNERS, MockBanner } from "./mock-data";
+
+export interface BannerView {
+  id: string;
+  image: string;
+  title: string;
+  badge?: string;
+  subtitle?: string;
+  link: string;
+  cta: string;
+}
 
 export interface NormalizedJersey {
   id: string;
@@ -59,11 +68,10 @@ export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJe
       if (rows && rows.length > 0) {
         const imageMap = await loadImages(rows.map((r) => r.id));
         return rows.map((r) => {
-          const mockMatch = MOCK_JERSEYS.find((m) => m.name === r.name || m.id === r.id);
           const gallery = imageMap.get(r.id)?.map((url) => ({ url }));
           return {
             ...r,
-            images: gallery?.length ? gallery : mockMatch?.images,
+            images: gallery,
             sizes: typeof r.sizes === "string" ? JSON.parse(r.sizes) : (r.sizes || []),
             stockData: typeof r.stockData === "string" ? JSON.parse(r.stockData) : (r.stockData || {}),
             category: r.category || (r.league === "World Cup" ? "Tim Nasional" : "Klub"),
@@ -75,18 +83,12 @@ export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJe
         });
       }
     } catch (e) {
-      console.warn("Falling back to mock jersey data:", e);
+      console.warn("DB query jerseys failed:", e);
     }
   }
 
-  // DB online tapi kosong/error = kondisi sah — jangan fallback mock,
-  // kalau tidak produk yang dihapus admin "hidup lagi" dari mock. Mock hanya saat DB offline.
-  if (isDbOnline) return [];
-  let result = MOCK_JERSEYS;
-  if (filterLeague) {
-    result = result.filter((j) => j.league.toLowerCase() === filterLeague.toLowerCase());
-  }
-  return result;
+  // DB offline / error / kosong = gagal-closed: [] bukan data mock
+  return [];
 }
 
 export async function getJerseyById(id: string): Promise<NormalizedJersey | null> {
@@ -101,10 +103,9 @@ export async function getJerseyById(id: string): Promise<NormalizedJersey | null
         where: eq(jerseys.id, id.trim()),
       });
       if (row) {
-        const mockMatch = MOCK_JERSEYS.find((m) => m.name === row.name || m.id === row.id);
         const imageMap = await loadImages([row.id]);
         const gallery = imageMap.get(row.id)?.map((url) => ({ url }));
-        const images = gallery?.length ? gallery : mockMatch?.images;
+        const images = gallery?.length ? gallery : undefined;
         return {
           ...row,
           image: images?.[0]?.url || row.image,
@@ -119,18 +120,14 @@ export async function getJerseyById(id: string): Promise<NormalizedJersey | null
         };
       }
     } catch (e) {
-      console.warn("DB findFirst error, checking mock fallback:", e);
+      console.warn("DB findFirst jersey error:", e);
     }
   }
 
-  // DB online + produk tidak ditemukan = produk terhapus, bukan mock.
-  // Fallback mock hanya saat DB offline/error.
-  if (isDbOnline) return null;
-  const mock = MOCK_JERSEYS.find((j) => j.id === id);
-  return mock || null;
+  return null;
 }
 
-export async function getActiveBanners(): Promise<MockBanner[]> {
+export async function getActiveBanners(): Promise<BannerView[]> {
   const isDbOnline = await checkDbConnection();
 
   if (isDbOnline) {
@@ -151,11 +148,11 @@ export async function getActiveBanners(): Promise<MockBanner[]> {
         }));
       }
     } catch (e) {
-      console.warn("Falling back to default banner:", e);
+      console.warn("DB query banners failed:", e);
     }
   }
 
-  return MOCK_BANNERS;
+  return [];
 }
 
 export async function getSetting(key: string, fallback: string) {
@@ -195,10 +192,44 @@ export async function getPaymentMethods() {
       });
       if (rows && rows.length > 0) return rows;
     } catch (e) {
-      console.warn("Falling back to default payment methods:", e);
+      console.warn("DB query payment methods failed:", e);
     }
   }
 
-  return MOCK_PAYMENT_METHODS;
+  return [];
+}
+
+export interface TestimonialView {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  club: string | null;
+  proofImage: string | null;
+}
+
+// Testimoni aktif untuk section di atas footer. DB offline / kosong → [] (section disembunyikan).
+export async function getActiveTestimonials(): Promise<TestimonialView[]> {
+  const isDbOnline = await checkDbConnection();
+  if (!isDbOnline) return [];
+
+  try {
+    const rows = await db.query.testimonials.findMany({
+      where: eq(testimonials.active, true),
+      orderBy: [desc(testimonials.createdAt)],
+      limit: 12,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      rating: r.rating,
+      comment: r.comment,
+      club: r.club,
+      proofImage: r.proofImage,
+    }));
+  } catch (e) {
+    console.warn("Gagal memuat testimoni:", e);
+    return [];
+  }
 }
 
