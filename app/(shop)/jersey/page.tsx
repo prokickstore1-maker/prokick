@@ -6,6 +6,8 @@ import { Search, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 export default async function JerseyCatalogPage({
   searchParams,
 }: {

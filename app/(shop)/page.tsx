@@ -9,6 +9,8 @@ import { JerseyCard } from "@/components/jersey/jersey-card";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { ChevronRight, ShieldCheck, QrCode, Truck } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [allJerseys, banners, rawSettings] = await Promise.all([
     getAllJerseys(),

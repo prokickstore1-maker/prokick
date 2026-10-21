@@ -22,7 +22,6 @@ const client = endpoint
   : null;
 
 export async function GET(_: Request, { params }: { params: Promise<{ key: string[] }> }) {
-  if (!client) return NextResponse.json({ error: "Storage not configured" }, { status: 503 });
   const { key: parts } = await params;
   const key = parts.map((p) => decodeURIComponent(p)).join("/");
 
@@ -31,17 +30,40 @@ export async function GET(_: Request, { params }: { params: Promise<{ key: strin
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  try {
-    const obj = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-    const bytes = await obj.Body?.transformToByteArray();
-    if (!bytes) return NextResponse.json({ error: "Empty" }, { status: 404 });
-    return new NextResponse(Buffer.from(bytes), {
-      headers: {
-        "Content-Type": obj.ContentType || "image/jpeg",
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    });
-  } catch {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // 1. Coba S3 Client jika kredensial env tersedia
+  if (client) {
+    try {
+      const obj = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      const bytes = await obj.Body?.transformToByteArray();
+      if (bytes) {
+        return new NextResponse(Buffer.from(bytes), {
+          headers: {
+            "Content-Type": obj.ContentType || "image/jpeg",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      }
+    } catch {
+      // lanjut ke fallback
+    }
   }
+
+  // 2. Fallback langsung ke S3 endpoint publik IDCloudHost
+  try {
+    const publicUrl = `https://is3.cloudhost.id/${bucket}/${key}`;
+    const pubRes = await fetch(publicUrl);
+    if (pubRes.ok) {
+      const bytes = await pubRes.arrayBuffer();
+      return new NextResponse(Buffer.from(bytes), {
+        headers: {
+          "Content-Type": pubRes.headers.get("Content-Type") || "image/jpeg",
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    }
+  } catch {
+    // gagal
+  }
+
+  return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
