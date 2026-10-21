@@ -80,14 +80,18 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
         {filtered.map((j) => (
           <div key={j.id} className="rounded-xl border border-[#27272A] bg-[#121217] p-4 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-black/40 relative overflow-hidden shrink-0 border border-[#27272A]">
-                <Image
-                  src={j.image || "/images/jerseys/madrid-home.jpg"}
-                  alt={j.name}
-                  fill
-                  className="object-contain p-1"
-                  sizes="48px"
-                />
+              <div className="w-12 h-12 rounded-lg bg-black/40 relative overflow-hidden shrink-0 border border-[#27272A] flex items-center justify-center">
+                {j.image ? (
+                  <Image
+                    src={j.image}
+                    alt={j.name}
+                    fill
+                    className="object-contain p-1"
+                    sizes="48px"
+                  />
+                ) : (
+                  <span className="text-[10px] text-zinc-600 font-mono">No Pic</span>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-sm text-white truncate">{j.name}</h3>
@@ -157,14 +161,18 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
                   {/* Jersey Info */}
                   <TableCell className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-black/40 relative overflow-hidden shrink-0 border border-[#27272A]">
-                        <Image
-                          src={j.image || "/images/jerseys/madrid-home.jpg"}
-                          alt={j.name}
-                          fill
-                          className="object-contain p-1"
-                          sizes="48px"
-                        />
+                      <div className="w-12 h-12 rounded-xl bg-black/40 relative overflow-hidden shrink-0 border border-[#27272A] flex items-center justify-center">
+                        {j.image ? (
+                          <Image
+                            src={j.image}
+                            alt={j.name}
+                            fill
+                            className="object-contain p-1"
+                            sizes="48px"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-zinc-600 font-mono">No Pic</span>
+                        )}
                       </div>
                       <div>
                         <span className="font-bold text-white block">{j.name}</span>

@@ -36,7 +36,7 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
       team: jersey.team,
       league: jersey.league,
       price: parseFloat(jersey.price),
-      image: jersey.image || "/images/jerseys/madrid-home.jpg",
+      image: jersey.image || "",
       size: defaultSize,
       quantity: 1,
     });
@@ -45,7 +45,7 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
     setTimeout(() => setJustAdded(false), 1500);
   };
 
-  const imageSrc = jersey.image || "/images/jerseys/madrid-home.jpg";
+  const imageSrc = jersey.image || "";
 
   // Derive contextual badge
   const isRetro = jersey.edition?.toLowerCase() === "vintage" || jersey.league.toLowerCase().includes("retro");
@@ -58,14 +58,17 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
       <Link href={`/product/${jersey.id}`} className="block relative">
         {/* Studio Jersey Stage with Radial Ambiance */}
         <div className="studio-stage relative aspect-[3/4] w-full p-2 sm:p-6">
-          <Image
-            src={imgOk ? imageSrc : "/images/jerseys/madrid-home.jpg"}
-            alt={jersey.name}
-            fill
-            onError={() => setImgOk(false)}
-            className="object-contain p-0.5 sm:p-4 group-hover:scale-108 transition-transform duration-200 motion-reduce:transition-none"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
+          {imageSrc ? (
+            <Image
+              src={imageSrc}
+              alt={jersey.name}
+              fill
+              className="object-contain p-0.5 sm:p-4 group-hover:scale-108 transition-transform duration-200 motion-reduce:transition-none"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs font-mono">No Image</div>
+          )}
 
           {/* Top-Left Authentic Tag */}
           <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">

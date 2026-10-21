@@ -56,10 +56,7 @@ export function JerseyCustomizer({
   // per-gambar: "main" = foto utama, angka = index thumbnail. false = gagal load
   const [imgOk, setImgOk] = useState<Record<string, boolean>>({});
 
-  // Gallery Active View
-  const [activeImage, setActiveImage] = useState(
-    jersey.image || "/images/jerseys/madrid-home.jpg"
-  );
+  const [activeImage, setActiveImage] = useState(jersey.image || "");
 
   const basePrice = parseFloat(jersey.price);
   // fee hanya saat nama diketik — sama dengan server (order.ts)
@@ -89,7 +86,6 @@ export function JerseyCustomizer({
       patch: enablePatch ? selectedPatch : undefined,
       patchPrice: enablePatch ? patchFee : 0,
     });
-
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
@@ -97,17 +93,11 @@ export function JerseyCustomizer({
   const gallery =
     jersey.images && jersey.images.length > 0
       ? jersey.images
-      : [
-          { url: jersey.image || "/images/jerseys/madrid-home.jpg" },
-          { url: "/images/hero/nike-hero.jpg" },
-        ];
+      : jersey.image
+      ? [{ url: jersey.image }]
+      : [];
 
-  // resolved source: fallback ke gambar default kalau URL aktif/izin gagal load
-  const activeIdx = gallery.findIndex((g) => g.url === activeImage);
-  const mainSrc =
-    activeIdx >= 0 && imgOk[String(activeIdx)] !== false && imgOk.main !== false
-      ? activeImage
-      : "/images/jerseys/madrid-home.jpg";
+  const mainSrc = activeImage || jersey.image || "";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 text-white">
@@ -151,9 +141,8 @@ export function JerseyCustomizer({
                 >
                   <div className="relative w-full h-full">
                     <Image
-                      src={imgOk[String(idx)] === false ? "/images/jerseys/madrid-home.jpg" : img.url}
+                      src={img.url}
                       alt={jersey.name}
-                      onError={() => setImgOk((p) => ({ ...p, [String(idx)]: false }))}
                       fill
                       className="object-contain p-1"
                       sizes="96px"

@@ -55,7 +55,11 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
         <div key={p.id} className="rounded-xl border border-[#27272A] bg-[#121217] p-3.5 space-y-3">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.image || "/images/jerseys/madrid-home.jpg"} alt={p.name} className="h-14 w-14 rounded-lg object-contain bg-black/40 border border-[#27272A] shrink-0" />
+            {p.image ? (
+              <img src={p.image} alt={p.name} className="h-14 w-14 rounded-lg object-contain bg-black/40 border border-[#27272A] shrink-0" />
+            ) : (
+              <div className="h-14 w-14 rounded-lg bg-black/40 border border-[#27272A] flex items-center justify-center text-[10px] text-zinc-600 font-mono shrink-0">No Pic</div>
+            )}
             <div className="min-w-0">
               <h3 className="font-bold text-sm text-white truncate">{p.name}</h3>
               <p className="text-xs text-zinc-400 truncate">{p.league} · {p.type}</p>
