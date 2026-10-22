@@ -20,6 +20,7 @@ export default async function JerseyCatalogPage({
     edition?: string;
     kitType?: string;
     size?: string;
+    team?: string;
     minPrice?: string;
     maxPrice?: string;
     search?: string;
@@ -30,6 +31,7 @@ export default async function JerseyCatalogPage({
   const currentLeague = resolvedParams.league || "";
   const currentCategory = resolvedParams.category || "";
   const currentCountry = resolvedParams.country || "";
+  const currentTeam = resolvedParams.team || "";
   const currentType = resolvedParams.type || "";
   const currentSeason = resolvedParams.season || "";
   const currentEdition = resolvedParams.edition || "";
@@ -50,6 +52,7 @@ export default async function JerseyCatalogPage({
     );
   }
 
+  if (currentTeam) jerseys = jerseys.filter((j) => j.team.toLowerCase() === currentTeam.toLowerCase());
   if (currentCategory) jerseys = jerseys.filter((j) => j.category.toLowerCase() === currentCategory.toLowerCase());
   if (currentCountry) jerseys = jerseys.filter((j) => j.country.toLowerCase() === currentCountry.toLowerCase());
   if (currentType) jerseys = jerseys.filter((j) => j.type.toLowerCase() === currentType.toLowerCase());
@@ -98,6 +101,7 @@ export default async function JerseyCatalogPage({
     const params = new URLSearchParams(
       Object.entries({
         league: currentLeague,
+        team: currentTeam,
         category: currentCategory,
         country: currentCountry,
         type: currentType,
@@ -120,6 +124,7 @@ export default async function JerseyCatalogPage({
 
   const filterLabels: string[] = [
     currentLeague && `League: ${currentLeague}`,
+    currentTeam && `Team: ${currentTeam}`,
     currentCategory && `Category: ${currentCategory}`,
     currentCountry && `Country: ${currentCountry}`,
     currentType && `Type: ${currentType}`,
@@ -189,6 +194,7 @@ export default async function JerseyCatalogPage({
           <form method="GET" action="/jersey" className="relative w-full lg:w-80">
             {Object.entries({
               league: currentLeague,
+              team: currentTeam,
               category: currentCategory,
               country: currentCountry,
               type: currentType,
@@ -223,6 +229,7 @@ export default async function JerseyCatalogPage({
           className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 bg-[#121217] border-white/8"
         >          {/* Preserve Current League & Search */}
           <input type="hidden" name="league" value={currentLeague} />
+          {currentTeam && <input type="hidden" name="team" value={currentTeam} />}
           {searchQuery && <input type="hidden" name="search" value={searchQuery} />}
           <input type="hidden" name="country" value={currentCountry} />
           <input type="hidden" name="kitType" value={currentKitType} />

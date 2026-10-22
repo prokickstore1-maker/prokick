@@ -62,6 +62,7 @@ export function getAvailablePatches(jersey: {
   const isNational =
     cat === "tim nasional" || cat === "national team" || cat === "national" ||
     jersey.league?.toLowerCase() === "world cup" ||
+    jersey.league?.toLowerCase() === "nation" ||
     jersey.team?.toLowerCase() === "indonesia";
 
   if (isNational) return NATIONAL_TEAM_PATCHES;

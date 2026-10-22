@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Search, Menu } from "lucide-react";
+import { ShoppingBag, Search, Menu, ChevronDown } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { LeagueOption } from "@/lib/leagues";
@@ -26,6 +26,7 @@ export function Navbar({
   // split | jadi fragmen; mobile hanya fragmen pertama
   const tickerParts = banner.split("|").map((s) => s.trim()).filter(Boolean);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedLeague, setExpandedLeague] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const router = useRouter();
   const items = useCartStore((state) => state.items);
@@ -72,20 +73,71 @@ export function Navbar({
           />
         </Link>
 
-        {/* Desktop Navigation Links — liga diturunkan dari data produk */}
-        <nav className="hidden lg:flex items-center gap-7 text-xs font-bold uppercase tracking-wider text-zinc-400">
+        {/* Desktop Navigation Links — liga & klub dropdown dinamis */}
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-7 text-xs font-bold uppercase tracking-wider text-zinc-400">
           <Link href="/jersey" className="hover:text-white transition-colors">
             All Kits
           </Link>
-          {leagues.filter((l) => l.value).map((l) => (
-            <Link
-              key={l.value}
-              href={`/jersey?league=${encodeURIComponent(l.value)}`}
-              className="hover:text-white transition-colors flex items-center gap-1.5"
-            >
-              <span>{l.label}</span>
-            </Link>
-          ))}
+          {leagues.filter((l) => l.value).map((l) => {
+            const hasTeams = l.teams && l.teams.length > 0;
+            const isWide = l.teams.length > 5;
+
+            return (
+              <div key={l.value} className="relative group/nav py-2">
+                <Link
+                  href={l.isNation ? "/jersey?league=Nation" : `/jersey?league=${encodeURIComponent(l.value)}`}
+                  className="hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <span>{l.label}</span>
+                  {hasTeams && (
+                    <ChevronDown className="w-3 h-3 text-zinc-500 group-hover/nav:text-zinc-200 group-hover/nav:rotate-180 transition-transform duration-200" />
+                  )}
+                </Link>
+
+                {hasTeams && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1.5 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 pointer-events-none group-hover/nav:pointer-events-auto z-50">
+                    <div
+                      className={`bg-[#121217] border border-white/10 rounded-xl p-2.5 shadow-2xl backdrop-blur-xl space-y-1.5 ${
+                        isWide ? "min-w-[340px]" : "min-w-[200px]"
+                      }`}
+                    >
+                      <div className="px-2.5 py-1 border-b border-white/6 flex items-center justify-between">
+                        <Link
+                          href={l.isNation ? "/jersey?league=Nation" : `/jersey?league=${encodeURIComponent(l.value)}`}
+                          className="text-[10px] font-extrabold uppercase tracking-widest text-[#E2F952] hover:underline"
+                        >
+                          All {l.label}
+                        </Link>
+                        <span className="text-[10px] font-mono text-zinc-400">
+                          {l.teams.length} {l.isNation ? "Nations" : "Clubs"}
+                        </span>
+                      </div>
+                      <div
+                        className={
+                          isWide
+                            ? "grid grid-cols-2 gap-0.5 max-h-[320px] overflow-y-auto scrollbar-thin"
+                            : "space-y-0.5 max-h-[320px] overflow-y-auto scrollbar-thin"
+                        }
+                      >
+                        {l.teams.map((team) => (
+                          <Link
+                            key={team.name}
+                            href={team.href}
+                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/8 transition-colors group/item"
+                          >
+                            <span className="truncate">{team.name}</span>
+                            <span className="text-[#E2F952] opacity-0 group-hover/item:opacity-100 transition-opacity text-[10px] ml-1 shrink-0">
+                              &rarr;
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Right Actions */}
@@ -150,7 +202,7 @@ export function Navbar({
                   Menu
                 </SheetTitle>
               </SheetHeader>
-              <nav className="flex flex-col gap-3 text-sm font-bold text-zinc-300 overflow-y-auto">
+              <nav className="flex flex-col gap-2 text-sm font-bold text-zinc-300 overflow-y-auto max-h-[calc(100vh-120px)]">
                 <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 focus-within:border-white/30 px-3.5 py-2.5 mb-2">
                   <Search className="w-4 h-4 text-zinc-400" />
                   <input
@@ -170,16 +222,61 @@ export function Navbar({
                   <span>All Football Kits</span>
                   <span className="text-[11px] text-zinc-400 font-bold">2026/27</span>
                 </Link>
-                {leagues.filter((l) => l.value).map((l) => (
-                  <Link
-                    key={l.value}
-                    href={`/jersey?league=${encodeURIComponent(l.value)}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`min-h-11 flex items-center border-b border-white/5 justify-between hover:text-white`}
-                  >
-                    <span>{l.label}</span>
-                  </Link>
-                ))}
+                {leagues.filter((l) => l.value).map((l) => {
+                  const hasTeams = l.teams && l.teams.length > 0;
+                  const isExpanded = expandedLeague === l.value;
+
+                  return (
+                    <div key={l.value} className="border-b border-white/5">
+                      <div className="flex items-center justify-between min-h-11">
+                        <Link
+                          href={l.isNation ? "/jersey?league=Nation" : `/jersey?league=${encodeURIComponent(l.value)}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="text-white hover:text-volt flex-1 py-2 font-bold"
+                        >
+                          <span>{l.label}</span>
+                        </Link>
+                        {hasTeams && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedLeague(isExpanded ? null : l.value)}
+                            className="p-2 min-w-10 min-h-10 flex items-center justify-center text-zinc-400 hover:text-white rounded-lg hover:bg-white/5"
+                            aria-label={`Toggle ${l.label} clubs`}
+                          >
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform duration-200 ${
+                                isExpanded ? "rotate-180 text-white" : ""
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
+
+                      {hasTeams && isExpanded && (
+                        <div className="pl-2 pb-2.5 pt-1 grid grid-cols-2 gap-1 text-xs text-zinc-400">
+                          <Link
+                            href={l.isNation ? "/jersey?league=Nation" : `/jersey?league=${encodeURIComponent(l.value)}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="col-span-2 py-1.5 px-2.5 rounded-lg bg-white/5 text-[#E2F952] font-bold text-[11px] flex items-center justify-between"
+                          >
+                            <span>All {l.label} Kits</span>
+                            <span>&rarr;</span>
+                          </Link>
+                          {l.teams.map((team) => (
+                            <Link
+                              key={team.name}
+                              href={team.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="py-1.5 px-2.5 rounded-lg bg-white/[0.02] hover:bg-white/8 hover:text-white truncate font-medium"
+                            >
+                              {team.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </nav>
             </SheetContent>
           </Sheet>
