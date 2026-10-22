@@ -6,5 +6,7 @@ node_modules
 _build_plan
 graphify-out
 /*.png
+scratch
 .env*
 .DS_Store
+*.log

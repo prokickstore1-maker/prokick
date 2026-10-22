@@ -82,15 +82,12 @@ const s3 = new S3Client({
   forcePathStyle: true,
 });
 const bucket = process.env.S3_BUCKET;
-const localDir = path.join(rootDir, 'public', 'images', 'jerseys');
-if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
 
 const s3Urls = [];
 for (let i = 0; i < images.length; i++) {
   const r = await fetch(images[i]);
   const buf = Buffer.from(await r.arrayBuffer());
   const fname = `${slug}-angle-${i+1}.jpg`;
-  fs.writeFileSync(path.join(localDir, fname), buf);
   const key = `products/${fname}`;
   await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buf, ContentType: 'image/jpeg', ACL: 'public-read' }));
   s3Urls.push(`${process.env.S3_ENDPOINT}/${bucket}/${key}`);

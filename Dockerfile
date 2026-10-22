@@ -5,11 +5,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# image penuh (devDeps sengaja dipertahankan): drizzle-kit dipakai saat
-# DB_PUSH=true untuk push schema ke database segar
 FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app ./
 EXPOSE 3000
-CMD sh -c "if [ \"$DB_PUSH\" = \"true\" ]; then npx drizzle-kit push || echo 'DB push gagal'; fi; npm run start"
+CMD ["npm", "run", "start"]
