@@ -2,11 +2,29 @@ import Link from "next/link";
 import { getAllJerseys } from "@/lib/data";
 import { buildLeagueOptions } from "@/lib/leagues";
 import { JerseyCard } from "@/components/jersey/jersey-card";
-import { Search, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { Search, RotateCcw, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
+
+const ITEMS_PER_PAGE = 16;
+
+function getPaginationRange(current: number, total: number): (number | string)[] {
+  if (total <= 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 3) {
+    return [1, 2, 3, "...", total];
+  }
+
+  if (current >= total - 2) {
+    return [1, "...", total - 2, total - 1, total];
+  }
+
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
 
 export default async function JerseyCatalogPage({
   searchParams,
@@ -25,6 +43,7 @@ export default async function JerseyCatalogPage({
     maxPrice?: string;
     search?: string;
     sort?: string;
+    page?: string;
   }>;
 }) {
   const resolvedParams = await searchParams;
@@ -41,6 +60,7 @@ export default async function JerseyCatalogPage({
   const maxPrice = Number(resolvedParams.maxPrice || 0);
   const searchQuery = resolvedParams.search || "";
   const sort = resolvedParams.sort || "featured";
+  const requestedPage = Math.max(1, parseInt(resolvedParams.page || "1", 10) || 1);
 
   const allJerseys = await getAllJerseys();
   let jerseys = allJerseys;
@@ -79,7 +99,36 @@ export default async function JerseyCatalogPage({
     jerseys.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
   } else if (sort === "price-desc") {
     jerseys.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+  } else {
+    // Default / "featured": Season descending (2026/27 first), Current edition before Vintage, Home/Away first
+    jerseys.sort((a, b) => {
+      // 1. Season DESC (e.g. "2026/2027" > "2010/2011" > "1994/1995")
+      const seasonDiff = (b.season || "").localeCompare(a.season || "");
+      if (seasonDiff !== 0) return seasonDiff;
+
+      // 2. Current edition before Vintage/Retro
+      if (a.edition === "Current" && b.edition !== "Current") return -1;
+      if (b.edition === "Current" && a.edition !== "Current") return 1;
+
+      // 3. Kit priority: Home (1) > Away (2) > Third (3) > others (4)
+      const kitPriority: Record<string, number> = { Home: 1, Away: 2, Third: 3 };
+      const aPriority = kitPriority[a.kitType] || 4;
+      const bPriority = kitPriority[b.kitType] || 4;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      return 0;
+    });
   }
+
+  // Pagination calculation
+  const totalItems = jerseys.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const paginatedJerseys = jerseys.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  const paginationRange = getPaginationRange(currentPage, totalPages);
 
   const categoryOptions = [...new Set(allJerseys.map((j) => j.category))].filter(Boolean);
   const typeOptions = [...new Set(allJerseys.map((j) => j.type))].filter(Boolean);
@@ -98,22 +147,28 @@ export default async function JerseyCatalogPage({
   // Rebuild query keeping every other active filter; used by league pills so
   // they don't silently drop type/size/price selections.
   const withFilter = (overrides: Record<string, string>) => {
+    const currentParams: Record<string, string> = {
+      league: currentLeague,
+      team: currentTeam,
+      category: currentCategory,
+      country: currentCountry,
+      type: currentType,
+      season: currentSeason,
+      edition: currentEdition,
+      kitType: currentKitType,
+      size: currentSize,
+      minPrice: resolvedParams.minPrice || "",
+      maxPrice: resolvedParams.maxPrice || "",
+      search: searchQuery,
+      sort: sort === "featured" ? "" : sort,
+    };
+
+    if (currentPage > 1 && !("page" in overrides)) {
+      currentParams.page = String(currentPage);
+    }
+
     const params = new URLSearchParams(
-      Object.entries({
-        league: currentLeague,
-        team: currentTeam,
-        category: currentCategory,
-        country: currentCountry,
-        type: currentType,
-        season: currentSeason,
-        edition: currentEdition,
-        kitType: currentKitType,
-        size: currentSize,
-        minPrice: resolvedParams.minPrice || "",
-        maxPrice: resolvedParams.maxPrice || "",
-        search: searchQuery,
-        sort: sort === "featured" ? "" : sort,
-      }).filter(([, v]) => v !== "") as [string, string][]
+      Object.entries(currentParams).filter(([, v]) => v !== "") as [string, string][]
     );
     Object.entries(overrides).forEach(([k, v]) => (v ? params.set(k, v) : params.delete(k)));
     const qs = params.toString();
@@ -151,9 +206,14 @@ export default async function JerseyCatalogPage({
             <h1 className="text-2xl sm:text-4xl font-black text-white font-display uppercase tracking-tight flex items-baseline gap-3">
               <span>Football Shirts &amp; Kits</span>
               <span className="text-base sm:text-xl font-mono text-zinc-400 font-semibold">
-                ({jerseys.length} {jerseys.length === 1 ? "Kit" : "Kits"})
+                ({totalItems} {totalItems === 1 ? "Kit" : "Kits"})
               </span>
             </h1>
+            {totalPages > 1 && (
+              <p className="text-xs text-zinc-400 font-sans mt-1">
+                Showing <span className="text-white font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}&ndash;{Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}</span> of <span className="text-white font-semibold">{totalItems}</span> kits &bull; Page {currentPage} of {totalPages}
+              </p>
+            )}
           </div>
 
           {hasActiveFilters && (
@@ -177,7 +237,7 @@ export default async function JerseyCatalogPage({
               return (
                 <Link
                   key={opt.label}
-                  href={withFilter({ league: opt.value })}
+                  href={withFilter({ league: opt.value, team: "", page: "" })}
                   className={`px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                     active
                       ? "bg-white text-black font-extrabold shadow-md"
@@ -355,12 +415,71 @@ export default async function JerseyCatalogPage({
         </form>
 
         {/* Catalog Grid (2-Column Mobile, 4-Column Desktop) */}
-        {jerseys.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 pt-2">
-            {jerseys.map((jersey) => (
-              <JerseyCard key={jersey.id} jersey={jersey} />
-            ))}
-          </div>
+        {paginatedJerseys.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 pt-2">
+              {paginatedJerseys.map((jersey) => (
+                <JerseyCard key={jersey.id} jersey={jersey} />
+              ))}
+            </div>
+
+            {/* Circular Pagination Controls */}
+            {totalPages > 1 && (
+              <nav aria-label="Pagination" className="flex items-center justify-center gap-2 sm:gap-3 pt-12 pb-8">
+                {/* Previous Page Button (<) */}
+                {currentPage > 1 && (
+                  <Link
+                    href={withFilter({ page: String(currentPage - 1) })}
+                    aria-label="Previous page"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center border border-white/10 bg-[#121217] text-zinc-300 hover:text-white hover:border-white/30 hover:bg-[#181820] transition-all active:scale-95"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Link>
+                )}
+
+                {/* Page Number Circles & Ellipsis */}
+                {paginationRange.map((p, idx) => {
+                  if (typeof p === "string") {
+                    return (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="w-6 sm:w-8 h-10 sm:h-11 flex items-center justify-center text-zinc-500 font-bold tracking-widest select-none text-xs"
+                      >
+                        &hellip;
+                      </span>
+                    );
+                  }
+
+                  const isActive = p === currentPage;
+                  return (
+                    <Link
+                      key={p}
+                      href={withFilter({ page: String(p) })}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-xs sm:text-sm transition-all active:scale-95 ${
+                        isActive
+                          ? "bg-white text-zinc-950 font-black shadow-md ring-2 ring-white/20"
+                          : "border border-white/10 bg-[#121217] text-zinc-300 hover:text-white hover:border-white/30 hover:bg-[#181820] font-medium"
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  );
+                })}
+
+                {/* Next Page Button (>) */}
+                {currentPage < totalPages && (
+                  <Link
+                    href={withFilter({ page: String(currentPage + 1) })}
+                    aria-label="Next page"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center border border-white/10 bg-[#121217] text-zinc-300 hover:text-white hover:border-white/30 hover:bg-[#181820] transition-all active:scale-95"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
+              </nav>
+            )}
+          </>
         ) : (
           <section className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 py-24 text-center space-y-4 bg-[#121217] border-white/8">
             <h2 className="text-xl sm:text-2xl font-black text-white uppercase font-display">

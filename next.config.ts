@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "flagcdn.com",
       },
+      {
+        protocol: "https",
+        hostname: "is3.cloudhost.id",
+      },
       // object storage (endpoint dari env — Garage via Coolify)
       (function () {
         try {
