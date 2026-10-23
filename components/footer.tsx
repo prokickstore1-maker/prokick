@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { Globe } from "lucide-react";
-import { getSetting, getAllJerseys } from "@/lib/data";
-import { buildLeagueOptions } from "@/lib/leagues";
+import { getSetting, getCachedLeagueOptions } from "@/lib/data";
 import { toIntlPhone } from "@/lib/utils";
 
 export default async function Footer() {
   const waNumber = toIntlPhone(await getSetting("whatsappNumber", "6281234567890"));
   const freeMin = Math.max(1, Number(await getSetting("freeShippingMinItems", "2")) || 2);
-  const leagues = buildLeagueOptions(await getAllJerseys());
+  const leagues = await getCachedLeagueOptions();
   return (
     <footer className="bg-[#09090B] border-t border-white/10 text-white pt-14 pb-12 text-xs">
       <div className="max-w-[1540px] mx-auto px-4 sm:px-8 lg:px-12">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getJerseyById, getAllJerseys, getShippingSettingsMap } from "@/lib/data";
+import { getJerseyById, getRelatedKits, getShippingSettingsMap } from "@/lib/data";
 import { toShippingSettings, STANDARD_NAMESET_FEE, STANDARD_PATCH_FEE } from "@/lib/promo";
 import { JerseyCustomizer } from "@/components/jersey/jersey-customizer";
 import { JerseyCard } from "@/components/jersey/jersey-card";
@@ -52,11 +52,8 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  // Related jerseys from same league or bestsellers
-  const allKits = await getAllJerseys();
-  const relatedKits = allKits
-    .filter((j) => j.id !== jersey.id && (j.league === jersey.league || j.isBestSeller))
-    .slice(0, 4);
+  // Related kits: query terarah (liga sama atau best seller), limit 4 di SQL
+  const relatedKits = await getRelatedKits(jersey.league, jersey.id, 4);
 
   // fee nameset/patch dari settings admin — sinkron dengan server checkout
   const shipSettings = toShippingSettings(await getShippingSettingsMap());

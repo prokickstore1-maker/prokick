@@ -29,6 +29,13 @@
       "when": 1791717397251,
       "tag": "0003_order_payment_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792748183234,
+      "tag": "0005_add_perf_indexes",
+      "breakpoints": true
     }
   ]
 }

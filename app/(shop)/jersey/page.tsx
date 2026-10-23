@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllJerseys } from "@/lib/data";
+import { getJerseysPaginated, getCatalogFilterOptions, getCachedLeagueOptions, type CatalogSort } from "@/lib/data";
 import { buildLeagueOptions } from "@/lib/leagues";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { Search, RotateCcw, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 export const dynamic = "force-dynamic";
 
 const ITEMS_PER_PAGE = 16;
+
+// Urutan liga di pill filter — sama dengan lib/leagues (All Kits di depan)
+const PILL_LEAGUE_ORDER = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "Nation"];
 
 function getPaginationRange(current: number, total: number): (number | string)[] {
   if (total <= 5) {
@@ -59,90 +62,51 @@ export default async function JerseyCatalogPage({
   const minPrice = Number(resolvedParams.minPrice || 0);
   const maxPrice = Number(resolvedParams.maxPrice || 0);
   const searchQuery = resolvedParams.search || "";
-  const sort = resolvedParams.sort || "featured";
   const requestedPage = Math.max(1, parseInt(resolvedParams.page || "1", 10) || 1);
+  const sort: CatalogSort =
+    resolvedParams.sort === "price-asc" || resolvedParams.sort === "price-desc" ? resolvedParams.sort : "featured";
 
-  const allJerseys = await getAllJerseys();
-  let jerseys = allJerseys;
+  // Filter + sort + LIMIT/OFFSET di SQL — tidak menarik 1.020 jersey ke RAM
+  const [{ items: paginatedJerseys, total: totalItems }, filterOptions, leagueOptions] = await Promise.all([
+    getJerseysPaginated(
+      {
+        league: currentLeague,
+        team: currentTeam,
+        category: currentCategory,
+        country: currentCountry,
+        type: currentType,
+        season: currentSeason,
+        edition: currentEdition,
+        kitType: currentKitType,
+        size: currentSize,
+        minPrice,
+        maxPrice,
+        search: searchQuery,
+      },
+      requestedPage,
+      ITEMS_PER_PAGE,
+      sort
+    ),
+    getCatalogFilterOptions(),
+    getCachedLeagueOptions(),
+  ]);
 
-  // Filter by League
-  if (currentLeague) {
-    jerseys = jerseys.filter(
-      (j) => j.league.toLowerCase() === currentLeague.toLowerCase()
-    );
-  }
-
-  if (currentTeam) jerseys = jerseys.filter((j) => j.team.toLowerCase() === currentTeam.toLowerCase());
-  if (currentCategory) jerseys = jerseys.filter((j) => j.category.toLowerCase() === currentCategory.toLowerCase());
-  if (currentCountry) jerseys = jerseys.filter((j) => j.country.toLowerCase() === currentCountry.toLowerCase());
-  if (currentType) jerseys = jerseys.filter((j) => j.type.toLowerCase() === currentType.toLowerCase());
-  if (currentSeason) jerseys = jerseys.filter((j) => j.season === currentSeason);
-  if (currentEdition) jerseys = jerseys.filter((j) => j.edition.toLowerCase() === currentEdition.toLowerCase());
-  if (currentKitType) jerseys = jerseys.filter((j) => j.kitType.toLowerCase() === currentKitType.toLowerCase());
-  if (currentSize) jerseys = jerseys.filter((j) => j.sizes.includes(currentSize));
-  if (Number.isFinite(minPrice) && minPrice > 0) jerseys = jerseys.filter((j) => Number(j.price) >= minPrice);
-  if (Number.isFinite(maxPrice) && maxPrice > 0) jerseys = jerseys.filter((j) => Number(j.price) <= maxPrice);
-
-  // Filter by Search Query
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    jerseys = jerseys.filter(
-      (j) =>
-        j.name.toLowerCase().includes(q) ||
-        j.team.toLowerCase().includes(q) ||
-        j.tags.toLowerCase().includes(q)
-    );
-  }
-
-  // Sort
-  if (sort === "price-asc") {
-    jerseys.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-  } else if (sort === "price-desc") {
-    jerseys.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-  } else {
-    // Default / "featured": Season descending (2026/27 first), Current edition before Vintage, Home/Away first
-    jerseys.sort((a, b) => {
-      // 1. Season DESC (e.g. "2026/2027" > "2010/2011" > "1994/1995")
-      const seasonDiff = (b.season || "").localeCompare(a.season || "");
-      if (seasonDiff !== 0) return seasonDiff;
-
-      // 2. Current edition before Vintage/Retro
-      if (a.edition === "Current" && b.edition !== "Current") return -1;
-      if (b.edition === "Current" && a.edition !== "Current") return 1;
-
-      // 3. Kit priority: Home (1) > Away (2) > Third (3) > others (4)
-      const kitPriority: Record<string, number> = { Home: 1, Away: 2, Third: 3 };
-      const aPriority = kitPriority[a.kitType] || 4;
-      const bPriority = kitPriority[b.kitType] || 4;
-      if (aPriority !== bPriority) return aPriority - bPriority;
-
-      return 0;
-    });
-  }
-
-  // Pagination calculation
-  const totalItems = jerseys.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
-  const currentPage = Math.min(requestedPage, totalPages);
-  const paginatedJerseys = jerseys.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-  const paginationRange = getPaginationRange(currentPage, totalPages);
-
-  const categoryOptions = [...new Set(allJerseys.map((j) => j.category))].filter(Boolean);
-  const typeOptions = [...new Set(allJerseys.map((j) => j.type))].filter(Boolean);
-  const editionOptions = [...new Set(allJerseys.map((j) => j.edition))].filter(Boolean);
-  const seasonOptions = [...new Set(allJerseys.map((j) => j.season))].filter(Boolean);
+  const categoryOptions = filterOptions.categories;
+  const typeOptions = filterOptions.types;
+  const editionOptions = filterOptions.editions;
+  const seasonOptions = filterOptions.seasons;
   // ukuran diturunkan dari produk yang ada (ukuran anak/3XL ikut muncul sendiri)
   const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "XXL", "XXXL"];
-  const sizeOptions = [...new Set(allJerseys.flatMap((j) => j.sizes || []))]
-    .filter(Boolean)
-    .sort((a, b) => {
-      const ia = SIZE_ORDER.indexOf(a.toUpperCase());
-      const ib = SIZE_ORDER.indexOf(b.toUpperCase());
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
-    });
+  const sizeOptions = filterOptions.sizes.sort((a, b) => {
+    const ia = SIZE_ORDER.indexOf(a.toUpperCase());
+    const ib = SIZE_ORDER.indexOf(b.toUpperCase());
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+  });
+
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const paginationRange = getPaginationRange(currentPage, totalPages);
 
   // Rebuild query keeping every other active filter; used by league pills so
   // they don't silently drop type/size/price selections.
@@ -174,8 +138,6 @@ export default async function JerseyCatalogPage({
     const qs = params.toString();
     return qs ? `/jersey?${qs}` : "/jersey";
   };
-
-  const leagueOptions = buildLeagueOptions(allJerseys);
 
   const filterLabels: string[] = [
     currentLeague && `League: ${currentLeague}`,

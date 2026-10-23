@@ -2,12 +2,11 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { TestimonialsSection } from "@/components/testimonials/testimonials-section";
-import { getAllJerseys, getShippingSettingsMap } from "@/lib/data";
-import { buildLeagueOptions } from "@/lib/leagues";
+import { getCachedLeagueOptions, getShippingSettingsMap } from "@/lib/data";
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const [leagues, shippingSettings] = await Promise.all([
-    buildLeagueOptions(await getAllJerseys()),
+    getCachedLeagueOptions(),
     getShippingSettingsMap(),
   ]);
 

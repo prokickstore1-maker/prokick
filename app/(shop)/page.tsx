@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getAllJerseys, getActiveBanners, getShippingSettingsMap } from "@/lib/data";
+import { getBestSellers, getNewArrivals, getRetroJerseys, getActiveBanners, getNationalCountries, getShippingSettingsMap, getCachedLeagueOptions } from "@/lib/data";
 import { toShippingSettings } from "@/lib/promo";
 import { formatIDR } from "@/lib/utils";
 import { buildLeagueOptions } from "@/lib/leagues";
@@ -12,32 +12,28 @@ import { ChevronRight, ShieldCheck, QrCode, Truck } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [allJerseys, banners, rawSettings] = await Promise.all([
-    getAllJerseys(),
+  const [trending, newArrivals, retroJerseys, banners, rawSettings, nationalCountries, leagueOptions] = await Promise.all([
+    getBestSellers(8),
+    getNewArrivals(8),
+    getRetroJerseys(8),
     getActiveBanners(),
     getShippingSettingsMap(),
+    getNationalCountries(),
+    getCachedLeagueOptions(),
   ]);
   const ship = toShippingSettings(rawSettings);
-  const trending = allJerseys.filter((j) => j.isBestSeller).slice(0, 8);
-  const newArrivals = allJerseys.filter((j) => j.isNew).slice(0, 8);
-
-  const leaguePills = buildLeagueOptions(allJerseys).map((l) => ({
-    name: l.label,
-    href: l.value ? `/jersey?league=${encodeURIComponent(l.value)}` : "/jersey",
-  }));
 
   // Featured = 2 banner pertama; hero carousel pakai sisanya (task H-5)
   const featuredBanners = banners.slice(0, 2);
 
+  // League pills (navbar-style)
+  const leaguePills = leagueOptions.map((l) => ({
+    name: l.label,
+    href: l.value ? `/jersey?league=${encodeURIComponent(l.value)}` : "/jersey",
+  }));
+
   // National Teams: hanya jersey tim nasional (category "Tim Nasional") —
   // country di produk klub = asal klub (Arsenal→England), bukan identitas tim nasional
-  const nationalCountries = [
-    ...new Set(
-      allJerseys
-        .filter((j) => j.category === "Tim Nasional" && j.country)
-        .map((j) => j.country)
-    ),
-  ].sort();
 
   return (
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] pb-24">
@@ -216,7 +212,36 @@ export default async function HomePage() {
           )}
         </section>
 
-        {/* 6. Smart Bundle Promo Bento Tile */}
+        {/* 6. Retro & Vintage Classics Showcase */}
+        {retroJerseys.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
+                  Vintage Heroes
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
+                  Retro &amp; Iconic Kits
+                </h2>
+              </div>
+              <Link
+                href="/jersey?edition=Vintage"
+                className="min-h-11 flex items-center gap-1.5 -my-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-wider transition-colors"
+              >
+                <span>View All Retro</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+              {retroJerseys.map((jersey) => (
+                <JerseyCard key={jersey.id} jersey={jersey} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 7. Smart Bundle Promo Bento Tile */}
         <section className="rounded-xl border border-white/10 bg-gradient-to-r from-[#121217] via-[#181820] to-[#121217] p-6 sm:p-8">
           <div className="max-w-3xl mx-auto text-center space-y-4">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-white/10 text-white border border-white/15">

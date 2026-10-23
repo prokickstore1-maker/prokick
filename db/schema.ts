@@ -53,6 +53,10 @@ export const jerseys = pgTable("jerseys", {
   index("jerseys_league_idx").on(table.league),
   index("jerseys_team_idx").on(table.team),
   index("jerseys_type_idx").on(table.type),
+  index("jerseys_created_at_idx").on(table.createdAt),
+  index("jerseys_is_best_seller_idx").on(table.isBestSeller),
+  index("jerseys_is_new_idx").on(table.isNew),
+  index("jerseys_category_idx").on(table.category),
 ]);
 
 // 4. Multi-angle Jersey Images
@@ -62,7 +66,9 @@ export const jerseyImages = pgTable("jersey_images", {
   url: text("url").notNull(),
   displayOrder: integer("display_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("jersey_images_jersey_id_idx").on(table.jerseyId),
+]);
 
 // 5. Customer Orders
 export const orders = pgTable("orders", {
