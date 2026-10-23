@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactCompiler: true,
   experimental: {
     // base64 upload (receipt 1MB / foto produk 4MB) + overhead multipart
     serverActions: { bodySizeLimit: "6mb" },

@@ -4,6 +4,8 @@ import { Navbar } from "@/components/navbar";
 import { TestimonialsSection } from "@/components/testimonials/testimonials-section";
 import { getCachedLeagueOptions, getShippingSettingsMap } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const [leagues, shippingSettings] = await Promise.all([
     getCachedLeagueOptions(),
