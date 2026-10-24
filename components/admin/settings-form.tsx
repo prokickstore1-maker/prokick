@@ -233,7 +233,12 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
     const result = await resizeAndUploadImage(file, 1200);
     if (result.success && result.url) {
       setQrImageUrl(result.url);
-      onStatus("Foto QR berhasil diunggah — klik Save untuk menyimpan.");
+      const r = await updatePaymentMethodAction(payment.id, { label, accountName, accountNumber, isActive, qrImageUrl: result.url });
+      if (r.success) {
+        onStatus("Foto QR berhasil diunggah & langsung disimpan.");
+      } else {
+        onStatus("Foto QR diunggah, tapi gagal auto-save: " + (r.error || ""));
+      }
     } else {
       onStatus(result.error || "Upload QR gagal");
     }
@@ -245,7 +250,13 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
       <Input value={label} onChange={(e) => setLabel(e.target.value)} aria-label="Payment label" />
       <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} aria-label="Account name" />
       <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} aria-label="Account number" />
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        {qrImageUrl ? (
+          <a href={qrImageUrl} target="_blank" rel="noreferrer" className="relative w-9 h-9 shrink-0 rounded border border-white/20 overflow-hidden bg-white" title="Lihat gambar QR">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qrImageUrl} alt="QR Preview" className="w-full h-full object-contain" />
+          </a>
+        ) : null}
         <Input value={qrImageUrl} onChange={(e) => setQrImageUrl(e.target.value)} placeholder="QR image URL" aria-label="QR image URL" />
         <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-2.5 py-2 text-xs font-bold text-white hover:bg-[#27272A] flex items-center">
           {isUploadingQr ? "..." : "Upload QR"}
@@ -269,7 +280,7 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
 }
 
 function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void }) {
-  const [type, setType] = useState("bank_transfer");
+  const [type, setType] = useState("qr_pay");
   const [label, setLabel] = useState("");
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -295,10 +306,16 @@ function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void })
         <option value="bank_transfer">Bank transfer</option>
         <option value="ewallet">E-wallet</option>
       </select>
-      <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Nama (cth. BCA)" aria-label="Payment label baru" />
+      <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Nama (cth. BCA / QRIS)" aria-label="Payment label baru" />
       <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="Nama rekening" aria-label="Account name baru" />
       <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Nomor rekening" aria-label="Account number baru" />
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        {qrImageUrl ? (
+          <a href={qrImageUrl} target="_blank" rel="noreferrer" className="relative w-9 h-9 shrink-0 rounded border border-white/20 overflow-hidden bg-white" title="Lihat gambar QR">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qrImageUrl} alt="QR Preview" className="w-full h-full object-contain" />
+          </a>
+        ) : null}
         <Input value={qrImageUrl} onChange={(e) => setQrImageUrl(e.target.value)} placeholder="QR image URL (opsional)" aria-label="QR image URL baru" />
         <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-2.5 py-2 text-xs font-bold text-white hover:bg-[#27272A] flex items-center">
           {isUploadingQr ? "..." : "Upload QR"}

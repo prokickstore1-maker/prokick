@@ -131,11 +131,11 @@ function paymentFromSnapshot(order: {
         qrImageUrl?: string | null; accountName?: string | null; accountNumber?: string | null;
       };
       return {
-        paymentMethodLabel: s.label ?? undefined,
-        paymentMethodType: s.type ?? undefined,
-        paymentQrImageUrl: s.qrImageUrl ?? undefined,
-        paymentAccountName: s.accountName ?? undefined,
-        paymentAccountNumber: s.accountNumber ?? undefined,
+        paymentMethodLabel: s.label ?? order.paymentMethod?.label ?? undefined,
+        paymentMethodType: s.type ?? order.paymentMethod?.type ?? undefined,
+        paymentQrImageUrl: s.qrImageUrl || order.paymentMethod?.qrImageUrl || undefined,
+        paymentAccountName: s.accountName ?? order.paymentMethod?.accountName ?? undefined,
+        paymentAccountNumber: s.accountNumber ?? order.paymentMethod?.accountNumber ?? undefined,
       };
     } catch {
       // snapshot rusak: jatuh ke relasi live

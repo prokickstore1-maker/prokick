@@ -12,6 +12,7 @@ import {
   Loader2,
   AlertCircle,
   QrCode,
+  Landmark,
 } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
 import { calculatePromoEngine, toShippingSettings } from "@/lib/promo";
@@ -36,6 +37,10 @@ export interface PaymentOption {
   label: string;
   desc: string;
   badge?: string;
+  type?: string;
+  accountName?: string | null;
+  accountNumber?: string | null;
+  qrImageUrl?: string | null;
 }
 
 
@@ -51,9 +56,18 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
   const [postcode, setPostcode] = useState("");
   const [state, setState] = useState("DKI Jakarta");
 
+  const qrMethods = paymentOptions.filter(
+    (opt) => opt.type === "qr_pay" || opt.label.toLowerCase().includes("qr") || Boolean(opt.qrImageUrl)
+  );
+  const bankMethods = paymentOptions.filter(
+    (opt) => !qrMethods.some((q) => q.id === opt.id)
+  );
+
   // Payment Selection
-  // default = metode pertama yang aktif dari settings admin (bukan hardcode "qr-pay")
-  const [paymentMethodId, setPaymentMethodId] = useState(paymentOptions[0]?.id || "");
+  // default = metode QRIS jika tersedia, atau metode aktif pertama dari settings admin
+  const [paymentMethodId, setPaymentMethodId] = useState(
+    qrMethods[0]?.id || paymentOptions[0]?.id || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   // key stable across retries of the same checkout attempt → dedupe double-submit
   const idemKeyRef = useRef<string | null>(null);
@@ -302,51 +316,161 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
             </div>
 
             {/* 2. Payment Method Card */}
-            <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-4">
-              <h2 className="text-base font-bold text-white font-display uppercase tracking-wide flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-zinc-300" />
-                <span>2. Select Payment Method</span>
-              </h2>
+            <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h2 className="text-base font-bold text-white font-display uppercase tracking-wide flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-volt" />
+                  <span>2. Pilih Metode Pembayaran</span>
+                </h2>
+                <span className="text-[11px] text-zinc-400">
+                  {paymentOptions.length} metode aktif
+                </span>
+              </div>
 
-              <RadioGroup
-                value={paymentMethodId}
-                onValueChange={setPaymentMethodId}
-                className="space-y-3"
-              >
-                {paymentOptions.map((opt) => {
-                  const isSelected = paymentMethodId === opt.id;
-                  return (
-                    <Label
-                      key={opt.id}
-                      htmlFor={`payment-${opt.id}`}
-                      className={`flex items-start p-4 rounded-xl border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-[#181820] border-volt ring-1 ring-volt/40"
-                          : "bg-[#09090B] border-white/10 hover:border-white/20"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 w-full">
-                        <RadioGroupItem
-                          value={opt.id}
-                          id={`payment-${opt.id}`}
-                          className="mt-0.5"
-                        />
-                        <div>
-                          <span className="text-xs font-bold text-white block">
-                            {opt.label}
-                          </span>
-                          <span className="text-[11px] text-zinc-400 block mt-0.5">
-                            {opt.desc}
-                          </span>
-                        </div>
-                        <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white/5 text-zinc-300 border border-white/10 hidden sm:inline-flex">
-                          {opt.badge}
+              {paymentOptions.length === 0 ? (
+                <div className="p-4 rounded-xl bg-[#09090B] border border-white/10 text-xs text-zinc-400">
+                  Metode pembayaran belum dikonfigurasi oleh admin.
+                </div>
+              ) : (
+                <RadioGroup
+                  value={paymentMethodId}
+                  onValueChange={setPaymentMethodId}
+                  className="space-y-6"
+                >
+                  {/* GROUP A: QRIS (SCAN BARCODE INSTAN) */}
+                  {qrMethods.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5 font-mono">
+                          <QrCode className="w-3.5 h-3.5 text-volt" />
+                          <span>QRIS (Scan Barcode Instan)</span>
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-volt/15 text-volt border border-volt/30">
+                          Paling Praktis
                         </span>
                       </div>
-                    </Label>
-                  );
-                })}
-              </RadioGroup>
+
+                      <div className="space-y-2.5">
+                        {qrMethods.map((opt) => {
+                          const isSelected = paymentMethodId === opt.id;
+                          return (
+                            <Label
+                              key={opt.id}
+                              htmlFor={`payment-${opt.id}`}
+                              className={`flex flex-col p-4 rounded-xl border transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-[#181820] border-volt ring-1 ring-volt/40 shadow-lg shadow-volt/5"
+                                  : "bg-[#09090B] border-white/10 hover:border-white/20"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3.5 w-full">
+                                <RadioGroupItem
+                                  value={opt.id}
+                                  id={`payment-${opt.id}`}
+                                  className="shrink-0"
+                                />
+                                <div className="w-10 h-10 rounded-xl bg-volt/10 border border-volt/25 flex items-center justify-center shrink-0 text-volt">
+                                  <QrCode className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-black text-white block tracking-wide">
+                                      {opt.label}
+                                    </span>
+                                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 font-mono">
+                                      QRIS
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] text-zinc-400 block mt-0.5">
+                                    {opt.desc}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 shrink-0 hidden sm:inline-flex">
+                                  {opt.badge || "Bebas Biaya"}
+                                </span>
+                              </div>
+
+                              {isSelected && (
+                                <div className="mt-3 pt-3 border-t border-white/10 text-[11px] text-zinc-300 flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-volt shrink-0 animate-pulse" />
+                                  <span>
+                                    Barcode QRIS akan langsung tampil di invoice setelah Anda klik <strong>Place Order</strong>.
+                                  </span>
+                                </div>
+                              )}
+                            </Label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* GROUP B: TRANSFER REKENING BANK */}
+                  {bankMethods.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5 font-mono">
+                          <Landmark className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>Transfer Rekening Bank</span>
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 border border-white/10">
+                          Manual Transfer
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {bankMethods.map((opt) => {
+                          const isSelected = paymentMethodId === opt.id;
+                          return (
+                            <Label
+                              key={opt.id}
+                              htmlFor={`payment-${opt.id}`}
+                              className={`flex flex-col p-4 rounded-xl border transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-[#181820] border-volt ring-1 ring-volt/40"
+                                  : "bg-[#09090B] border-white/10 hover:border-white/20"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3.5 w-full">
+                                <RadioGroupItem
+                                  value={opt.id}
+                                  id={`payment-${opt.id}`}
+                                  className="shrink-0"
+                                />
+                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/15 flex items-center justify-center shrink-0 text-zinc-300">
+                                  <Landmark className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-xs font-bold text-white block">
+                                    {opt.label}
+                                  </span>
+                                  <span className="text-[11px] text-zinc-400 block mt-0.5">
+                                    {opt.desc}
+                                  </span>
+                                </div>
+                                {opt.badge && (
+                                  <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 text-zinc-300 border border-white/10 shrink-0 hidden sm:inline-flex">
+                                    {opt.badge}
+                                  </span>
+                                )}
+                              </div>
+
+                              {isSelected && (
+                                <div className="mt-3 pt-3 border-t border-white/10 text-[11px] text-zinc-300 flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0" />
+                                  <span>
+                                    Nomor rekening tujuan &amp; tombol salin nomor akan tersedia di invoice.
+                                  </span>
+                                </div>
+                              )}
+                            </Label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </RadioGroup>
+              )}
             </div>
           </div>
 

@@ -8,17 +8,23 @@ export type { PaymentOption } from "./checkout";
 
 export default async function CartPage() {
   const [methods, shippingSettings] = await Promise.all([getPaymentMethods(), getShippingSettingsMap()]);
-  const paymentOptions = methods.map((m) => ({
-    id: m.id,
-    label: m.label,
-    desc:
-      m.type === "qr_pay"
-        ? "Scan pakai GoPay, OVO, DANA, atau aplikasi bank apa pun"
+  const paymentOptions = methods.map((m) => {
+    const isQr = m.type === "qr_pay" || m.label.toLowerCase().includes("qr") || Boolean(m.qrImageUrl);
+    return {
+      id: m.id,
+      label: m.label,
+      type: m.type,
+      accountName: m.accountName,
+      accountNumber: m.accountNumber,
+      qrImageUrl: m.qrImageUrl,
+      desc: isQr
+        ? "Scan pakai GoPay, OVO, DANA, ShopeePay, BCA, Mandiri, atau bank apa pun"
         : m.type === "ewallet"
-        ? `Transfer ke e-wallet${m.accountNumber ? ` (${m.accountNumber})` : ""}`
-        : `Transfer bank${m.accountNumber ? ` (Rek: ${m.accountNumber})` : ""}`,
-    badge: m.type === "qr_pay" ? "Tanpa Biaya Admin" : m.accountNumber || undefined,
-  }));
+        ? `Transfer ke ${m.label}${m.accountNumber ? ` (${m.accountNumber})` : ""}${m.accountName ? ` a.n ${m.accountName}` : ""}`
+        : `Transfer manual${m.accountNumber ? ` Rek: ${m.accountNumber}` : ""}${m.accountName ? ` a.n ${m.accountName}` : ""}`,
+      badge: isQr ? "Bebas Biaya Admin" : (m.accountNumber ? `Rek: ${m.accountNumber}` : undefined),
+    };
+  });
 
   return <Checkout paymentOptions={paymentOptions} shippingSettings={shippingSettings} />;
 }

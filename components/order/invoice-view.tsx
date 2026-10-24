@@ -163,8 +163,8 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
 
   const isQrPayment =
     order.paymentMethodType === "qr_pay" ||
-    order.paymentMethodLabel?.includes("QRIS") ||
-    order.paymentMethodLabel?.includes("QR");
+    Boolean(order.paymentQrImageUrl) ||
+    Boolean(order.paymentMethodLabel?.toLowerCase().includes("qr"));
 
   const waHelpMessage = encodeURIComponent(
     `Halo ProKick, saya memesan #${order.orderNumber} dengan total Rp${order.totalAmount}. Saya ingin bertanya tentang pembayaran/pengiriman.`
