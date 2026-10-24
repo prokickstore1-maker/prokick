@@ -280,7 +280,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                     <SelectContent>
                       {INDONESIAN_PROVINCES.map((s) => (
                         <SelectItem key={s.code} value={s.name}>
-                          {s.name} ({s.zone})
+                          {s.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

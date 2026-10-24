@@ -8,6 +8,7 @@ import { flagUrl } from "@/lib/countries";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { ChevronRight, ShieldCheck, QrCode, Truck } from "lucide-react";
+import { TOP_CLUBS } from "@/lib/clubs";
 
 export const dynamic = "force-dynamic";
 
@@ -120,7 +121,51 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* 5. Best sellers 2026/27 */}
+        {/* 5. Top Clubs — Shop by Club */}
+        <section className="space-y-6">
+          <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
+                Shop by club
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
+                Top Clubs
+              </h2>
+            </div>
+            <Link
+              href="/jersey?category=Klub"
+              className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1.5 uppercase tracking-wider transition-colors"
+            >
+              <span>View All</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="flex overflow-x-auto pb-2 scrollbar-none gap-2.5 snap-x snap-mandatory">
+            {TOP_CLUBS.map((club) => (
+              <Link
+                key={club.team}
+                href={`/jersey?league=${encodeURIComponent(club.league)}&team=${encodeURIComponent(club.team)}`}
+                className="group snap-start w-20 sm:w-24 shrink-0 flex flex-col items-center gap-1.5 rounded-lg border border-white/10 bg-[#121217] px-2 py-2.5 hover:border-white/25 hover:bg-[#181820] transition-colors"
+              >
+                <div className="h-9 w-full flex items-center justify-center overflow-hidden">
+                  <Image
+                    src={club.logo}
+                    alt={`${club.name} logo`}
+                    width={36}
+                    height={36}
+                    className="max-h-8 w-auto object-contain group-hover:scale-110 transition-transform duration-200"
+                  />
+                </div>
+                <span className="w-full truncate text-center text-[10px] font-bold text-zinc-300 group-hover:text-white">
+                  {club.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 6. Best sellers 2026/27 */}
         <section className="space-y-6">
           <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
             <div>
