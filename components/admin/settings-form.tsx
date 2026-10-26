@@ -48,7 +48,31 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
       {status && <p role="status" className="rounded-lg border border-[#27272A] bg-[#181820] p-3 text-sm text-zinc-200">{status}</p>}
 
       <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
-        <h2 className="text-lg font-bold text-white">Delivery</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27272A] pb-3">
+          <div>
+            <h2 className="text-lg font-bold text-white">Delivery</h2>
+            <p className="text-xs text-zinc-400">Aturan ongkir, fee sablon nameset/patch, dan banner pengumuman.</p>
+          </div>
+          <Button
+            type="button"
+            className="h-auto px-4 py-2 text-xs uppercase tracking-wider font-bold self-start sm:self-auto"
+            onClick={async () => {
+              await saveSetting("javaShippingCost", shipping);
+              await saveSetting("outsideJavaShippingCost", eastShipping);
+              await saveSetting("freeShippingMinItems", freeItems);
+              await saveSetting("namesetFee", namesetFee);
+              await saveSetting("patchFee", patchFee);
+              await saveSetting("freePatchMinItems", freePatchItems);
+              await saveSetting("freeNamesetMinItems", freeNamesetItems);
+              await saveSetting("runningBannerText", runningBanner.slice(0, 500));
+              await saveSetting("sulawesiBlocked", sulawesiBlocked ? "1" : "0");
+              setStatus("Pengaturan Delivery & Ticker berhasil disimpan!");
+            }}
+          >
+            Simpan Pengiriman
+          </Button>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-3">
           {[['Ongkir Jawa (IDR)', 'javaShippingCost', shipping, setShipping], ['Ongkir Luar Jawa (IDR)', 'outsideJavaShippingCost', eastShipping, setEastShipping], ['Gratis ongkir setelah', 'freeShippingMinItems', freeItems, setFreeItems]].map(([label, key, value, setter]) => (
             <Label key={key as string} className="space-y-1 text-sm font-semibold">
@@ -86,7 +110,27 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
       </section>
 
       <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
-        <h2 className="text-lg font-bold text-white">Contact</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27272A] pb-3">
+          <div>
+            <h2 className="text-lg font-bold text-white">Contact &amp; Chat</h2>
+            <p className="text-xs text-zinc-400">Nomor WhatsApp &amp; username Telegram untuk tombol chat invoice pembeli.</p>
+          </div>
+          <Button
+            type="button"
+            className="h-auto px-4 py-2 text-xs uppercase tracking-wider font-bold self-start sm:self-auto bg-emerald-600 hover:bg-emerald-500 text-white"
+            onClick={async () => {
+              const cleanWa = whatsapp.replace(/\D/g, "");
+              const cleanTg = telegramUsername.replace(/^@/, "");
+              await saveSetting("whatsappNumber", cleanWa);
+              await saveSetting("telegramUsername", cleanTg);
+              await saveSetting("invoiceChatButtons", invoiceChatButtons);
+              setStatus("Kontak WhatsApp (" + cleanWa + ") & Telegram berhasil disimpan!");
+            }}
+          >
+            Simpan Kontak WhatsApp
+          </Button>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <Label className="space-y-1 text-sm font-semibold">
             WhatsApp number
@@ -107,7 +151,7 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
             ))}
           </div>
         </Label>
-        <p className="text-xs text-zinc-400">WhatsApp: format internasional tanpa &quot;+&quot; — 6281234567890. Telegram: username tanpa @. Tombol invoice hanya tampil kalau kontaknya terisi.</p>
+        <p className="text-xs text-zinc-400">WhatsApp: format internasional tanpa &quot;+&quot; — contoh: <strong>6281234567890</strong>. Tombol invoice hanya tampil jika nomor WA terisi.</p>
       </section>
 
       <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
