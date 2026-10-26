@@ -26,6 +26,7 @@ export function Navbar({
   // split | jadi fragmen; mobile hanya fragmen pertama
   const tickerParts = banner.split("|").map((s) => s.trim()).filter(Boolean);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [expandedLeague, setExpandedLeague] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const router = useRouter();
@@ -40,6 +41,8 @@ export function Navbar({
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
     const value = query.trim();
+    setMobileSearchOpen(false);
+    setMobileMenuOpen(false);
     router.push(value ? `/jersey?search=${encodeURIComponent(value)}` : "/jersey");
   };
 
@@ -142,22 +145,36 @@ export function Navbar({
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Search Pill */}
+          {/* Mobile Search Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setMobileSearchOpen((prev) => !prev)}
+            aria-label="Cari jersey"
+            className="sm:hidden p-2.5 min-w-11 min-h-11 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition active:scale-95 cursor-pointer"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
+          {/* Desktop Search Pill */}
           <form
             onSubmit={submitSearch}
-            className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 hover:border-white/20 focus-within:border-white/30 px-3.5 py-1.5 rounded-lg text-xs transition"
+            className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 hover:border-white/20 focus-within:border-white/30 pl-3 pr-1.5 py-1.5 rounded-lg text-xs transition"
           >
-            <Search className="w-3.5 h-3.5 text-zinc-400" />
+            <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search club, player, kit..."
+              placeholder="Search club, kit..."
               aria-label="Search kits"
-              className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/40 text-xs text-white placeholder:text-zinc-400 w-28 md:w-36"
+              className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/40 text-xs text-white placeholder:text-zinc-400 w-28 md:w-36 lg:w-44"
             />
-            {/* implicit submission kadang gagal tanpa tombol submit di form — ini juga tombol screen-reader */}
-            <button type="submit" className="sr-only">Search</button>
+            <button
+              type="submit"
+              className="px-2.5 py-1 rounded bg-white/10 hover:bg-[#E2F952] hover:text-black text-[11px] font-bold text-zinc-300 transition cursor-pointer"
+            >
+              Cari
+            </button>
           </form>
 
           {/* Currency indicator (desktop) */}
@@ -203,8 +220,8 @@ export function Navbar({
                 </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-2 text-sm font-bold text-zinc-300 overflow-y-auto max-h-[calc(100vh-120px)]">
-                <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 focus-within:border-white/30 px-3.5 py-2.5 mb-2">
-                  <Search className="w-4 h-4 text-zinc-400" />
+                <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 focus-within:border-white/30 px-3.5 py-2 mb-2">
+                  <Search className="w-4 h-4 text-zinc-400 shrink-0" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -212,7 +229,12 @@ export function Navbar({
                     aria-label="Search kits"
                     className="min-w-0 flex-1 text-xs text-white placeholder:text-zinc-400 bg-transparent outline-none focus-visible:ring-1 focus-visible:ring-white/40"
                   />
-                  <button type="submit" className="sr-only">Search</button>
+                  <button
+                    type="submit"
+                    className="px-3 py-1.5 rounded-lg bg-[#E2F952] text-black font-bold text-xs uppercase tracking-wider hover:bg-[#d4eb3e] transition cursor-pointer shrink-0"
+                  >
+                    Cari
+                  </button>
                 </form>
                 <Link
                   href="/jersey"
@@ -282,6 +304,32 @@ export function Navbar({
           </Sheet>
         </div>
       </div>
+
+      {/* Mobile Search Bar Dropdown */}
+      {mobileSearchOpen && (
+        <div className="sm:hidden border-t border-white/10 bg-[#121217] px-4 py-2.5">
+          <form onSubmit={submitSearch} className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Cari klub, pemain, jersey..."
+                aria-label="Search kits"
+                autoFocus
+                className="w-full bg-white/5 border border-white/10 focus:border-[#E2F952]/50 pl-9 pr-3 py-2 rounded-lg text-xs text-white placeholder:text-zinc-400 outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-3.5 py-2 rounded-lg bg-[#E2F952] text-black font-extrabold text-xs uppercase tracking-wider hover:bg-[#d4eb3e] transition cursor-pointer shrink-0"
+            >
+              Cari
+            </button>
+          </form>
+        </div>
+      )}
     </header>
   );
 }

@@ -211,7 +211,7 @@ export async function getJerseysPaginated(
   }
 }
 
-// Homepage: 8 best seller tanpa tarik seluruh tabel
+// Homepage: 8 best seller tanpa tarik seluruh tabel (auto-fill jika kurang dari limit)
 export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
   if (!(await checkDbConnection())) return [];
   try {
@@ -220,6 +220,22 @@ export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
       orderBy: [desc(jerseys.createdAt)],
       limit,
     });
+    // Jika jumlah jersey berlabel isBestSeller kurang dari limit, lengkapi dengan jersey terbaru agar grid selalu penuh
+    if (rows.length < limit) {
+      const existingIds = new Set(rows.map((r) => r.id));
+      const fallbacks = await db.query.jerseys.findMany({
+        where: and(ne(jerseys.type, "Retro")),
+        orderBy: [desc(jerseys.isFeatured), desc(jerseys.isNew), desc(jerseys.createdAt)],
+        limit: limit * 2,
+      });
+      for (const f of fallbacks) {
+        if (!existingIds.has(f.id)) {
+          rows.push(f);
+          existingIds.add(f.id);
+          if (rows.length >= limit) break;
+        }
+      }
+    }
     return rows.map((r) => normalizeJerseyRow(r));
   } catch (e) {
     console.warn("DB best sellers failed:", e);

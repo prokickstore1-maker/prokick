@@ -7,7 +7,7 @@ import { buildLeagueOptions } from "@/lib/leagues";
 import { flagUrl } from "@/lib/countries";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { HeroCarousel } from "@/components/home/hero-carousel";
-import { ChevronRight, ShieldCheck, QrCode, Truck } from "lucide-react";
+import { ChevronRight, ShieldCheck, QrCode, Truck, Search } from "lucide-react";
 import { TOP_CLUBS } from "@/lib/clubs";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +42,53 @@ export default async function HomePage() {
         {/* 1. Cinematic Hero Carousel */}
         {banners.length > 2 && <HeroCarousel banners={banners.slice(2)} />}
 
-        {/* 2. Store Trust & Benefit Strip */}
+        {/* 2. Direct Search & Discovery Bar */}
+        <section className="rounded-2xl border border-white/10 bg-[#121217] p-4 sm:p-5 shadow-xl">
+          <form method="GET" action="/jersey" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                name="search"
+                aria-label="Cari jersey"
+                placeholder="Cari jersey klub, tim nasional, pemain, atau edisi (contoh: Real Madrid, Arsenal, Retro)..."
+                className="w-full bg-[#181820] border border-white/10 focus:border-[#E2F952]/60 rounded-xl pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 text-xs sm:text-sm text-white placeholder:text-zinc-400 outline-none transition"
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 rounded-xl bg-[#E2F952] text-black font-extrabold text-xs sm:text-sm uppercase tracking-wider hover:bg-[#d4eb3e] transition cursor-pointer shadow-md shrink-0"
+            >
+              <Search className="w-4 h-4" />
+              <span>Cari Jersey</span>
+            </button>
+          </form>
+
+          {/* Quick search chips */}
+          <div className="mt-3 pt-3 border-t border-white/6 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mr-1">
+              Populer:
+            </span>
+            {[
+              { label: "Real Madrid 26/27", q: "Real Madrid" },
+              { label: "Arsenal", q: "Arsenal" },
+              { label: "Barcelona", q: "Barcelona" },
+              { label: "Man United", q: "Manchester United" },
+              { label: "Tim Nasional", href: "/jersey?category=Tim+Nasional" },
+              { label: "Retro Vintage", href: "/jersey?edition=Vintage" },
+            ].map((chip) => (
+              <Link
+                key={chip.label}
+                href={chip.href || `/jersey?search=${encodeURIComponent(chip.q!)}`}
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/6 transition-colors"
+              >
+                {chip.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. Store Trust & Benefit Strip */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="rounded-xl border border-white/8 bg-[#121217] p-4 sm:p-5 flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-[#E2F952]/10 border border-[#E2F952]/25 flex items-center justify-center text-[#E2F952] shrink-0">
@@ -185,21 +231,40 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {/* Quick filter pills (liga dari data) — dipindah ke dalam section Best Sellers */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {leaguePills.map((comp, idx) => (
-              <Link
-                key={comp.name}
-                href={comp.href}
-                className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                  idx === 0
-                    ? "bg-white text-black font-extrabold shadow-md hover:bg-zinc-200"
-                    : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/8"
-                }`}
+          {/* Quick filter pills & Search */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+              {leaguePills.map((comp, idx) => (
+                <Link
+                  key={comp.name}
+                  href={comp.href}
+                  className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                    idx === 0
+                      ? "bg-white text-black font-extrabold shadow-md hover:bg-zinc-200"
+                      : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/8"
+                  }`}
+                >
+                  {comp.name}
+                </Link>
+              ))}
+            </div>
+
+            <form method="GET" action="/jersey" className="relative w-full lg:w-72 shrink-0">
+              <input
+                type="text"
+                name="search"
+                aria-label="Cari jersey di katalog"
+                placeholder="Cari jersey..."
+                className="w-full bg-[#121217] border border-white/10 hover:border-white/20 focus:border-[#E2F952]/60 rounded-lg pl-9 pr-16 py-2.5 text-xs text-white placeholder:text-zinc-400 outline-none"
+              />
+              <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <button
+                type="submit"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded bg-[#E2F952] text-black font-extrabold text-[11px] uppercase tracking-wider hover:bg-[#d4eb3e] transition cursor-pointer"
               >
-                {comp.name}
-              </Link>
-            ))}
+                Cari
+              </button>
+            </form>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">

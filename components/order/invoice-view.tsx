@@ -13,6 +13,9 @@ import {
   Loader2,
   AlertCircle,
   ExternalLink,
+  Download,
+  Maximize2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StoredOrder } from "@/lib/orders-store";
@@ -37,6 +40,25 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(Boolean(order.paymentProofUrl));
   const [uploadError, setUploadError] = useState("");
+  const [isQrZoomed, setIsQrZoomed] = useState(false);
+
+  const handleDownloadQr = async () => {
+    if (!order.paymentQrImageUrl) return;
+    try {
+      const res = await fetch(order.paymentQrImageUrl);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `qris-${order.orderNumber}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch {
+      window.open(order.paymentQrImageUrl, "_blank");
+    }
+  };
 
   const copyToClipboard = (text: string, type: "amount" | "account") => {
     navigator.clipboard.writeText(text);
@@ -236,7 +258,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
         {/* CARD 1: PAYMENT INSTRUCTIONS (QR PAY / BANK) */}
         <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-5">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <h2 className="text-base font-bold text-white font-display uppercase tracking-wider">Payment Instructions</h2>
+            <h2 className="text-base font-bold text-white font-display uppercase tracking-wider">Instruksi Pembayaran</h2>
             <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded-lg bg-white/10 text-zinc-300 border border-white/15">
               {order.paymentMethodLabel || "QRIS / Transfer"}
             </span>
@@ -245,7 +267,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
           {/* Exact Amount to Pay Box */}
           <div className="p-4 rounded-xl bg-[#09090B] border border-white/10 flex items-center justify-between">
             <div>
-              <span className="text-[10px] text-zinc-400 uppercase font-bold block">Exact Amount to Pay</span>
+              <span className="text-[10px] text-zinc-400 uppercase font-bold block">Jumlah yang Harus Dibayar</span>
               <span className="text-2xl font-black text-white font-mono">
                 {formatIDR(order.totalAmount)}
               </span>
@@ -256,25 +278,57 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
               className="rounded-xl p-2.5 gap-1.5 text-xs font-bold bg-white/10 text-white hover:bg-white/20 border-0"
             >
               {copiedAmount ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              <span role="status">{copiedAmount ? "Copied!" : "Copy"}</span>
+              <span role="status">{copiedAmount ? "Tersalin!" : "Salin Nominal"}</span>
             </Button>
           </div>
 
           {/* QR View */}
           {isQrPayment ? (
-            <div className="text-center space-y-3">
+            <div className="text-center space-y-4">
               {order.paymentQrImageUrl ? (
-                <div className="inline-block p-4 rounded-2xl bg-white shadow-xl mx-auto border border-white/20">
-                  {/* QR Code Box */}
-                  <div className="w-48 h-48 relative flex items-center justify-center bg-white rounded-lg">
+                <div className="space-y-3">
+                  {/* Container QRIS Besar */}
+                  <div
+                    onClick={() => setIsQrZoomed(true)}
+                    className="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[750/1050] mx-auto rounded-2xl overflow-hidden bg-white shadow-2xl border-2 border-white/20 p-2 cursor-pointer group/qr transition-all hover:scale-[1.01]"
+                  >
                     <Image
                       src={order.paymentQrImageUrl}
-                      alt="QRIS Code"
+                      alt="Barcode QRIS Pembayaran"
                       fill
                       unoptimized
-                      className="object-contain p-2"
-                      sizes="200px"
+                      priority
+                      className="object-contain"
+                      sizes="(max-width: 640px) 340px, 400px"
                     />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/qr:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-bold text-xs pointer-events-none">
+                      <Maximize2 className="w-4 h-4" />
+                      <span>Klik untuk Memperbesar</span>
+                    </div>
+                  </div>
+
+                  {/* Tombol Aksi QRIS: Unduh & Perbesar */}
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleDownloadQr}
+                      className="rounded-xl px-4 py-2 text-xs font-bold gap-1.5 bg-white/10 text-white hover:bg-white/20 border-0"
+                    >
+                      <Download className="w-3.5 h-3.5 text-volt" />
+                      <span>Unduh QRIS</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsQrZoomed(true)}
+                      className="rounded-xl px-4 py-2 text-xs font-bold gap-1.5 bg-white/10 text-white hover:bg-white/20 border-0"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>Perbesar QR</span>
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -283,27 +337,27 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                 </div>
               )}
               <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
-                Scan pakai <strong className="text-white">GoPay</strong>, <strong className="text-white">OVO</strong>, <strong className="text-white">DANA</strong>, atau aplikasi bank apa pun.
+                Scan pakai <strong className="text-white">BCA, Mandiri, BRI, GoPay, OVO, DANA</strong>, atau aplikasi m-banking apa pun. Bisa unduh QR lalu scan dari galeri m-banking.
               </p>
             </div>
           ) : (
             /* Online Banking View */
             <div className="space-y-3 text-xs">
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 space-y-1">
-                <span className="text-zinc-400 block text-[10px] uppercase font-bold">Bank Name</span>
+                <span className="text-zinc-400 block text-[10px] uppercase font-bold">Nama Bank</span>
                 <span className="font-bold text-white text-sm">
                   {order.paymentMethodLabel || "Bank Transfer"}
                 </span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 space-y-1">
-                <span className="text-zinc-400 block text-[10px] uppercase font-bold">Account Name</span>
+                <span className="text-zinc-400 block text-[10px] uppercase font-bold">Nama Pemilik Rekening</span>
                 <span className="font-bold text-white">{order.paymentAccountName || "ProKick Indonesia"}</span>
               </div>
 
               <div className="p-3.5 rounded-xl bg-[#09090B] border border-white/10 flex items-center justify-between">
                 <div>
-                  <span className="text-zinc-400 block text-[10px] uppercase font-bold">Account Number</span>
+                  <span className="text-zinc-400 block text-[10px] uppercase font-bold">Nomor Rekening</span>
                   <span className="font-mono font-bold text-white text-sm">
                     {order.paymentAccountNumber || "-"}
                   </span>
@@ -316,7 +370,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                       "account"
                     )
                   }
-                  aria-label={copiedAccount ? "Account number copied" : "Copy account number"}
+                  aria-label={copiedAccount ? "Nomor rekening tersalin" : "Salin nomor rekening"}
                   className="rounded-xl p-2 bg-white/10 text-white hover:bg-white/20 border-0"
                 >
                   {copiedAccount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -330,9 +384,9 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
         <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-              <h2 className="text-base font-bold text-white font-display uppercase tracking-wider">Payment Receipt</h2>
+              <h2 className="text-base font-bold text-white font-display uppercase tracking-wider">Bukti Pembayaran</h2>
               <span role="status" className="text-[10px] text-volt font-semibold">
-                {uploadSuccess ? "Receipt Received" : "Upload Slip"}
+                {uploadSuccess ? "Bukti Diterima" : "Upload Bukti"}
               </span>
             </div>
 
@@ -348,31 +402,31 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center mx-auto">
                   <FileCheck className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-white text-sm">Receipt Successfully Uploaded!</h3>
+                <h3 className="font-bold text-white text-sm">Bukti Pembayaran Berhasil Diunggah!</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Your payment receipt is being verified by the ProKick store administrator. You will receive a WhatsApp confirmation once shipped.
+                  Bukti transfer Anda sedang diverifikasi oleh admin ProKick Store. Anda akan menerima update dan resi pengiriman via WhatsApp.
                 </p>
 
                 {previewUrl && (
                   <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-white/10 mt-3">
-                    <Image src={previewUrl} alt="Payment Receipt" fill className="object-cover" sizes="400px" />
+                    <Image src={previewUrl} alt="Bukti Pembayaran" fill className="object-cover" sizes="400px" />
                   </div>
                 )}
               </div>
             ) : (
               <div className="space-y-4">
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  After completing your transfer, take a screenshot of the receipt and upload it below. Our system will compress it automatically before sending to the admin.
+                  Setelah menyelesaikan pembayaran, ambil tangkapan layar (screenshot) bukti transfer lalu unggah di bawah ini. Sistem akan mengompresnya otomatis sebelum diteruskan ke admin.
                 </p>
 
                 {/* Upload Box */}
                 <label className="border-2 border-dashed border-white/20 hover:border-volt rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-[#09090B]">
                   <UploadCloud className="w-8 h-8 text-volt mb-2" />
                   <span className="text-xs font-bold text-white block">
-                    {file ? file.name : "Select Transfer Receipt Screenshot"}
+                    {file ? file.name : "Pilih Screenshot Bukti Transfer"}
                   </span>
                   <span className="text-[10px] text-zinc-400 mt-0.5 font-mono">
-                    PNG, JPEG, WebP &bull; Max 1MB
+                    PNG, JPEG, WebP &bull; Maks 1MB
                   </span>
                   <input
                     type="file"
@@ -384,7 +438,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
 
                 {previewUrl && (
                   <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-white/10">
-                    <Image src={previewUrl} alt="Preview" fill className="object-cover" sizes="400px" />
+                    <Image src={previewUrl} alt="Preview Bukti" fill className="object-cover" sizes="400px" />
                   </div>
                 )}
               </div>
@@ -401,12 +455,12 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                 {isUploading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Compressing &amp; Uploading Slip...</span>
+                    <span>Mengompres &amp; Mengunggah Bukti...</span>
                   </>
                 ) : (
                   <>
                     <UploadCloud className="w-4 h-4" />
-                    <span>Submit Payment Receipt</span>
+                    <span>Kirim Bukti Pembayaran</span>
                   </>
                 )}
               </Button>
@@ -421,7 +475,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                   rel="noopener noreferrer"
                 >
                   <MessageCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Chat Admin on WhatsApp</span>
+                  <span>Hubungi Admin via WhatsApp</span>
                 </a>
               </Button>
             )}
@@ -433,7 +487,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                   rel="noopener noreferrer"
                 >
                   <MessageCircle className="w-4 h-4 text-sky-400" />
-                  <span>Chat Admin on Telegram</span>
+                  <span>Hubungi Admin via Telegram</span>
                 </a>
               </Button>
             )}
@@ -444,7 +498,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
       {/* Itemized Order Breakdown */}
       <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-4">
         <h2 className="text-base font-bold text-white font-display uppercase tracking-wider border-b border-white/10 pb-3">
-          Ordered Football Kits
+          Rincian Jersey Dipesan
         </h2>
 
         <div className="space-y-3">
@@ -456,9 +510,9 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
               <div className="space-y-0.5">
                 <span className="font-bold text-white font-display">{item.name}</span>
                 <div className="flex items-center gap-2 text-zinc-400 text-[11px]">
-                  <span>Size: <strong className="text-white font-mono">{item.size}</strong></span>
+                  <span>Ukuran: <strong className="text-white font-mono">{item.size}</strong></span>
                   <span>&bull;</span>
-                  <span>Qty: {item.quantity}</span>
+                  <span>Jumlah: {item.quantity}</span>
                 </div>
                 {item.namesetName && (
                   <p className="text-[10px] text-zinc-400 font-semibold">
@@ -480,12 +534,53 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
         </div>
 
         <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-zinc-400 gap-2">
-          <span>Recipient Address: <strong className="text-white">{order.customerAddress}</strong></span>
+          <span>Alamat Pengiriman: <strong className="text-white">{order.customerAddress}</strong></span>
           <Link href="/jersey" className="text-volt font-bold hover:underline">
-            Return to Store
+            Kembali ke Katalog
           </Link>
         </div>
       </div>
+
+      {/* Modal Zoom QRIS */}
+      {isQrZoomed && order.paymentQrImageUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsQrZoomed(false)}
+        >
+          <div
+            className="relative max-w-sm sm:max-w-md w-full bg-white rounded-3xl p-4 shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsQrZoomed(false)}
+              className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-xl border border-white/20 hover:bg-zinc-800 transition-colors"
+              aria-label="Tutup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="relative w-full aspect-[750/1050]">
+              <Image
+                src={order.paymentQrImageUrl}
+                alt="Barcode QRIS Pembayaran Ukuran Penuh"
+                fill
+                unoptimized
+                className="object-contain"
+                sizes="(max-width: 640px) 380px, 480px"
+              />
+            </div>
+            <div className="pt-3 pb-1 text-center">
+              <Button
+                type="button"
+                onClick={handleDownloadQr}
+                className="w-full rounded-xl py-3 text-xs font-bold gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Simpan Gambar ke Galeri HP</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

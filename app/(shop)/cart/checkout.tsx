@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import {
   AlertCircle,
   QrCode,
   Landmark,
+  Trash2,
 } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
 import { calculatePromoEngine, toShippingSettings } from "@/lib/promo";
@@ -46,7 +47,17 @@ export interface PaymentOption {
 
 export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions: PaymentOption[]; shippingSettings: Record<string, string> }) {
   const router = useRouter();
-  const { items, clearCart } = useCartStore();
+  const { items, removeItem, clearCart } = useCartStore();
+
+  // Bersihkan item usang/lama peninggalan Malaysia (< Rp 10.000 atau tanpa jerseyId) secara instan
+  useEffect(() => {
+    const invalidItems = items.filter(
+      (i) => typeof i.price === "number" && (i.price < 10000 || !i.jerseyId)
+    );
+    if (invalidItems.length > 0) {
+      invalidItems.forEach((b) => removeItem(b.id));
+    }
+  }, [items, removeItem]);
 
   // Form State
   const [customerName, setCustomerName] = useState("");
@@ -132,7 +143,12 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
       });
 
       if (!result.success || !result.orderId) {
-        setErrorMessage(result.error || "Failed to create order. Please try again.");
+        if ((result as { unavailableJerseyId?: string }).unavailableJerseyId) {
+          const badId = (result as { unavailableJerseyId?: string }).unavailableJerseyId;
+          const badItems = items.filter((i) => i.jerseyId === badId);
+          badItems.forEach((b) => removeItem(b.id));
+        }
+        setErrorMessage(result.error || "Gagal membuat pesanan. Silakan coba kembali.");
         setIsSubmitting(false);
         return;
       }
@@ -509,9 +525,19 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                         </p>
                       )}
                     </div>
-                    <span className="font-mono font-bold text-white shrink-0">
-                      {formatIDR(item.price * item.quantity)}
-                    </span>
+                    <div className="flex flex-col items-end justify-between shrink-0">
+                      <span className="font-mono font-bold text-white">
+                        {formatIDR(item.price * item.quantity)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="text-zinc-500 hover:text-red-400 p-1 -mr-1 transition-colors rounded hover:bg-white/5"
+                        title="Hapus dari keranjang"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

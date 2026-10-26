@@ -83,11 +83,21 @@ export async function createOrderAction(input: CreateOrderInput) {
         return { success: false, error: "Invalid item quantity or size." };
       }
       const dbJersey = await getJerseyById(item.jerseyId);
-      if (!dbJersey) return { success: false, error: `Product unavailable: ${item.name}` };
+      if (!dbJersey) {
+        return {
+          success: false,
+          error: `Produk "${item.name}" sudah tidak tersedia di katalog dan telah dihapus dari keranjang Anda.`,
+          unavailableJerseyId: item.jerseyId,
+        };
+      }
       const verifiedPrice = Number(dbJersey.price);
       // stock itself is checked in createOrderWithStock (throws "Insufficient stock …")
       if (!Number.isFinite(verifiedPrice) || verifiedPrice < 0) {
-        return { success: false, error: "Product unavailable." };
+        return {
+          success: false,
+          error: `Produk "${item.name}" tidak dapat diproses saat ini.`,
+          unavailableJerseyId: item.jerseyId,
+        };
       }
       const verifiedName = dbJersey.name;
       const hasNameset = Boolean(item.namesetName && item.namesetName.trim());

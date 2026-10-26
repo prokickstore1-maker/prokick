@@ -89,13 +89,25 @@ export const useCartStore = create<CartStore>()(
       partialize: (state) => ({ items: state.items, shippingZone: state.shippingZone }),
       // defer localStorage read past SSR hydration — Navbar triggers rehydrate on mount
       skipHydration: true,
-      // nilai lama Malaysia ("Peninsular/East Malaysia") dari localStorage sebelum migrasi — normalisasi saat rehydrate
+      // nilai lama Malaysia ("Peninsular/East Malaysia") atau harga MYR (< Rp 10.000) dari localStorage sebelum migrasi — normalisasi saat rehydrate
       migrate: (persisted) => {
-        const zone = (persisted as { shippingZone?: string })?.shippingZone;
-        if (zone !== "Jawa" && zone !== "Luar Jawa") {
-          (persisted as { shippingZone?: string }).shippingZone = "Jawa";
+        const p = persisted as { shippingZone?: string; items?: CartItem[] };
+        if (p?.shippingZone !== "Jawa" && p?.shippingZone !== "Luar Jawa") {
+          p.shippingZone = "Jawa";
         }
-        return persisted;
+        if (Array.isArray(p?.items)) {
+          p.items = p.items.filter(
+            (item) => typeof item.price === "number" && item.price >= 10000 && Boolean(item.jerseyId)
+          );
+        }
+        return p;
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state && Array.isArray(state.items)) {
+          state.items = state.items.filter(
+            (item) => typeof item.price === "number" && item.price >= 10000 && Boolean(item.jerseyId)
+          );
+        }
       },
     }
   )

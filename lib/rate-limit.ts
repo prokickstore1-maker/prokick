@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 const buckets = new Map<string, { count: number; expiresAt: number }>();
 
 export function rateLimit(key: string, max: number, windowMs: number) {
+  if (process.env.NODE_ENV !== "production") {
+    return { allowed: true, retryAfterMinutes: 0 };
+  }
   const now = Date.now();
   // drop expired entries so a flood of unique keys can't grow the map forever
   for (const [k, v] of buckets) {

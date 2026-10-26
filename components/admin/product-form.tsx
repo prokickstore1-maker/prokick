@@ -98,7 +98,7 @@ export function ProductForm({ initialProducts, product }: { initialProducts: Nor
         continue;
       }
       setImages((prev) => {
-        if (prev.length >= 8) { URL.revokeObjectURL(preview); setMessage("Maksimal 8 foto per produk."); return prev; }
+        if (prev.length >= 16) { URL.revokeObjectURL(preview); setMessage("Maksimal 16 foto per produk."); return prev; }
         return [...prev, { file, preview }];
       });
     }
@@ -199,16 +199,16 @@ export function ProductForm({ initialProducts, product }: { initialProducts: Nor
         >
           <ImagePlus className="h-6 w-6 text-zinc-400" />
           <span className="text-xs font-bold text-zinc-200">Sentuh atau tarik foto produk ke sini</span>
-          <span className="text-[11px] text-zinc-400">Maksimal 8 foto · foto pertama jadi foto utama</span>
+          <span className="text-[11px] text-zinc-400">Maksimal 16 foto · foto pertama jadi foto utama</span>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
             aria-label="Pilih foto produk"
-            disabled={isSaving || images.length >= 8}
+            disabled={isSaving || images.length >= 16}
             className="hidden"
             onChange={(e) => {
-              void handleImageSelect(Array.from(e.target.files || []).slice(0, 8 - images.length));
+              void handleImageSelect(Array.from(e.target.files || []).slice(0, 16 - images.length));
               e.currentTarget.value = "";
             }}
           />

@@ -32,7 +32,7 @@ function clean(input: ProductInput): ProductInput {
 }
 
 function validImages(images: string[] | undefined) {
-  return !images || (images.length <= 8 && images.every((u) => /^https?:\/\//.test(u) || u.startsWith("/")));
+  return !images || (images.length <= 16 && images.every((u) => /^https?:\/\//.test(u) || u.startsWith("/")));
 }
 
 function valid(input: ProductInput) {
