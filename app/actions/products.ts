@@ -154,6 +154,10 @@ export async function uploadProductImageAction(base64Data: string, mimeType: str
     return { success: true as const, url };
   } catch (e) {
     console.error("Product image upload failed:", e);
-    return { success: false as const, error: e instanceof Error ? e.message : "Upload failed." };
+    const raw = e instanceof Error ? e.message : "Upload failed.";
+    const cleanError = raw === "UnknownError" || raw.includes("AccessDenied")
+      ? "Gagal mengunggah ke S3: Akses ditolak (periksa izin bucket 'prokick' dan kredensial S3)."
+      : raw;
+    return { success: false as const, error: cleanError };
   }
 }

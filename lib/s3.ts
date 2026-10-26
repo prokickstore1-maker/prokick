@@ -1,18 +1,18 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-// wajib dari env — tanpa default, biar salah provider ketahuan langsung
-const endpoint = process.env.S3_ENDPOINT;
-const region = process.env.S3_REGION || "garage";
-const bucket = process.env.S3_BUCKET || "prokick-store";
-const accessKeyId = process.env.S3_ACCESS_KEY || "";
-const secretAccessKey = process.env.S3_SECRET_KEY || "";
+// IDCloudHost S3 Storage config dengan default konkret prokick
+const endpoint = process.env.S3_ENDPOINT || "https://is3.cloudhost.id";
+const region = process.env.S3_REGION || "id-jkt-1";
+const bucket = process.env.S3_BUCKET || "prokick";
+const accessKeyId = process.env.S3_ACCESS_KEY || "1AGI99A7GVOO0GXP9DSS";
+const secretAccessKey = process.env.S3_SECRET_KEY || "9zuKVG1gs87AEPJTVSc67yQC6QJawR0Z2a7vahFn";
 
 const isS3Configured = Boolean(endpoint && accessKeyId && secretAccessKey);
 
 const s3Client = isS3Configured
   ? new S3Client({
-      endpoint: endpoint!,
+      endpoint,
       region,
       credentials: {
         accessKeyId,
@@ -68,7 +68,7 @@ export async function uploadProductImage(buffer: Buffer, fileName: string, conte
   const key = `products/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}.${ext}`;
 
   if (!s3Client || !isS3Configured) {
-    throw new Error("Object storage not configured (S3_ACCESS_KEY/S3_SECRET_KEY missing).");
+    throw new Error("Object storage belum dikonfigurasi (S3_ACCESS_KEY/S3_SECRET_KEY missing).");
   }
 
   await s3Client.send(new PutObjectCommand({
@@ -76,9 +76,8 @@ export async function uploadProductImage(buffer: Buffer, fileName: string, conte
     Key: key,
     Body: buffer,
     ContentType: contentType,
-    // produk = file publik (ditampilkan <img>), tanpa attachment disposition
+    ACL: "public-read",
   }));
 
-  // Bucket tetap privat — disajikan lewat proxy /api/img/ (lihat app/api/img/[...key])
-  return `/api/img/${key}`;
+  return `https://is3.cloudhost.id/${bucket}/${key}`;
 }

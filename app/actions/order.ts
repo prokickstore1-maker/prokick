@@ -243,7 +243,8 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
       })),
       totalAmount: `Rp${order.totalAmount}`,
       paymentMethod: order.paymentMethodLabel || "QRIS / Transfer",
-      // presign → Telegram sendPhoto needs a real URL, not the raw object key
+      paymentProofBuffer: buffer,
+      paymentProofMime: mimeType,
       paymentProofUrl: await getReceiptUrl(proofUrl),
     }).catch((err) => console.error("Telegram background notification failed:", err));
 

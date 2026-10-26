@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
-// wajib dari env — tanpa default, biar salah provider ketahuan langsung
-const endpoint = process.env.S3_ENDPOINT;
-const region = process.env.S3_REGION || "garage";
-const bucket = process.env.S3_BUCKET || "prokick-store";
+const endpoint = process.env.S3_ENDPOINT || "https://is3.cloudhost.id";
+const region = process.env.S3_REGION || "id-jkt-1";
+const bucket = process.env.S3_BUCKET || "prokick";
 
 // Proxy gambar publik (foto produk) dari object storage.
 // Bucket tetap privat; route ini hanya melayani prefix "products/".
@@ -14,8 +13,8 @@ const client = endpoint
       endpoint,
       region,
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY || "",
-        secretAccessKey: process.env.S3_SECRET_KEY || "",
+        accessKeyId: process.env.S3_ACCESS_KEY || "1AGI99A7GVOO0GXP9DSS",
+        secretAccessKey: process.env.S3_SECRET_KEY || "9zuKVG1gs87AEPJTVSc67yQC6QJawR0Z2a7vahFn",
       },
       forcePathStyle: true,
     })
