@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createTestimonialAction, updateBannerAction, updatePaymentMethodAction, updateStoreSettingAction, createPaymentMethodAction, deletePaymentMethodAction, updateTestimonialAction, deleteTestimonialAction } from "@/app/actions/settings";
 import { uploadProductImageAction } from "@/app/actions/products";
 import type { Banner, PaymentMethod, Setting, Testimonial } from "@/db/schema";
@@ -227,9 +227,12 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
   const [qrImageUrl, setQrImageUrl] = useState(payment.qrImageUrl || "");
   const [isActive, setIsActive] = useState(payment.isActive);
   const [isUploadingQr, setIsUploadingQr] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleQrUpload(file: File) {
     setIsUploadingQr(true);
+    setUploadError("");
     const result = await resizeAndUploadImage(file, 1200);
     if (result.success && result.url) {
       setQrImageUrl(result.url);
@@ -237,9 +240,10 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
       if (r.success) {
         onStatus("Foto QR berhasil diunggah & langsung disimpan.");
       } else {
-        onStatus("Foto QR diunggah, tapi gagal auto-save: " + (r.error || ""));
+        setUploadError("Gagal menyimpan ke database: " + (r.error || ""));
       }
     } else {
+      setUploadError(result.error || "Upload QR gagal");
       onStatus(result.error || "Upload QR gagal");
     }
     setIsUploadingQr(false);
@@ -258,10 +262,26 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
           </a>
         ) : null}
         <Input value={qrImageUrl} onChange={(e) => setQrImageUrl(e.target.value)} placeholder="QR image URL" aria-label="QR image URL" />
-        <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-2.5 py-2 text-xs font-bold text-white hover:bg-[#27272A] flex items-center">
-          {isUploadingQr ? "..." : "Upload QR"}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQrUpload(f); e.currentTarget.value = ""; }} />
-        </label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleQrUpload(f);
+            e.target.value = "";
+          }}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={isUploadingQr}
+          onClick={() => fileInputRef.current?.click()}
+          className="shrink-0 h-auto px-3 py-2 text-xs font-bold bg-[#181820] text-white hover:bg-[#27272A] border border-[#27272A]"
+        >
+          {isUploadingQr ? "Mengunggah..." : "Upload QR"}
+        </Button>
       </div>
       <div className="flex gap-2">
         <Button className="h-auto px-4 py-2 text-xs uppercase tracking-wider font-bold" onClick={async () => { const r = await updatePaymentMethodAction(payment.id, { label, accountName, accountNumber, isActive, qrImageUrl: qrImageUrl || null }); onStatus(r.success ? "Payment method saved" : r.error || "Save failed"); }}>Save</Button>
@@ -273,6 +293,7 @@ function PaymentEditor({ payment, onStatus }: { payment: PaymentMethod; onStatus
         }}>Hapus</Button>
       </div>
     </div>
+    {uploadError && <p className="text-xs text-red-400 font-medium">⚠️ {uploadError}</p>}
     <label className="flex items-center gap-2 text-sm font-medium">
       <Checkbox checked={isActive} onCheckedChange={(c) => setIsActive(c === true)} /> Aktif (tampil di halaman checkout)
     </label>
@@ -286,14 +307,18 @@ function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void })
   const [accountNumber, setAccountNumber] = useState("");
   const [qrImageUrl, setQrImageUrl] = useState("");
   const [isUploadingQr, setIsUploadingQr] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleQrUpload(file: File) {
     setIsUploadingQr(true);
+    setUploadError("");
     const result = await resizeAndUploadImage(file, 1200);
     if (result.success && result.url) {
       setQrImageUrl(result.url);
       onStatus("Foto QR berhasil diunggah.");
     } else {
+      setUploadError(result.error || "Upload QR gagal");
       onStatus(result.error || "Upload QR gagal");
     }
     setIsUploadingQr(false);
@@ -317,10 +342,26 @@ function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void })
           </a>
         ) : null}
         <Input value={qrImageUrl} onChange={(e) => setQrImageUrl(e.target.value)} placeholder="QR image URL (opsional)" aria-label="QR image URL baru" />
-        <label className="shrink-0 cursor-pointer rounded-lg border border-[#27272A] bg-[#181820] px-2.5 py-2 text-xs font-bold text-white hover:bg-[#27272A] flex items-center">
-          {isUploadingQr ? "..." : "Upload QR"}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQrUpload(f); e.currentTarget.value = ""; }} />
-        </label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleQrUpload(f);
+            e.target.value = "";
+          }}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={isUploadingQr}
+          onClick={() => fileInputRef.current?.click()}
+          className="shrink-0 h-auto px-3 py-2 text-xs font-bold bg-[#181820] text-white hover:bg-[#27272A] border border-[#27272A]"
+        >
+          {isUploadingQr ? "Mengunggah..." : "Upload QR"}
+        </Button>
       </div>
       <Button className="h-auto px-4 py-2 text-xs uppercase tracking-wider font-bold" onClick={async () => {
         const r = await createPaymentMethodAction(type, { label, accountName, accountNumber, qrImageUrl: qrImageUrl || null });
@@ -328,6 +369,7 @@ function NewPaymentEditor({ onStatus }: { onStatus: (message: string) => void })
         else onStatus(r.error || "Add failed");
       }}>Tambah</Button>
     </div>
+    {uploadError && <p className="text-xs text-red-400 font-medium">⚠️ {uploadError}</p>}
   </div>;
 }
 

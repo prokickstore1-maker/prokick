@@ -271,6 +271,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                       src={order.paymentQrImageUrl}
                       alt="QRIS Code"
                       fill
+                      unoptimized
                       className="object-contain p-2"
                       sizes="200px"
                     />
