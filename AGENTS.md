@@ -8,12 +8,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## Mulai sesi
+## Aturan Kerja Sesi & Dokumentasi
 
-1. Baca `00-DOCS.md` — peta dokumen, status proyek, backlog prioritas, aturan main.
-2. Status bug: lihat `bug-audit/AUDIT.md` sebelum mengklaim sesuatu sudah/belum difix.
-3. Verifikasi sebelum klaim selesai: `node_modules/.bin/tsc --noEmit` harus EXIT=0.
-4. Jangan commit/push/build/migration tanpa izin user.
+1. **Awal Sesi**:
+   - Baca `00-DOCS.md` — peta dokumen, status proyek, dan backlog prioritas.
+   - Periksa `DAILY_TASKS.md` dan `HANDOFF.md`. Jika masuk tanggal/hari baru, buat heading tanggal baru di paling atas `DAILY_TASKS.md`.
+2. **Saat Kerja**:
+   - Status bug teknis: rujuk `bug-audit/AUDIT.md`.
+   - Patuhi guardrail di `HANDOFF.md` (bagian terlarang diutak-atik).
+3. **Sebelum Klaim Selesai**:
+   - Verifikasi wajib: `node_modules/.bin/tsc --noEmit` harus EXIT=0.
+   - **Wajib perbarui `DAILY_TASKS.md` secara otomatis**: centang target `[x]`, catat ringkasan teknis yang selesai dan hash commit-nya pada tanggal hari ini, serta tulis prioritas sesi berikutnya.
+   - Perbarui status estafet di `HANDOFF.md`.
+4. **Izin Operasi**:
+   - Jangan commit/push/build/migration tanpa izin eksplisit dari user.
 
 <!-- antislop:start -->
 ## antislop

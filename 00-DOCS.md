@@ -9,6 +9,7 @@ Satu pintu masuk. Cari dokumen lain dari sini.
 | `README.md` | Stack, setup, env vars, alur utama (katalog → checkout → bayar → kirim), struktur, deploy | Baru clone / butuh peta alur |
 | `DESIGN.md` | Token visual aktual (warna, font, radius), motion, aturan konten | Kerja UI |
 | `HANDOFF.md` | Status kerja terakhir, perubahan perilaku, langkah berikut | Awal sesi kerja |
+| `DAILY_TASKS.md` | Catatan target harian, pekerjaan selesai, dan prioritas besok | Setiap awal & akhir sesi kerja harian |
 | `AGENTS.md` / `CLAUDE.md` | Instruksi agent (Next.js versi berbeda, antislop) | Otomatis termuat |
 | `cara upload jersey.md` | Prosedur impor jersey dari supplier: kurasi, harga, jalankan `scripts/upload-jersey.mjs`, bersihkan file lokal | Menambah produk massal |
 | `bug-audit/AUDIT.md` | Temuan bug: OPEN vs FIXED, sudah direkonsiliasi 2026-10-27 | Sebelum klaim selesai / memperbaiki bug |
