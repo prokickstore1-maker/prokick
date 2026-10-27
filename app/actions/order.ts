@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getJerseyById, getShippingSettingsMap, getPaymentMethods } from "@/lib/data";
+import { getJerseyById, getShippingSettingsMap, getPaymentMethodById } from "@/lib/data";
 import { calculatePromoEngine, ShippingZone, toShippingSettings } from "@/lib/promo";
 import { getShippingZoneByProvince, isSulawesiProvince } from "@/lib/indonesia";
 import { createOrderWithStock, getOrderByIdempotencyKey, updateOrderPaymentProof, updateOrderStatus, updateOrderAdminNotes, StoredOrder, getOrderById } from "@/lib/orders-store";
@@ -57,8 +57,14 @@ export async function createOrderAction(input: CreateOrderInput) {
     const limit = rateLimit(`checkout:${await clientIp()}`, 10, 15 * 60 * 1000);
     if (!limit.allowed) return { success: false, error: `Too many checkout attempts. Try again in ${limit.retryAfterMinutes} min.` };
     if (input.idempotencyKey && !/^[a-zA-Z0-9_-]{16,100}$/.test(input.idempotencyKey)) return { success: false, error: "Invalid checkout request." };
-    if (!input.customerName || !input.customerPhone || !input.streetAddress || !input.state) {
+    if (!input.customerName || !input.customerPhone || !input.streetAddress || !input.city || !input.postcode || !input.state) {
       return { success: false, error: "Please complete all mandatory delivery fields." };
+    }
+    if (!/^\d{5}$/.test(input.postcode.trim())) {
+      return { success: false, error: "Kode pos harus 5 digit angka." };
+    }
+    if (input.streetAddress.trim().length > 200 || input.city.trim().length > 100) {
+      return { success: false, error: "Alamat terlalu panjang. Ringkas alamat jalan (maks 200 karakter) dan kota (maks 100 karakter)." };
     }
 
     if (!input.items || input.items.length === 0) {
@@ -140,8 +146,9 @@ export async function createOrderAction(input: CreateOrderInput) {
       .map((part) => part.trim().slice(0, 200))
       .join(", ");
 
-    // Snapshot metode bayar saat checkout: invoice order ini tidak ikut berubah kalau admin ganti QR/rekening
-    const method = (await getPaymentMethods()).find((m) => m.id === input.paymentMethodId);
+    // Snapshot metode bayar saat checkout: invoice order ini tidak ikut berubah kalau admin ganti QR/rekening.
+    // Query langsung (tanpa cache) — metode yang baru dinonaktifkan tidak boleh lolos validasi checkout.
+    const method = await getPaymentMethodById(input.paymentMethodId);
     if (!method) return { success: false, error: "Selected payment method is unavailable. Please choose another method." };
     const paymentSnapshot = JSON.stringify({
           label: method.label,

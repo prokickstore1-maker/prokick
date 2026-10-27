@@ -109,6 +109,16 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
       return;
     }
 
+    if (!/^\d{5}$/.test(postcode.trim())) {
+      setErrorMessage("Kode pos harus 5 digit angka.");
+      return;
+    }
+
+    if (streetAddress.trim().length > 200 || city.trim().length > 100) {
+      setErrorMessage("Alamat terlalu panjang. Ringkas alamat jalan (maks 200 karakter) dan kota (maks 100 karakter).");
+      return;
+    }
+
     if (items.length === 0) {
       setErrorMessage("Your shopping cart is empty.");
       return;

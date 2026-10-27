@@ -49,7 +49,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ key: strin
 
   // 2. Fallback langsung ke S3 endpoint publik IDCloudHost
   try {
-    const publicUrl = `https://is3.cloudhost.id/${bucket}/${key}`;
+    const publicUrl = `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
     const pubRes = await fetch(publicUrl);
     if (pubRes.ok) {
       const bytes = await pubRes.arrayBuffer();

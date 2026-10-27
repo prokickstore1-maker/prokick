@@ -71,7 +71,10 @@ export async function createOrderWithStock(order: StoredOrder): Promise<StoredOr
       if (!row) throw new Error("Product unavailable");
       const stockData = typeof row.stockData === "string" ? JSON.parse(row.stockData) : row.stockData || {};
       const current = Number(stockData[item.size] || 0);
-      if (current < item.quantity) throw new Error(`Insufficient stock for size ${item.size}`);
+      if (current < item.quantity) {
+        // sebutkan produk + ukuran: pembeli dengan banyak item perlu tahu mana yang kurang
+        throw new Error(`Insufficient stock: ${row.name} size ${item.size} (tersisa ${current}, diminta ${item.quantity})`);
+      }
       stockData[item.size] = current - item.quantity;
       const stock = Object.values(stockData).reduce((sum: number, value) => sum + Number(value || 0), 0);
       await tx.update(jerseys).set({ stockData: JSON.stringify(stockData), stock }).where(eq(jerseys.id, item.jerseyId));

@@ -13,8 +13,9 @@ Satu pintu masuk. Cari dokumen lain dari sini.
 | `AGENTS.md` / `CLAUDE.md` | Instruksi agent (Next.js versi berbeda, antislop) | Otomatis termuat |
 | `cara upload jersey.md` | Prosedur impor jersey dari supplier: kurasi, harga, jalankan `scripts/upload-jersey.mjs`, bersihkan file lokal | Menambah produk massal |
 | `bug-audit/AUDIT.md` | Temuan bug: OPEN vs FIXED, sudah direkonsiliasi 2026-10-27 | Sebelum klaim selesai / memperbaiki bug |
+| `BUGLIST.md` | 17 bug terverifikasi aktif dari pembacaan source (P0–P3) | Rujukan backlog perbaikan teknis aktif |
 | `anti-slop/audit-*.md`, `fix-report-*.md` | Arsip audit UI historis (sudah diterapkan) | Referensi keputusan UI lama |
-| `.agents/skills/jersey-uploader/SKILL.md` | Ringkasan operasional uploader untuk agent | Impor jersey |
+| `.claude/skills/jersey-uploader/SKILL.md` | Ringkasan operasional uploader untuk agent | Impor jersey |
 | `.claude/skills/antislop*/SKILL.md` | Filter anti-slop (UI, copy, mobile, code) | Kerja UI/copy/mobile |
 | `graphify-out/` | Graf kode hasil generate (bukan dokumentasi manual) | Eksplorasi arsitektur |
 

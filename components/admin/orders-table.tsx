@@ -102,7 +102,12 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
 
   const handleConfirmPaid = async (orderId: string) => {
     setIsUpdating(true);
-    await updateOrderStatusAction(orderId, "PROCESSING");
+    const r = await updateOrderStatusAction(orderId, "PROCESSING");
+    if (!r.success) {
+      alert(r.error || "Gagal menandai lunas.");
+      setIsUpdating(false);
+      return;
+    }
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: "PAID", orderStatus: "PROCESSING" } : o))
     );
@@ -114,7 +119,12 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
 
     setIsUpdating(true);
     const trackingCode = `${courierName}: ${trackingNumber.trim()}`;
-    await updateOrderStatusAction(trackingModalOrder.id, "SHIPPED", trackingCode);
+    const r = await updateOrderStatusAction(trackingModalOrder.id, "SHIPPED", trackingCode);
+    if (!r.success) {
+      alert(r.error || "Gagal menyimpan resi.");
+      setIsUpdating(false);
+      return;
+    }
 
     setOrders((prev) =>
       prev.map((o) =>
@@ -131,7 +141,12 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
 
   const handleMarkCompleted = async (orderId: string) => {
     setIsUpdating(true);
-    await updateOrderStatusAction(orderId, "COMPLETED");
+    const r = await updateOrderStatusAction(orderId, "COMPLETED");
+    if (!r.success) {
+      alert(r.error || "Gagal menandai selesai.");
+      setIsUpdating(false);
+      return;
+    }
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, orderStatus: "COMPLETED" } : o))
     );

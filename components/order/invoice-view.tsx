@@ -235,9 +235,9 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-bold text-white block">Package Dispatched!</span>
+              <span className="font-bold text-white block">Paket Telah Dikirim!</span>
               <span className="text-zinc-300">
-                Courier Tracking Code: <strong className="text-white font-mono">{order.trackingNumber}</strong>
+                Resi Kurir: <strong className="text-white font-mono">{order.trackingNumber}</strong>
               </span>
             </div>
           </div>
@@ -247,7 +247,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
               target="_blank"
               rel="noopener noreferrer"
             >
-              <span>Track Delivery</span>
+              <span>Lacak Paket</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </Button>

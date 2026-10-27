@@ -28,7 +28,8 @@ export async function getReceiptUrl(key: string) {
 }
 
 /**
- * Falls back gracefully in local dev if credentials are not configured yet
+ * Upload bukti bayar. Di produksi gagal = error (jangan simpan base64 ke DB).
+ * Fallback data-URI hanya untuk dev tanpa kredensial.
  */
 export async function uploadToS3(
   buffer: Buffer,
@@ -39,24 +40,26 @@ export async function uploadToS3(
 
   if (s3Client && isS3Configured) {
     try {
-      const command = new PutObjectCommand({
+      await s3Client.send(new PutObjectCommand({
         Bucket: bucket,
         Key: key,
         Body: buffer,
         ContentType: contentType,
         ContentDisposition: "attachment",
-      });
-
-      await s3Client.send(command);
+      }));
       return key;
     } catch (err) {
-      console.warn("S3 upload failed, using fallback:", err);
+      console.error("S3 upload failed:", err);
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("Gagal mengunggah bukti pembayaran ke object storage. Coba lagi atau hubungi admin.");
+      }
     }
+  } else if (process.env.NODE_ENV === "production") {
+    throw new Error("Object storage belum dikonfigurasi (S3_ACCESS_KEY/S3_SECRET_KEY missing).");
   }
 
-  // Graceful dev fallback: return data URI
-  const base64 = buffer.toString("base64");
-  return `data:${contentType};base64,${base64}`;
+  // dev saja: tanpa S3, simpan sebagai data URI
+  return `data:${contentType};base64,${buffer.toString("base64")}`;
 }
 
 /**
@@ -79,5 +82,5 @@ export async function uploadProductImage(buffer: Buffer, fileName: string, conte
     ACL: "public-read",
   }));
 
-  return `https://is3.cloudhost.id/${bucket}/${key}`;
+  return `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
 }

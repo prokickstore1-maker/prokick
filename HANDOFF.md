@@ -3,11 +3,12 @@
 ## 1. Status Terbaru Sistem
 - **Status Type-Check**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Clean, 0 error).
 - **HTTP Server**: `http://localhost:3000/` HTTP 200, `/robots.txt` HTTP 200, `/sitemap.xml` HTTP 200 (965 URLs: 7 statis + 958 produk).
-- **Working Tree**: Seluruh perubahan tersimpan di *local working tree* (belum di-commit/push).
+- **Git State**: Local branch `main` mendahului `origin/main` (commit `1f06886`, `26886fb`, `7337388`).
 - **Aturan Operasional Wajib**:
   1. `tsc --noEmit` wajib EXIT=0 sebelum mengklaim pekerjaan selesai.
-  2. Jangan jalankan commit, push, build produksi, atau migrasi database tanpa persetujuan eksplisit user.
-  3. Jangan utak-atik database produksi secara manual.
+  2. Wajib perbarui `DAILY_TASKS.md` dan `HANDOFF.md` di setiap akhir sesi kerja.
+  3. Jangan jalankan commit, push, build produksi, atau migrasi database tanpa persetujuan eksplisit user.
+  4. Jangan utak-atik database produksi secara manual.
 
 ---
 
@@ -68,14 +69,33 @@
 
 ---
 
-## 3. Backlog Terbuka Selanjutnya (Prioritas dari `bug-audit/AUDIT.md`)
+## 3. Backlog Terbuka Selanjutnya (Prioritas Resmi dari `BUGLIST.md`)
 
-| Urutan | Isu | Rincian Tindakan |
-|---|---|---|
-| **1** | **#43** | Rotasi kredensial S3 yang tertulis sebagai default fallback di source code (`lib/s3.ts`, `app/api/img/[...key]/route.ts`). |
-| **2** | **#28** | Perbaiki `orders-table.tsx` (Confirm Paid, Save Tracking, Mark Completed) dan `jersey-stock-table.tsx` agar memeriksa `result.success` sebelum update state lokal. |
-| **3** | **#46** | Hapus penerimaan label client pada payload notifikasi Telegram `app/actions/order.ts`. |
-| **4** | **#32** | Kolom badge & CTA kustom untuk banner admin. |
+Dokumen induk: [BUGLIST.md](file:///d:/project%20web/PROKICK%20MY/BUGLIST.md).
+
+### Sudah diperbaiki sesi ini (working tree, siap commit)
+| ID | Perbaikan |
+|---|---|
+| BUG-02 | `uploadToS3` gagal-tertutup di produksi; base64 fallback hanya dev (`lib/s3.ts`) |
+| BUG-03 | Host foto produk dari `endpoint` dinamis (`lib/s3.ts`, `app/api/img/[...key]/route.ts`) |
+| BUG-04 | `result.success` dicek + rollback stok (`orders-table.tsx`, `jersey-stock-table.tsx`) |
+| BUG-05 | `getPaymentMethodById` query langsung tanpa cache (`lib/data.ts`, `order.ts`) |
+| BUG-07 | Pesan stok menyebut nama produk + sisa (`lib/orders-store.ts`) |
+| BUG-08 | Quick-add hanya bila 1 ukuran berstok (`jersey-card.tsx`) |
+| BUG-09 | Validasi kode pos 5 digit + panjang alamat (client + server) |
+| BUG-11 | Label track-order & resi invoice ke Bahasa Indonesia |
+| BUG-13 | Hapus `public/images/` (12 MB unreferenced) & tambahkan ke `.dockerignore` |
+| BUG-14 | Hapus 5 SVG template Next & pindahkan 3 screenshot root ke `scratch/` |
+| BUG-15 | `.env.example` ikut Git, `DB_PUSH` dihapus |
+| BUG-16 | Pindahkan `jersey-uploader` ke `.claude/skills/`, hapus folder `.agents/` |
+
+### Masih terbuka / Catatan
+| ID | Severity | Masalah | Rencana |
+|---|---|---|---|
+| **BUG-06** | P1 (dibiarkan) | `revalidateTag(tag, { expire: 0 })` menunda revalidasi sampai request berikutnya | Biarkan; beralih ke `updateTag` bila cache pindah ke `"use cache"` |
+| **BUG-12** | P2 (dokumentasi) | `next.config.ts` mendaftarkan host S3 dari env saat build; env yang diubah pasca-build → `next/image` menolak gambar | Set `S3_ENDPOINT` sebelum build Coolify; sudah didokumentasikan di `README.md` bagian Deploy |
+| **BUG-10** | — | **Ditutup: false positive.** `getSetting` sudah membaca map ter-cache; layout Next tidak bisa mengoper props ke page | Tidak ada aksi |
+| **BUG-17** | P3 | `scratch/` 540 file / 67 MB | Sudah terproteksi di `.gitignore` dan `.dockerignore`; aman untuk diabaikan atau dibersihkan berkala |
 
 ---
 
@@ -89,7 +109,28 @@
 
 ---
 
-## 5. Prosedur Verifikasi Sebelum Selesai / Push
-1. Jalankan `node_modules/.bin/tsc --noEmit` $\rightarrow$ wajib EXIT=0.
-2. Uji endpoint dev server: `/`, `/cart`, `/robots.txt`, `/sitemap.xml`.
-3. Minta izin user sebelum melakukan `git add`, `git commit`, atau `git push origin main`.
+## 5. Prosedur Verifikasi & Protokol Update Daily Task Sebelum Handoff / Selesai
+
+Setiap agen atau pengembang yang menyelesaikan sesi kerja **wajib** mengikuti 4 langkah verifikasi dan dokumentasi estafet berikut:
+
+### Langkah 1: Verifikasi Teknis & Build
+1. Jalankan `node_modules/.bin/tsc --noEmit` $\rightarrow$ wajib **EXIT=0** (tidak boleh ada error tipe TypeScript yang diabaikan).
+2. Pastikan dev server merespons normal: uji endpoint `/`, `/cart`, `/robots.txt`, dan `/sitemap.xml`.
+
+### Langkah 2: Update Wajib [DAILY_TASKS.md](file:///d:/project%20web/PROKICK%20MY/DAILY_TASKS.md)
+1. Buka [DAILY_TASKS.md](file:///d:/project%20web/PROKICK%20MY/DAILY_TASKS.md).
+2. Periksa tanggal hari ini (`current local time`):
+   - Jika masuk hari baru, buat heading tanggal baru di paling atas dokumen (`## YYYY-MM-DD (Hari)`) mengikuti template di bagian bawah file.
+3. Perbarui 4 bagian berikut:
+   - **Target Hari Ini**: Centang pekerjaan yang selesai (`- [x]`) dan biarkan (`- [ ]`) jika belum tuntas.
+   - **Pekerjaan Selesai & Commit**: Tulis ringkasan fitur/bugfix yang selesai dikerjakan beserta hash commit Git (`git log -n 1 --oneline`).
+   - **Catatan & Kendala**: Cantumkan kendala teknis, catatan arsitektur, atau instruksi khusus dari user.
+   - **Prioritas Besok / Sesi Berikutnya**: Pindahkan tugas backlog yang belum selesai, urutkan berdasarkan severity di [BUGLIST.md](file:///d:/project%20web/PROKICK%20MY/BUGLIST.md) (**P0 $\rightarrow$ P1 $\rightarrow$ P2 $\rightarrow$ P3**).
+
+### Langkah 3: Perbarui [HANDOFF.md](file:///d:/project%20web/PROKICK%20MY/HANDOFF.md)
+1. Perbarui ringkasan status sesi (Bagian 1) dan commit hash terbaru.
+2. Jika ada bug dari [BUGLIST.md](file:///d:/project%20web/PROKICK%20MY/BUGLIST.md) yang berhasil diperbaiki, tandai atau hapus dari tabel Bagian 3 agar sesi berikutnya tidak mengulang investigasi.
+
+### Langkah 4: Izin Operasi Git
+- Jangan pernah menjalankan `git commit`, `git push origin main`, build produksi, atau migrasi database tanpa izin eksplisit dari user.
+

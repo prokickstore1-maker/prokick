@@ -160,7 +160,7 @@ stores/cart.ts       state keranjang (Zustand + persist)
 2. Set semua env di panel Coolify — jangan commit `.env`.
 3. Health check: `GET /api/health` → `{"status":"ok","service":"prokick"}`.
 4. Tidak ada auto-migration. Jalankan `db:generate`/`db:push` hanya dengan izin eksplisit.
-5. Hostname S3 harus tercakup `next.config.ts` → `images.remotePatterns` (endpoint dibaca dari `S3_ENDPOINT`, plus `is3.cloudhost.id`, `flagcdn.com`, `images.unsplash.com`).
+5. **Set `S3_ENDPOINT` sebelum build.** `next.config.ts` membangun `images.remotePatterns` dari env saat build time; mengubah endpoint setelah image dibangun membuat `next/image` menolak host baru. `is3.cloudhost.id`, `flagcdn.com`, dan `images.unsplash.com` selalu terdaftar.
 6. Server action body limit 6 MB (`next.config.ts`) — cukup untuk resep 1 MB dan foto produk 4 MB.
 
 ## Dokumen

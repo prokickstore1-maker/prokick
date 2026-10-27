@@ -44,13 +44,13 @@ export default function TrackOrderPage() {
       <div className="max-w-xl mx-auto space-y-8">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-volt">
-            Delivery Status
+            Status Pengiriman
           </span>
           <h1 className="text-3xl sm:text-4xl font-black uppercase font-display tracking-tight text-white">
-            Track Your Order
+            Lacak Pesanan
           </h1>
           <p className="text-xs text-zinc-400 max-w-md mx-auto">
-            Enter your order number and WhatsApp phone number to check verification, dispatch, and courier tracking details.
+            Masukkan nomor pesanan dan nomor WhatsApp Anda untuk melihat status verifikasi, pengiriman, dan resi kurir.
           </p>
         </div>
 
@@ -59,7 +59,7 @@ export default function TrackOrderPage() {
           className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-4"
         >
           <div className="space-y-1.5">
-            <Label htmlFor="orderNumber" className="text-xs font-bold text-zinc-300">Order Number *</Label>
+            <Label htmlFor="orderNumber" className="text-xs font-bold text-zinc-300">Nomor Pesanan *</Label>
             <Input
               id="orderNumber"
               required
@@ -71,7 +71,7 @@ export default function TrackOrderPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="trackPhone" className="text-xs font-bold text-zinc-300">WhatsApp Mobile Number *</Label>
+            <Label htmlFor="trackPhone" className="text-xs font-bold text-zinc-300">Nomor WhatsApp *</Label>
             <Input
               id="trackPhone"
               required
@@ -88,7 +88,7 @@ export default function TrackOrderPage() {
             className="w-full h-auto rounded-xl px-6 py-4 text-xs uppercase tracking-wider font-black shadow-lg"
           >
             <Search className="w-4 h-4" />
-            <span>{loading ? "Searching Order..." : "Find Order"}</span>
+            <span>{loading ? "Mencari Pesanan..." : "Cari Pesanan"}</span>
           </Button>
         </form>
 
@@ -114,7 +114,7 @@ export default function TrackOrderPage() {
             {result.trackingNumber ? (
               <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-zinc-400 font-mono uppercase block">Courier Tracking</span>
+                  <span className="text-[10px] text-zinc-400 font-mono uppercase block">Resi Kurir</span>
                   <span className="font-mono font-bold text-white text-sm">{result.trackingNumber}</span>
                 </div>
                 <Button asChild className="rounded-lg px-3 h-auto py-1.5 text-[11px] gap-1 font-bold">
@@ -130,7 +130,7 @@ export default function TrackOrderPage() {
               </div>
             ) : (
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Your order is currently in the verification stage. Detail resi otomatis terupdate setelah paket diserahkan ke J&amp;T Express.
+                Pesanan Anda sedang dalam tahap verifikasi. Detail resi otomatis terupdate setelah paket diserahkan ke J&amp;T Express.
               </p>
             )}
           </div>

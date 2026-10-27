@@ -19,18 +19,21 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
   const [imgOk, setImgOk] = useState(true);
 
   // Konsisten dengan customizer: out hanya jika stock didefinisikan dan <= 0.
-  const firstInStock = jersey.sizes.find((s) => {
+  const inStockSizes = jersey.sizes.filter((s) => {
     const stock = jersey.stockData?.[s];
     return stock === undefined || stock > 0;
   });
+  const firstInStock = inStockSizes[0];
   const soldOut = !firstInStock;
+  // Quick-add hanya aman bila tepat satu ukuran berstok; kalau banyak, pembeli
+  // bisa menerima ukuran ekstrem (XXL) tanpa pernah menyadarinya.
+  const canQuickAdd = inStockSizes.length === 1;
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!canQuickAdd) return;
 
-    // Pilih ukuran pertama yang berstok; customizer menolak out-of-stock.
-    const defaultSize = firstInStock || jersey.sizes[0] || "M";
     addItem({
       jerseyId: jersey.id,
       name: jersey.name,
@@ -38,7 +41,7 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
       league: jersey.league,
       price: parseFloat(jersey.price),
       image: jersey.image || "",
-      size: defaultSize,
+      size: firstInStock,
       quantity: 1,
     });
 
@@ -89,7 +92,7 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
             ) : null}
           </div>
 
-          {/* Quick Add Button */}
+          {/* Quick Add Button — hanya saat tepat satu ukuran berstok */}
           {soldOut ? (
             <span
               className="absolute bottom-3 right-3 min-h-11 px-3 py-1.5 rounded-full font-bold text-xs flex items-center bg-zinc-800 text-zinc-400 border border-white/10 z-10"
@@ -97,7 +100,7 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
             >
               Sold Out
             </span>
-          ) : (
+          ) : canQuickAdd ? (
             <button
               onClick={handleQuickAdd}
               className={`absolute bottom-3 right-3 min-w-11 min-h-11 p-2 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer z-10 ${
@@ -120,6 +123,13 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
                 </>
               )}
             </button>
+          ) : (
+            <span
+              className="absolute bottom-3 right-3 min-h-11 px-3 py-1.5 rounded-full font-bold text-xs flex items-center bg-zinc-800 text-zinc-300 border border-white/10 z-10"
+              title="Pilih ukuran di halaman produk"
+            >
+              Pilih Ukuran
+            </span>
           )}
         </div>
       </Link>

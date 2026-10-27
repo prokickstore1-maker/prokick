@@ -38,6 +38,9 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
     const key = `${jerseyId}-${size}`;
     setLoadingSize(key);
 
+    // Snapshot baris lama untuk rollback kalau server menolak
+    const previous = jerseysList.find((j) => j.id === jerseyId);
+
     // Optimistic UI update
     setJerseysList((prev) =>
       prev.map((j) => {
@@ -52,7 +55,14 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
       })
     );
 
-    await updateJerseyStockAction(jerseyId, size, delta);
+    const result = await updateJerseyStockAction(jerseyId, size, delta);
+    if (!result.success) {
+      // Kembalikan tampilan ke nilai sebelum klik; server tidak menyimpan apa pun
+      if (previous) {
+        setJerseysList((prev) => prev.map((j) => (j.id === jerseyId ? previous : j)));
+      }
+      alert(result.error || "Gagal menyimpan stok.");
+    }
     setLoadingSize(null);
   };
 

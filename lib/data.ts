@@ -400,6 +400,19 @@ export const getPaymentMethods = unstable_cache(
   { tags: ["payment-methods"], revalidate: 60 }
 );
 
+// Validasi saat checkout: query langsung, tanpa cache — metode yang baru
+// dinonaktifkan/dihapus admin tidak boleh lolos (BUG-05).
+export async function getPaymentMethodById(id: string) {
+  try {
+    return await db.query.paymentMethods.findFirst({
+      where: and(eq(paymentMethods.id, id), eq(paymentMethods.isActive, true)),
+    });
+  } catch (e) {
+    console.warn("DB query payment method failed:", e);
+    return undefined;
+  }
+}
+
 export interface TestimonialView {
   id: string;
   name: string;
