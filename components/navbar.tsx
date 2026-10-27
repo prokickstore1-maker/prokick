@@ -182,9 +182,11 @@ export function Navbar({
             IDR
           </span>
 
-          {/* Shopping Bag Button */}
+          {/* Shopping Bag Button — prefetch bundle on hover/touch agar terbuka instan */}
           <button
             onClick={openCart}
+            onMouseEnter={() => { void import("@/components/cart/cart-drawer"); }}
+            onTouchStart={() => { void import("@/components/cart/cart-drawer"); }}
             aria-label="Open Shopping Bag"
             className="flex items-center gap-2 p-2.5 sm:px-3.5 sm:py-2 min-w-11 min-h-11 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white transition active:scale-95 cursor-pointer"
           >

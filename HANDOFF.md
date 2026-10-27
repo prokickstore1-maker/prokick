@@ -61,6 +61,10 @@
    - Menghilangkan klaim misleading: *"Verifikasi Pembayaran Otomatis"* $\rightarrow$ *"Verifikasi manual oleh admin"*.
    - Menghilangkan daftar bank hardcoded: *"BCA / Mandiri / BRI / BNI"* $\rightarrow$ *"Transfer Bank & E-Wallet"*.
    - Menandai waktu pengiriman sebagai perkiraan: *"Estimasi Jawa (1–2 Hari Kerja)"* dan *"Estimasi Luar Jawa (2–4 Hari Kerja)"*.
+6. **Optimasi Bundle Client & Caching Aset (Lighthouse Diagnostics)**:
+   - `CartDrawer` dipisahkan dari initial bundle melalui `components/cart/cart-drawer-client.tsx` dengan lazy mounting (`hasOpened`) dan `next/dynamic` (`ssr: false`). Menghemat ~26.4 KiB JS saat initial page load dan mengurangi beban main-thread.
+   - Prefetch chunk pada event `onMouseEnter` & `onTouchStart` tombol Bag di `components/navbar.tsx` agar laci tetap terbuka instan 0 ms saat diklik.
+   - Cache header aset statis di `next.config.ts` diperluas mencakup file font (`woff`, `woff2`, `ttf`, `eot`) dengan `max-age=31536000, immutable`.
 
 ---
 
