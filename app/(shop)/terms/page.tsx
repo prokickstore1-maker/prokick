@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Ketentuan Penjualan | ProKick Store",
+  description: "Syarat dan ketentuan pembelian, garansi produk, dan pengiriman ProKick Store Indonesia.",
+};
 
 export default function TermsPage() {
   return (

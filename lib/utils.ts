@@ -23,3 +23,11 @@ export function toIntlPhone(raw: string): string {
   if (digits.startsWith("62")) return digits;
   return `62${digits.replace(/^0+/, "")}`;
 }
+
+// Object key S3 ("proofs/…") tidak bisa dipakai langsung sebagai <Image src>.
+// Lewati route presign yang sudah mengecek akses. Data-URI (dev fallback) dipakai apa adanya.
+export function receiptSrc(orderId: string, paymentProofUrl?: string | null): string | null {
+  if (!paymentProofUrl) return null;
+  if (paymentProofUrl.startsWith("proofs/")) return `/api/orders/${orderId}/receipt`;
+  return paymentProofUrl;
+}

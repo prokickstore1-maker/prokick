@@ -1,87 +1,53 @@
 # ProKick Store — Design Direction
 
-Dokumen ini adalah **sumber arah visual** untuk ProKick: aturan keras di bawah mengikat, sisanya bebas dikreasikan.
-`antislop.md` adalah filter; dokumen ini adalah jiwanya.
-
----
-
-## 0. Terkunci vs bebas
-
-**Terkunci (jangan dilanggar):** palet §2, radius §4, aturan pill §4, tipografi §3 (mono hanya untuk data), larangan warna tambahan.
-
-**Bebas (kreasikan, selama tak melanggar yang terkunci):** komposisi section, urutan section, ukuran/rasio tile, gaya hero, jumlah kolom grid, copywriting, ikon, motion selama masih MOTION 1.
-
-Aturan yang tak tercantum di sini = bebas. Ragu? Pilih yang lebih sederhana.
-
----
+Dokumen ini mendefinisikan arah visual. **Aturan implementasi UI saat ini adalah sumber penentu visual nyata; bila berbeda dari dokumen, catat gap dan selaraskan perubahan berikutnya.**
 
 ## 1. Identitas
 
-- **Produk:** toko jersey bola Indonesia (ProKick), publik belanja, mobile-first.
-- **Karakter:** *matchday terrace* — keras, kontras tinggi, siap lapangan. Bukan SaaS studio, bukan lifestyle boutique.
-- **Rasa:** stadion malam hari. Hitam pekat, satu lampu sorot ke jersey, aksen kuning volt seperti ban stadion.
-- **Satu kalimat:** "Toko kit bola yang terlihat seperti dinding ruang ganti, bukan dashboard."
+- Produk: toko jersey bola Indonesia, storefront mobile-first.
+- Karakter: *matchday terrace* — kontras tinggi, produk jadi fokus.
+- Rasa: stadion malam; kanvas hitam, aksen volt.
+- Hindari tampilan SaaS generik dan dekorasi yang tidak membantu belanja.
 
-## 2. Palet (inti + 1 aksen)
+## 2. Token visual yang dipakai
 
-| Token | Nilai | Peran |
+| Token | Nilai / implementasi | Peran |
 |---|---|---|
-| `canvas` | `#09090B` | latar utama |
-| `surface` | `#121217` | kartu / panel |
-| `surface-elevated` | `#181820` | kartu di atas surface, sheet, item list |
-| `text` | `#FAFAFA` | teks utama |
-| `muted` | `#A1A1AA` | teks sekunder |
-| **accent** | `volt #E2F952` | **satu-satunya** aksen kuat: CTA, harga, progres, stok hidup, status aktif |
+| `canvas` | `#09090B` (`--bg-canvas`) | Latar utama |
+| `surface` | `#121217` (`--bg-surface`) | Kartu/panel |
+| `surface-elevated` | `#181820` (`--bg-surface-elevated`) | Surface terangkat |
+| `text-primary` | `#FAFAFA` | Teks utama |
+| `text-secondary` | `#A1A1AA` | Teks sekunder |
+| `volt` | `#E2F952` (`--accent-volt`) | Aksen brand |
+| semantik | zinc, emerald, cyan, red | Netral, sukses, proses, error |
 
-**Alasan:** hitam = fokus ke produk; kuning volt = warna ring / ban stadion, membedakan dari biru-ungu default AI.
+Sumber token: `app/globals.css`. Hindari warna brand tambahan. `app/globals.css` memetakan kelas amber Tailwind ke volt untuk kompatibilitas call site lama; jangan gunakan amber sebagai aksen terpisah.
 
-**Aturan keras — warna tambahan DILARANG. Tiga aturan ini menutup semua kasus:**
+## 3. Tipografi — aktual
 
-1. **Aksen tunggal.** Volt (`#E2F952`) untuk semua yang butuh penekanan: CTA, harga total, progres bundle, "In Stock", status aktif. Tidak ada aksen kedua di storefront.
-2. **Status semantik = emerald + cyan saja.** `emerald` = berhasil/terkirim/selesai/lunas. `cyan` = sedang diproses/verifikasi. Status lain (menunggu, dibatalkan, nonaktif) = `zinc` netral. `red` hanya untuk error dan retur — bukan badge.
-3. **Kelipatan ketiga = hapus.** Kalau sebuah section butuh warna di luar volt/emerald/cyan/zinc/red, section itu salah — pecah atau hapus.
+- Display: Outfit (`next/font/google`, `--font-display`) untuk judul.
+- Teks UI: Geist (`--font-sans`), **bukan Inter**.
+- Mono: Geist Mono (`--font-geist-mono`), gunakan untuk data terstruktur seperti harga, ukuran, nomor, dan kode order.
 
-## 3. Tipografi
+## 4. Bentuk
 
-- **Display:** Outfit — geometric, tegas, cocok untuk uppercase jersey name. Dipakai untuk judul & nama produk.
-- **Teks:** Inter — isi tubuh, deskripsi, form.
-- **Mono:** Geist Mono — HANYA untuk data terstruktur: harga, ukuran, nomor punggung, kode pesanan.
-  - **Dilarang** mono untuk label dekoratif ("MATCHDAY 2026/27", eyebrow, badge). Itu slop R-06.
-- Eyebrow/label section: **tanpa font-mono**. Pakai Outfit bold kecil dengan tracking normal.
+- Radius dasar: 12px (`--radius: 0.75rem`). `--radius-2xl`/`--radius-3xl` juga dibatasi ke 12px.
+- Banyak komponen sekarang memakai `rounded-xl`; CTA checkout memakai pill. Utamakan radius 8–12px untuk input/kartu/aksi non-utama.
+- Badge status tidak perlu glow dekoratif; utamakan keterbacaan.
 
-## 4. Bentuk & Radius
+## 5. Motion dan layout
 
-- Kartu: `radius 12px` (`rounded-xl`; 20px+ diremap ke 12px lewat `--radius-2xl/3xl`).
-- Input, badge, tombol sekunder, tombol aksi admin: `radius 8px` (`rounded-lg`) atau `12px` (`rounded-xl`).
-- **Tombol CTA beli/checkout saja** yang pill (`rounded-full`) — satu bentuk istimewa: Add to Bag, Proceed to Checkout, Place Order, Quick Add. Semua tombol lain (admin action, filter tab, copy, cancel, qty stepper, search input) bukan pill.
-- Badge status jangan pill + glow + dot sekaligus. Pilih satu: border tipis TANPA dot, atau dot TANPA border. Badge status pakai `rounded-lg`.
+- Motion ringan: hover/fade/transisi; hindari parallax dan scroll choreography.
+- Halaman katalog memakai grid konsisten. Home aktual berisi hero banner, pencarian langsung, trust strip, pilihan liga/klub/timnas, tier promo, best-seller/retro/new arrivals.
+- Komposisi section dapat berubah sesuai kode; jangan pertahankan urutan lama bila halaman berkembang.
+- Pertahankan layout responsif dan hindari overflow horizontal.
 
-## 5. Dials
+## 6. Konten dan data
 
-> Reading this as: e-commerce jersey olahraga untuk fan, bahasa terrace-stadium gelap, dial **ENERGY 2 / RHYTHM 2 / MOTION 1**.
+- Klaim layanan harus cocok dengan data aktif. Ongkir dan tier promo berasal dari settings; metode pembayaran dibaca dari DB.
+- Jangan menampilkan data stok, harga, promosi, atau rekening yang tidak bersumber dari sistem.
+- Copy berbahasa Indonesia di alur pelanggan; label internal/brand boleh mengikuti bahasa produk yang berlaku.
 
-- **ENERGY 2** — kontras tinggi, teks tebal uppercase di judul, tapi tidak eksperimental.
-- **RHYTHM 2** — grid katalog konsisten, variasi pada hero + 1 section promo saja. Bukan tiap section beda gaya.
-- **MOTION 1** — hover/fade transisi saja. Tidak ada parallax, tidak ada scroll-choreography, `animate-pulse` maksimal 1 per layar.
+## 7. Catatan akurasi
 
-## 6. Komposisi section (larangan template)
-
-- **Dilarang:** bento-grid sebagai tata letak utama halaman mana pun. Boleh satu grid kartu promo di home, sebagai *tile*, bukan identitas.
-- Footer: 4 kolom boleh, tapi kolom Delivery & Payment harus berupa teks-informasi (bukan link mati) — sudah benar saat ini, pertahankan.
-- Eyebrow label di atas tiap H2: **maksimal 2 per halaman**. Section lain mulai langsung dengan H2.
-
-## 7. Konten
-
-- Semua klaim layanan (contoh: "Free Delivery on 2+ Kits", "QRIS") harus nyata dan bisa diverifikasi dari data/checkout.
-- Copy pakai bahasa faktual dan spesifik produk. Hindari hype/urgensi yang tidak bisa dibuktikan: "Elite", "Iconic", "Trending", "Drop", "Revolutionary", "Unleash", "Best" (kecuali label data best-seller), dan CTA generik "Explore/Discover".
-- Hindari pengulangan klaim lintas halaman; sebut benefit di lokasi yang membantu keputusan pembelian, bukan di setiap komponen.
-- Deskripsi produk tanpa data → kosongkan, jangan isi template generik.
-- Stok tanpa angka riil → tampil "Cek stok", jangan angka dummy.
-
-## 8. Alasan keputusan (R-31, ringkas)
-
-- **Kenapa hitam?** Fokus produk, bukan brand biru-ungu.
-- **Kenapa volt?** Satu aksen = identitas; satu keluar dari biru-ungu default.
-- **Kenapa pill hanya untuk CTA?** Satu bentuk istimewa menandai aksi beli.
-- **Kenapa mono terbatas?** Mono = data (harga/ukuran), bukan dekorasi.
-- **Kenapa motion 1?** Toko belanja, kecepatan > efek.
+Dokumen ini mencatat arah dan token, bukan jaminan bahwa seluruh runtime sudah patuh. Saat audit UI, bandingkan implementasi aktual dengan aturan di atas dan daftar temuan di `bug-audit/AUDIT.md`.

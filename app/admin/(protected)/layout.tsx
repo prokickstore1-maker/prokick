@@ -3,7 +3,10 @@ import { isAdmin } from "@/lib/admin-auth";
 import type { Metadata } from "next";
 import AdminHeader from "./admin-header";
 
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: "Admin Panel | ProKick Store",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,

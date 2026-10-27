@@ -31,6 +31,8 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
   const [runningBanner, setRunningBanner] = useState(settingMap.runningBannerText || "");
   const [telegramUsername, setTelegramUsername] = useState(settingMap.telegramUsername || "");
   const [invoiceChatButtons, setInvoiceChatButtons] = useState(settingMap.invoiceChatButtons || "both");
+  const [instagram, setInstagram] = useState(settingMap.instagramHandle || "prokickstore");
+  const [tiktok, setTiktok] = useState(settingMap.tiktokHandle || "prokickstore");
 
   async function saveSetting(key: string, value: string) {
     const result = await updateStoreSettingAction(key, value);
@@ -112,8 +114,8 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
       <section className="rounded-xl border border-[#27272A] bg-[#121217] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#27272A] pb-3">
           <div>
-            <h2 className="text-lg font-bold text-white">Contact &amp; Chat</h2>
-            <p className="text-xs text-zinc-400">Nomor WhatsApp &amp; username Telegram untuk tombol chat invoice pembeli.</p>
+            <h2 className="text-lg font-bold text-white">Contact &amp; Social Media</h2>
+            <p className="text-xs text-zinc-400">Nomor WhatsApp, Telegram, serta username Instagram &amp; TikTok untuk footer dan invoice.</p>
           </div>
           <Button
             type="button"
@@ -121,13 +123,17 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
             onClick={async () => {
               const cleanWa = whatsapp.replace(/\D/g, "");
               const cleanTg = telegramUsername.replace(/^@/, "");
+              const cleanIg = instagram.replace(/^@/, "").trim();
+              const cleanTt = tiktok.replace(/^@/, "").trim();
               await saveSetting("whatsappNumber", cleanWa);
               await saveSetting("telegramUsername", cleanTg);
               await saveSetting("invoiceChatButtons", invoiceChatButtons);
-              setStatus("Kontak WhatsApp (" + cleanWa + ") & Telegram berhasil disimpan!");
+              await saveSetting("instagramHandle", cleanIg);
+              await saveSetting("tiktokHandle", cleanTt);
+              setStatus("Kontak WhatsApp & Akun Social Media berhasil disimpan!");
             }}
           >
-            Simpan Kontak WhatsApp
+            Simpan Kontak &amp; Social Media
           </Button>
         </div>
 
@@ -141,6 +147,32 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
             <Input className="font-normal" value={telegramUsername} onChange={(event) => setTelegramUsername(event.target.value)} onBlur={() => saveSetting("telegramUsername", telegramUsername.replace(/^@/, ""))} placeholder="prokick_admin" />
           </Label>
         </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-[#27272A]">
+          <Label className="space-y-1 text-sm font-semibold">
+            Instagram Username
+            <Input
+              className="font-normal"
+              value={instagram}
+              onChange={(event) => setInstagram(event.target.value)}
+              onBlur={() => saveSetting("instagramHandle", instagram.replace(/^@/, "").trim())}
+              placeholder="prokickstore"
+            />
+            <p className="text-[11px] text-zinc-400">Username tanpa simbol @ (contoh: <code>prokickstore</code>)</p>
+          </Label>
+          <Label className="space-y-1 text-sm font-semibold">
+            TikTok Username
+            <Input
+              className="font-normal"
+              value={tiktok}
+              onChange={(event) => setTiktok(event.target.value)}
+              onBlur={() => saveSetting("tiktokHandle", tiktok.replace(/^@/, "").trim())}
+              placeholder="prokickstore"
+            />
+            <p className="text-[11px] text-zinc-400">Username tanpa simbol @ (contoh: <code>prokickstore</code>)</p>
+          </Label>
+        </div>
+
         <Label className="space-y-1 text-sm font-semibold">
           Tombol chat di halaman invoice
           <div className="flex flex-wrap gap-4 pt-1 text-sm font-normal">

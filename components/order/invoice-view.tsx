@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StoredOrder } from "@/lib/orders-store";
-import { formatIDR, toIntlPhone } from "@/lib/utils";
+import { formatIDR, toIntlPhone, receiptSrc } from "@/lib/utils";
 import { uploadReceiptAction } from "@/app/actions/order";
 import { orderStatusLabel } from "@/lib/order-status";
 
@@ -36,7 +36,8 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
 
   // Upload States
   const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(order.paymentProofUrl || null);
+  // object key S3 harus lewat route presign, bukan dipakai mentah sebagai src
+  const [previewUrl, setPreviewUrl] = useState<string | null>(receiptSrc(order.id, order.paymentProofUrl));
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(Boolean(order.paymentProofUrl));
   const [uploadError, setUploadError] = useState("");
@@ -296,10 +297,10 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
                       src={order.paymentQrImageUrl}
                       alt="Barcode QRIS Pembayaran"
                       fill
-                      unoptimized
                       priority
+                      quality={85}
                       className="object-contain"
-                      sizes="(max-width: 640px) 340px, 400px"
+                      sizes="(max-width: 640px) 90vw, 380px"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/qr:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-bold text-xs pointer-events-none">
                       <Maximize2 className="w-4 h-4" />
@@ -409,7 +410,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
 
                 {previewUrl && (
                   <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-white/10 mt-3">
-                    <Image src={previewUrl} alt="Bukti Pembayaran" fill className="object-cover" sizes="400px" />
+                    <Image src={previewUrl} alt="Bukti Pembayaran" fill unoptimized className="object-cover" sizes="400px" />
                   </div>
                 )}
               </div>
@@ -438,7 +439,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
 
                 {previewUrl && (
                   <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-white/10">
-                    <Image src={previewUrl} alt="Preview Bukti" fill className="object-cover" sizes="400px" />
+                    <Image src={previewUrl} alt="Preview Bukti" fill unoptimized className="object-cover" sizes="400px" />
                   </div>
                 )}
               </div>

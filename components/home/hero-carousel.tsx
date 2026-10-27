@@ -45,7 +45,8 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
         src={banner.image}
         alt={banner.title}
         fill
-        priority
+        priority={currentIndex === 0}
+        loading={currentIndex === 0 ? undefined : "lazy"}
         sizes="(max-width: 1540px) 100vw, 1540px"
         className="object-cover object-[center_25%] brightness-[0.72] transition-transform duration-300 ease-out group-hover:scale-105 motion-reduce:transition-none"
       />

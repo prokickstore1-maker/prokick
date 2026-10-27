@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Kebijakan Privasi | ProKick Store",
+  description: "Kebijakan perlindungan data pribadi dan privasi pelanggan ProKick Store Indonesia.",
+};
 
 export default function PrivacyPage() {
   return (

@@ -44,9 +44,6 @@ export interface StoredOrder {
 }
 
 export async function getOrderByIdempotencyKey(key: string): Promise<StoredOrder | null> {
-  const isDbOnline = await checkDbConnection();
-  if (!isDbOnline) return null;
-
   try {
     const row = await db.query.orders.findFirst({ where: eq(orders.idempotencyKey, key), columns: { id: true } });
     if (row) return getOrderById(row.id);
@@ -151,9 +148,6 @@ function paymentFromSnapshot(order: {
 }
 
 export async function getOrderById(id: string): Promise<StoredOrder | null> {
-  const isDbOnline = await checkDbConnection();
-  if (!isDbOnline) return null;
-
   try {
     const cleanId = id.trim();
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
@@ -208,9 +202,6 @@ export async function getOrderById(id: string): Promise<StoredOrder | null> {
 }
 
 export async function getAllOrders(): Promise<StoredOrder[]> {
-  const isDbOnline = await checkDbConnection();
-  if (!isDbOnline) return [];
-
   try {
     const rows = await db.query.orders.findMany({
       orderBy: [desc(orders.createdAt)],

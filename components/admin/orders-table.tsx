@@ -13,7 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { StoredOrder } from "@/lib/orders-store";
-import { formatIDR, toIntlPhone } from "@/lib/utils";
+import { formatIDR, toIntlPhone, receiptSrc } from "@/lib/utils";
 import { updateOrderAdminNotesAction, updateOrderStatusAction } from "@/app/actions/order";
 import { JNT_COURIER } from "@/lib/indonesia";
 import { Button } from "@/components/ui/button";
@@ -232,7 +232,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                 <div className="flex items-center gap-1.5">
                   {order.paymentProofUrl ? (
                     <button
-                      onClick={() => setSelectedReceipt(order.paymentProofUrl!)}
+                      onClick={() => setSelectedReceipt(receiptSrc(order.id, order.paymentProofUrl) || "")}
                       className="min-h-9 rounded-lg border border-[#27272A] bg-[#181820] px-2.5 text-[11px] font-bold text-zinc-200 inline-flex items-center gap-1"
                     >
                       <Eye className="w-3 h-3" />
@@ -403,7 +403,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
                         </span>
                         {order.paymentProofUrl ? (
                           <Button
-                            onClick={() => setSelectedReceipt(order.paymentProofUrl!)}
+                            onClick={() => setSelectedReceipt(receiptSrc(order.id, order.paymentProofUrl) || "")}
                             className="mt-1 h-auto rounded-lg px-2.5 py-1 text-[10px] font-bold"
                           >
                             <Eye className="w-3 h-3" />
@@ -514,6 +514,7 @@ export function OrdersTable({ initialOrders }: OrdersTableProps) {
               src={selectedReceipt || ""}
               alt="Payment Slip Proof"
               fill
+              unoptimized
               className="object-contain"
               sizes="500px"
             />

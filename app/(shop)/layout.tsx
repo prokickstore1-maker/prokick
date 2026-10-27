@@ -20,7 +20,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <Navbar leagues={leagues} shippingSettings={shippingSettings} />
       <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
       <TestimonialsSection />
-      <Footer />
+      <Footer settingsMap={shippingSettings} leagues={leagues} />
       <CartDrawer shippingSettings={shippingSettings} />
     </>
   );

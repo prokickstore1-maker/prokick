@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { getPaymentMethods, getShippingSettingsMap } from "@/lib/data";
 import { Checkout } from "./checkout";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Keranjang & Checkout | ProKick Store",
+  description: "Keranjang belanja jersey sepak bola dan formulir checkout pengiriman ProKick Store Indonesia.",
+};
 
 // helper type dari checkout
 export type { PaymentOption } from "./checkout";

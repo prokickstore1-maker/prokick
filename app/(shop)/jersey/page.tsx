@@ -380,8 +380,8 @@ export default async function JerseyCatalogPage({
         {paginatedJerseys.length > 0 ? (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 pt-2">
-              {paginatedJerseys.map((jersey) => (
-                <JerseyCard key={jersey.id} jersey={jersey} />
+              {paginatedJerseys.map((jersey, idx) => (
+                <JerseyCard key={jersey.id} jersey={jersey} priority={idx < 4} />
               ))}
             </div>
 

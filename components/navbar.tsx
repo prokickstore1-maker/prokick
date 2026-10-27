@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import type { LeagueOption } from "@/lib/leagues";
 
 const DEFAULT_TICKER =
-  "Free Nationwide Delivery on 2+ Kits | QRIS & e-Wallet | J&T Express";
+  "Gratis Ongkir Se-Indonesia min. 2 Kaos | QRIS & e-Wallet Instan | J&T Express";
 
 export function Navbar({
   leagues,

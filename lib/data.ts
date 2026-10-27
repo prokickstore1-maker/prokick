@@ -1,4 +1,4 @@
-import { db, checkDbConnection, client } from "./db";
+import { db, client } from "./db";
 import { jerseys, jerseyImages, banners, paymentMethods, settings, testimonials } from "@/db/schema";
 import { unstable_cache } from "next/cache";
 import { eq, desc, asc, inArray, and, or, ne, ilike, gte, lte, sql, count, type SQL } from "drizzle-orm";
@@ -78,47 +78,35 @@ function normalizeJerseyRow(r: JerseyRow, gallery?: { url: string }[]): Normaliz
 }
 
 // Listing admin & opsi filter — tanpa galeri 7k foto (kartu cukup image depan)
+// Tanpa checkDbConnection pre-check: query asli sudah try/catch → gagal = []
 export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJersey[]> {
-  const isDbOnline = await checkDbConnection();
-
-  if (isDbOnline) {
-    try {
-      const rows = await db.query.jerseys.findMany({
-        where: filterLeague ? eq(jerseys.league, filterLeague) : undefined,
-        orderBy: [desc(jerseys.createdAt)],
-      });
-
-      if (rows && rows.length > 0) {
-        return rows.map((r) => normalizeJerseyRow(r));
-      }
-    } catch (e) {
-      console.warn("DB query jerseys failed:", e);
-    }
+  try {
+    const rows = await db.query.jerseys.findMany({
+      where: filterLeague ? eq(jerseys.league, filterLeague) : undefined,
+      orderBy: [desc(jerseys.createdAt)],
+    });
+    return rows.map((r) => normalizeJerseyRow(r));
+  } catch (e) {
+    console.warn("DB query jerseys failed:", e);
+    return [];
   }
-
-  // DB offline / error / kosong = gagal-closed: [] bukan data mock
-  return [];
 }
 
 export async function getJerseyById(id: string): Promise<NormalizedJersey | null> {
-  const isDbOnline = await checkDbConnection();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id.trim());
+  if (!isUuid) return null;
 
-  if (isDbOnline) {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id.trim());
-    if (!isUuid) return null;
-
-    try {
-      const row = await db.query.jerseys.findFirst({
-        where: eq(jerseys.id, id.trim()),
-      });
-      if (row) {
-        const imageMap = await loadImages([row.id]);
-        const gallery = imageMap.get(row.id)?.map((url) => ({ url }));
-        return normalizeJerseyRow(row, gallery);
-      }
-    } catch (e) {
-      console.warn("DB findFirst jersey error:", e);
+  try {
+    const row = await db.query.jerseys.findFirst({
+      where: eq(jerseys.id, id.trim()),
+    });
+    if (row) {
+      const imageMap = await loadImages([row.id]);
+      const gallery = imageMap.get(row.id)?.map((url) => ({ url }));
+      return normalizeJerseyRow(row, gallery);
     }
+  } catch (e) {
+    console.warn("DB findFirst jersey error:", e);
   }
 
   return null;
@@ -188,8 +176,6 @@ export async function getJerseysPaginated(
   pageSize: number,
   sort: CatalogSort = "featured"
 ): Promise<{ items: NormalizedJersey[]; total: number }> {
-  if (!(await checkDbConnection())) return { items: [], total: 0 };
-
   try {
     const where = buildCatalogWhere(filter);
     const [totalRow, rows] = await Promise.all([
@@ -213,7 +199,6 @@ export async function getJerseysPaginated(
 
 // Homepage: 8 best seller tanpa tarik seluruh tabel (auto-fill jika kurang dari limit)
 export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
-  if (!(await checkDbConnection())) return [];
   try {
     const rows = await db.query.jerseys.findMany({
       where: eq(jerseys.isBestSeller, true),
@@ -245,7 +230,6 @@ export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
 
 // Homepage: 8 new arrival tanpa tarik seluruh tabel
 export async function getNewArrivals(limit = 8): Promise<NormalizedJersey[]> {
-  if (!(await checkDbConnection())) return [];
   try {
     const rows = await db.query.jerseys.findMany({
       where: eq(jerseys.isNew, true),
@@ -261,7 +245,6 @@ export async function getNewArrivals(limit = 8): Promise<NormalizedJersey[]> {
 
 // Homepage: 8 retro / vintage jerseys tanpa tarik seluruh tabel
 export async function getRetroJerseys(limit = 8): Promise<NormalizedJersey[]> {
-  if (!(await checkDbConnection())) return [];
   try {
     const rows = await db.query.jerseys.findMany({
       where: or(
@@ -281,7 +264,6 @@ export async function getRetroJerseys(limit = 8): Promise<NormalizedJersey[]> {
 
 // Homepage: daftar negara tim nasional (distinct, bukan scan semua jersey)
 export async function getNationalCountries(): Promise<string[]> {
-  if (!(await checkDbConnection())) return [];
   try {
     const rows = await db
       .selectDistinct({ country: jerseys.country })
@@ -297,7 +279,6 @@ export async function getNationalCountries(): Promise<string[]> {
 
 // Halaman detail: related = liga sama ATAU best seller, limit 4
 export async function getRelatedKits(league: string, excludeId: string, limit = 4): Promise<NormalizedJersey[]> {
-  if (!(await checkDbConnection())) return [];
   try {
     const rows = await db.query.jerseys.findMany({
       where: and(
@@ -323,7 +304,6 @@ export async function getCatalogFilterOptions(): Promise<{
   sizes: string[];
 }> {
   const empty = { categories: [], types: [], editions: [], seasons: [], sizes: [] };
-  if (!(await checkDbConnection())) return empty;
   try {
     const [cats, types, editions, seasons, sizeRows] = await Promise.all([
       db.selectDistinct({ v: jerseys.category }).from(jerseys).orderBy(jerseys.category),
@@ -356,77 +336,69 @@ export const getCachedLeagueOptions: () => Promise<LeagueOption[]> = unstable_ca
   { tags: ["jerseys-all"], revalidate: 60 }
 );
 
-export async function getActiveBanners(): Promise<BannerView[]> {
-  const isDbOnline = await checkDbConnection();
-
-  if (isDbOnline) {
+// Banner aktif — cached 60 detik; admin invalidasi via revalidateTag("banners", "max")
+export const getActiveBanners = unstable_cache(
+  async (): Promise<BannerView[]> => {
     try {
       const rows = await db.query.banners.findMany({
         where: eq(banners.active, true),
         orderBy: [banners.displayOrder],
       });
-      if (rows && rows.length > 0) {
-        return rows.map((r) => ({
-          id: r.id,
-          image: r.image,
-          badge: "2026/27",
-          title: r.title || "MATCHDAY SHIRTS",
-          subtitle: r.subtitle || "2026/27 football shirts for supporters.",
-          link: r.link || "/jersey",
-          cta: "View shirts",
-        }));
-      }
+      return rows.map((r) => ({
+        id: r.id,
+        image: r.image,
+        badge: "2026/27",
+        title: r.title || "MATCHDAY SHIRTS",
+        subtitle: r.subtitle || "2026/27 football shirts for supporters.",
+        link: r.link || "/jersey",
+        cta: "View shirts",
+      }));
     } catch (e) {
       console.warn("DB query banners failed:", e);
+      return [];
     }
-  }
+  },
+  ["active-banners"],
+  { tags: ["banners"], revalidate: 60 }
+);
 
-  return [];
-}
-
-export async function getSetting(key: string, fallback: string) {
-  const isDbOnline = await checkDbConnection();
-  if (isDbOnline) {
-    try {
-      const row = await db.query.settings.findFirst({ where: eq(settings.key, key) });
-      if (row) return row.value;
-    } catch (e) {
-      console.warn("Falling back to default setting:", e);
-    }
-  }
-  return fallback;
-}
-
-// Ambil ongkir + threshold gratis ongkir dari settings admin
-export async function getShippingSettingsMap(): Promise<Record<string, string>> {
-  const isDbOnline = await checkDbConnection();
-  if (isDbOnline) {
+// Satu-satunya query tabel settings — cache 60 detik di tag "settings".
+// Setting individual dibaca dari map ini, bukan query terpisah.
+export const getShippingSettingsMap = unstable_cache(
+  async (): Promise<Record<string, string>> => {
     try {
       const rows = await db.select().from(settings);
       return Object.fromEntries(rows.map((r) => [r.key, r.value]));
     } catch (e) {
       console.warn("Falling back to default shipping settings:", e);
+      return {};
     }
-  }
-  return {};
+  },
+  ["shipping-settings"],
+  { tags: ["settings"], revalidate: 60 }
+);
+
+export async function getSetting(key: string, fallback: string) {
+  const map = await getShippingSettingsMap();
+  return map[key] ?? fallback;
 }
 
-export async function getPaymentMethods() {
-  const isDbOnline = await checkDbConnection();
-
-  if (isDbOnline) {
+// Metode bayar aktif untuk checkout & verifikasi order — cache 60 detik,
+// admin invalidate via revalidateTag("payment-methods", { expire: 0 })
+export const getPaymentMethods = unstable_cache(
+  async () => {
     try {
-      const rows = await db.query.paymentMethods.findMany({
+      return await db.query.paymentMethods.findMany({
         where: eq(paymentMethods.isActive, true),
       });
-      if (rows && rows.length > 0) return rows;
     } catch (e) {
       console.warn("DB query payment methods failed:", e);
+      return [];
     }
-  }
-
-  return [];
-}
+  },
+  ["payment-methods"],
+  { tags: ["payment-methods"], revalidate: 60 }
+);
 
 export interface TestimonialView {
   id: string;
@@ -437,27 +409,28 @@ export interface TestimonialView {
   proofImage: string | null;
 }
 
-// Testimoni aktif untuk section di atas footer. DB offline / kosong → [] (section disembunyikan).
-export async function getActiveTestimonials(): Promise<TestimonialView[]> {
-  const isDbOnline = await checkDbConnection();
-  if (!isDbOnline) return [];
-
-  try {
-    const rows = await db.query.testimonials.findMany({
-      where: eq(testimonials.active, true),
-      orderBy: [desc(testimonials.createdAt)],
-      limit: 12,
-    });
-    return rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      rating: r.rating,
-      comment: r.comment,
-      club: r.club,
-      proofImage: r.proofImage,
-    }));
-  } catch (e) {
-    console.warn("Gagal memuat testimoni:", e);
-    return [];
-  }
-}
+// Testimoni aktif untuk section di atas footer. Cache 60 detik.
+export const getActiveTestimonials = unstable_cache(
+  async (): Promise<TestimonialView[]> => {
+    try {
+      const rows = await db.query.testimonials.findMany({
+        where: eq(testimonials.active, true),
+        orderBy: [desc(testimonials.createdAt)],
+        limit: 12,
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        rating: r.rating,
+        comment: r.comment,
+        club: r.club,
+        proofImage: r.proofImage,
+      }));
+    } catch (e) {
+      console.warn("Gagal memuat testimoni:", e);
+      return [];
+    }
+  },
+  ["active-testimonials"],
+  { tags: ["testimonials"], revalidate: 60 }
+);

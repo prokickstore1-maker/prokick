@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { eq } from "drizzle-orm";
 import { banners, paymentMethods, settings, testimonials } from "@/db/schema";
 import { db, checkDbConnection } from "@/lib/db";
@@ -23,6 +23,8 @@ export async function updateStoreSettingAction(key: string, value: string) {
     target: settings.key,
     set: { value },
   });
+  // unstable_cache memakai revalidateTag (updateTag hanya untuk tag "use cache"/fetch)
+  revalidateTag("settings", { expire: 0 });
   revalidatePath("/admin/settings");
   return { success: true };
 }
@@ -37,6 +39,7 @@ export async function updateBannerAction(id: string, input: { title: string; sub
   }
 
   await db.update(banners).set(input).where(eq(banners.id, id));
+  revalidateTag("banners", { expire: 0 });
   revalidatePath("/");
   revalidatePath("/admin/settings");
   return { success: true };
@@ -50,6 +53,7 @@ export async function updatePaymentMethodAction(id: string, input: { label: stri
   }
 
   await db.update(paymentMethods).set(input).where(eq(paymentMethods.id, id));
+  revalidateTag("payment-methods", { expire: 0 });
   revalidatePath("/cart");
   revalidatePath("/invoice/[orderId]");
   revalidatePath("/admin/settings");
@@ -73,6 +77,7 @@ export async function createPaymentMethodAction(type: string, input: { label: st
     return { success: false, error: "Invalid payment method" };
   }
   await db.insert(paymentMethods).values({ ...input, label: input.label.trim(), type, isActive: true });
+  revalidateTag("payment-methods", { expire: 0 });
   revalidatePath("/cart");
   revalidatePath("/admin/settings");
   return { success: true };
@@ -86,6 +91,7 @@ export async function deletePaymentMethodAction(id: string) {
     return { success: false, error: "Invalid payment method" };
   }
   await db.delete(paymentMethods).where(eq(paymentMethods.id, id));
+  revalidateTag("payment-methods", { expire: 0 });
   revalidatePath("/cart");
   revalidatePath("/admin/settings");
   return { success: true };
@@ -124,6 +130,7 @@ export async function createTestimonialAction(input: TestimonialInput) {
     proofImage: input.proofImage || null,
     active: true,
   });
+  revalidateTag("testimonials", { expire: 0 });
   revalidatePath("/");
   revalidatePath("/admin/settings");
   return { success: true };
@@ -145,6 +152,7 @@ export async function updateTestimonialAction(id: string, input: TestimonialInpu
     proofImage: input.proofImage || null,
     active,
   }).where(eq(testimonials.id, id));
+  revalidateTag("testimonials", { expire: 0 });
   revalidatePath("/");
   revalidatePath("/admin/settings");
   return { success: true };
@@ -157,6 +165,7 @@ export async function deleteTestimonialAction(id: string) {
     return { success: false, error: "Invalid testimonial" };
   }
   await db.delete(testimonials).where(eq(testimonials.id, id));
+  revalidateTag("testimonials", { expire: 0 });
   revalidatePath("/");
   revalidatePath("/admin/settings");
   return { success: true };

@@ -7,7 +7,7 @@ import { buildLeagueOptions } from "@/lib/leagues";
 import { flagUrl } from "@/lib/countries";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { HeroCarousel } from "@/components/home/hero-carousel";
-import { ChevronRight, ShieldCheck, QrCode, Truck, Search } from "lucide-react";
+import { ChevronRight, ShieldCheck, QrCode, Truck, Search, Award, Sparkles } from "lucide-react";
 import { TOP_CLUBS } from "@/lib/clubs";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +38,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] pb-24">
+      <h1 className="sr-only">ProKick Store Indonesia | Jersey Bola Original, Retro &amp; Player Issue</h1>
       <div className="max-w-[1540px] mx-auto px-4 sm:px-8 lg:px-12 pt-3 sm:pt-6 space-y-12 sm:space-y-16">
         {/* 1. Cinematic Hero Carousel */}
         {banners.length > 2 && <HeroCarousel banners={banners.slice(2)} />}
@@ -95,11 +96,11 @@ export default async function HomePage() {
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-tight text-white font-display">
-                Free Nationwide Delivery
-              </h4>
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-tight text-white font-display">
+                Gratis Ongkir Se-Indonesia
+              </p>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Otomatis gratis di {ship.freeShippingMinItems}+ kaos (J&amp;T Express)
+                Otomatis gratis min. {ship.freeShippingMinItems} kaos (J&amp;T Express)
               </p>
             </div>
           </div>
@@ -109,11 +110,11 @@ export default async function HomePage() {
               <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-tight text-white font-display">
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-tight text-white font-display">
                 QRIS &amp; e-Wallet
-              </h4>
+              </p>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Scan pakai GoPay, OVO, DANA, atau aplikasi bank
+                Scan via GoPay, OVO, DANA, ShopeePay, atau m-banking
               </p>
             </div>
           </div>
@@ -123,11 +124,11 @@ export default async function HomePage() {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-tight text-white font-display">
-                Official &amp; Retro Kits
-              </h4>
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-tight text-white font-display">
+                Jersey Klub &amp; Retro Klasik
+              </p>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Official club player issues &amp; vintage retro jerseys
+                Koleksi jersey player issue dan edisi retro legendaris
               </p>
             </div>
           </div>
@@ -138,7 +139,7 @@ export default async function HomePage() {
           <section className="space-y-6">
             <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">Shop by country</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">Pilihan Negara</span>
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">National Teams</h2>
               </div>
             </div>
@@ -172,7 +173,7 @@ export default async function HomePage() {
           <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
-                Shop by club
+                Pilihan Klub
               </span>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
                 Top Clubs
@@ -182,7 +183,7 @@ export default async function HomePage() {
               href="/jersey?category=Klub"
               className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1.5 uppercase tracking-wider transition-colors"
             >
-              <span>View All</span>
+              <span>Lihat Semua</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -216,7 +217,7 @@ export default async function HomePage() {
           <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
-                Matchday 2026/27
+                Koleksi 2026/27
               </span>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
                 Best Sellers
@@ -226,50 +227,31 @@ export default async function HomePage() {
               href="/jersey"
               className="min-h-11 flex items-center gap-1.5 -my-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-wider transition-colors"
             >
-              <span>View All</span>
+              <span>Lihat Semua</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          {/* Quick filter pills & Search */}
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
-              {leaguePills.map((comp, idx) => (
-                <Link
-                  key={comp.name}
-                  href={comp.href}
-                  className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                    idx === 0
-                      ? "bg-white text-black font-extrabold shadow-md hover:bg-zinc-200"
-                      : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/8"
-                  }`}
-                >
-                  {comp.name}
-                </Link>
-              ))}
-            </div>
-
-            <form method="GET" action="/jersey" className="relative w-full lg:w-72 shrink-0">
-              <input
-                type="text"
-                name="search"
-                aria-label="Cari jersey di katalog"
-                placeholder="Cari jersey..."
-                className="w-full bg-[#121217] border border-white/10 hover:border-white/20 focus:border-[#E2F952]/60 rounded-lg pl-9 pr-16 py-2.5 text-xs text-white placeholder:text-zinc-400 outline-none"
-              />
-              <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <button
-                type="submit"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded bg-[#E2F952] text-black font-extrabold text-[11px] uppercase tracking-wider hover:bg-[#d4eb3e] transition cursor-pointer"
+          {/* Quick filter pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            {leaguePills.map((comp, idx) => (
+              <Link
+                key={comp.name}
+                href={comp.href}
+                className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  idx === 0
+                    ? "bg-white text-black font-extrabold shadow-md hover:bg-zinc-200"
+                    : "bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/8"
+                }`}
               >
-                Cari
-              </button>
-            </form>
+                {comp.name}
+              </Link>
+            ))}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
-            {trending.map((jersey) => (
-              <JerseyCard key={jersey.id} jersey={jersey} />
+            {trending.map((jersey, idx) => (
+              <JerseyCard key={jersey.id} jersey={jersey} priority={idx < 2} />
             ))}
           </div>
         </section>
@@ -278,7 +260,7 @@ export default async function HomePage() {
         <section className="space-y-6">
           <div className="border-b border-white/10 pb-4">
             <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
-              This Season
+              Pilihan Musim Ini
             </span>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
               Featured Editions
@@ -313,7 +295,7 @@ export default async function HomePage() {
                       <p className="text-xs text-zinc-300 max-w-sm line-clamp-2">{banner.subtitle}</p>
                     )}
                     <span className="inline-flex mt-1 h-auto rounded-lg px-7 py-3 text-xs uppercase tracking-wider font-extrabold bg-white text-black">
-                      {banner.cta || "View collection"}
+                      {banner.cta || "Lihat Koleksi"}
                     </span>
                   </div>
                 </Link>
@@ -328,7 +310,7 @@ export default async function HomePage() {
             <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
-                  Vintage Heroes
+                  Edisi Klasik &amp; Bersejarah
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
                   Retro &amp; Iconic Kits
@@ -338,7 +320,7 @@ export default async function HomePage() {
                 href="/jersey?edition=Vintage"
                 className="min-h-11 flex items-center gap-1.5 -my-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-wider transition-colors"
               >
-                <span>View All Retro</span>
+                <span>Lihat Semua Retro</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -355,32 +337,66 @@ export default async function HomePage() {
         <section className="rounded-xl border border-white/10 bg-gradient-to-r from-[#121217] via-[#181820] to-[#121217] p-6 sm:p-8">
           <div className="max-w-3xl mx-auto text-center space-y-4">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-white/10 text-white border border-white/15">
-              Bundle Discount
+              Promo Bundle
             </span>
             <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight font-display text-white">
-              Buy More, Save More
+              Beli Lebih Banyak, Makin Hemat
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
-              Discount applies automatically at checkout.
+              Semua promo bersifat <strong className="text-white font-bold">akumulatif</strong> &amp; otomatis terpasang langsung saat checkout tanpa perlu voucher.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 text-left">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
-                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 1 • {ship.freeShippingMinItems}+ Kits</span>
-                <h4 className="text-xs font-bold text-white uppercase">Free Delivery</h4>
-                <p className="text-[11px] text-zinc-400">Hemat {formatIDR(ship.javaRate)}–{formatIDR(ship.outsideJavaRate)} ongkir ke seluruh Indonesia.</p>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 1 • Min. {ship.freeShippingMinItems} Kaos</span>
+                    <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
+                      <Truck className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <h3 className="text-xs font-bold text-white uppercase">Gratis Ongkir</h3>
+                  <p className="text-[11px] text-zinc-400 mt-1">Hemat {formatIDR(ship.javaRate)}–{formatIDR(ship.outsideJavaRate)} ongkir via J&amp;T ke seluruh Indonesia.</p>
+                </div>
+                <div className="pt-2 border-t border-white/6">
+                  <span className="text-[10px] font-bold text-zinc-400">Tier Pembuka</span>
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
-                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 2 • {ship.freePatchMinItems}+ Kits</span>
-                <h4 className="text-xs font-bold text-white uppercase">Free Official Patch</h4>
-                <p className="text-[11px] text-zinc-400">Badge UCL Starball atau EPL gold termasuk (hemat {formatIDR(ship.patchFee)}).</p>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 2 • Min. {ship.freePatchMinItems} Kaos</span>
+                    <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
+                      <Award className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <h3 className="text-xs font-bold text-white uppercase">Gratis Patch Resmi</h3>
+                  <p className="text-[11px] text-zinc-400 mt-1">Badge UCL Starball atau EPL gold termasuk (hemat {formatIDR(ship.patchFee)}).</p>
+                </div>
+                <div className="pt-2 border-t border-white/6">
+                  <span className="inline-flex items-center text-[10px] font-extrabold text-[#E2F952]">
+                    + Tetap Gratis Ongkir
+                  </span>
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-1">
-                <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 3 • {ship.freeNamesetMinItems}+ Kits</span>
-                <h4 className="text-xs font-bold text-white uppercase">Free Nameset</h4>
-                <p className="text-[11px] text-zinc-400">Custom nama &amp; nomor pemain termasuk (hemat {formatIDR(ship.namesetFee)}).</p>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 3 • Min. {ship.freeNamesetMinItems} Kaos</span>
+                    <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <h3 className="text-xs font-bold text-white uppercase">Gratis Nameset Custom</h3>
+                  <p className="text-[11px] text-zinc-400 mt-1">Custom nama &amp; nomor pemain termasuk (hemat {formatIDR(ship.namesetFee)}).</p>
+                </div>
+                <div className="pt-2 border-t border-white/6">
+                  <span className="inline-flex items-center text-[10px] font-extrabold text-[#E2F952]">
+                    + Gratis Ongkir &amp; Patch
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -392,7 +408,7 @@ export default async function HomePage() {
             <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
-                  Fresh Drops
+                  Rilis Terbaru
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
                   New Arrivals
@@ -402,7 +418,7 @@ export default async function HomePage() {
                 href="/jersey"
                 className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1.5 uppercase tracking-wider transition-colors"
               >
-                <span>View All</span>
+                <span>Lihat Semua</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>

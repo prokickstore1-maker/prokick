@@ -1,9 +1,26 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin-auth";
 import { canAccessOrder } from "@/lib/order-auth";
 import { getOrderById } from "@/lib/orders-store";
 import { getSetting } from "@/lib/data";
 import { InvoiceView } from "@/components/order/invoice-view";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderId: string }>;
+}): Promise<Metadata> {
+  const { orderId } = await params;
+  const order = await getOrderById(orderId);
+  return {
+    title: order ? `Invoice #${order.orderNumber} | ProKick Store` : "Invoice Pesanan | ProKick Store",
+    description: order
+      ? `Instruksi pembayaran pesanan #${order.orderNumber} ProKick Store Indonesia.`
+      : "Halaman instruksi pembayaran dan status pesanan ProKick Store Indonesia.",
+    robots: { index: false, follow: false, nocache: true },
+  };
+}
 
 export default async function InvoicePage({
   params,

@@ -10,9 +10,10 @@ import { NormalizedJersey } from "@/lib/data";
 
 interface JerseyCardProps {
   jersey: NormalizedJersey;
+  priority?: boolean;
 }
 
-export function JerseyCard({ jersey }: JerseyCardProps) {
+export function JerseyCard({ jersey, priority }: JerseyCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const [justAdded, setJustAdded] = useState(false);
   const [imgOk, setImgOk] = useState(true);
@@ -63,6 +64,7 @@ export function JerseyCard({ jersey }: JerseyCardProps) {
               src={imageSrc}
               alt={jersey.name}
               fill
+              priority={priority}
               className="object-contain p-0.5 sm:p-4 group-hover:scale-108 transition-transform duration-200 motion-reduce:transition-none"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
