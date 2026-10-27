@@ -35,13 +35,21 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 - [x] **P3 (BUG-16)**: Pindahkan skill `jersey-uploader` ke `.claude/skills/`, hapus folder `.agents/`.
 - [x] Tulis `BUGLIST.md` — 17 temuan terverifikasi dari pembacaan source.
 
-### Pekerjaan Sesi Kedua (Working Tree, Siap Commit):
-- Perbaikan BUG-02/03/04/05/07/08/09/11/13/14/15/16 selesai di working tree.
-- BUG-06 dicatat sebagai risiko persepsi (dibiarkan, sesuai keputusan handoff).
-- BUG-10 ditutup (false positive): `getSetting` sudah membaca map yang di-cache.
-- BUG-12 didokumentasikan di `README.md` (bagian Deploy).
-- BUG-13/14/16 telah berhasil dieksekusi via PowerShell tanpa hambatan tool.
-- BUG-17 (`scratch/`) aman ter-ignore di `.gitignore` dan `.dockerignore`.
+### Pekerjaan Selesai & Commit:
+- **Commit `8e02c9f`**: `fix: resolve BUGLIST findings (P0-P3), clean unused assets, and sync docs`
+  - BUG-02: fail-closed upload S3 di produksi, fallback base64 hanya dev.
+  - BUG-03: URL foto produk dari dynamic endpoint S3, hapus hardcode is3.cloudhost.id.
+  - BUG-04: cek `result.success` di admin orders/stock handler + rollback state.
+  - BUG-05: query direct DB tanpa cache untuk validasi checkout order.
+  - BUG-07: pesan stok menyebut nama produk dan sisa stok.
+  - BUG-08: quick-add diproteksi hanya untuk 1 ukuran berstok; selain itu diarahkan ke PDP.
+  - BUG-09: validasi kode pos 5 digit & limit panjang alamat client/server.
+  - BUG-11: lokalisasi track-order & invoice ke Bahasa Indonesia.
+  - BUG-13: hapus `public/images/` 12 MB & tambahkan ke `.dockerignore`.
+  - BUG-14: hapus 5 template SVG & pindahkan screenshot root ke `scratch/`.
+  - BUG-15: track `.env.example` di Git (`!.env.example`) & bersihkan `DB_PUSH`.
+  - BUG-16: pindahkan skill ke `.claude/skills/jersey-uploader` & hapus `.agents/`.
+  - update `BUGLIST.md`, `HANDOFF.md`, `00-DOCS.md`, `README.md`.
 
 ### Catatan & Konfirmasi:
 - Audit TypeScript: `node_modules/.bin/tsc --noEmit` $\rightarrow$ **EXIT=0** (Lolos tanpa error).

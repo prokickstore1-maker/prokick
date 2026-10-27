@@ -73,7 +73,7 @@
 
 Dokumen induk: [BUGLIST.md](file:///d:/project%20web/PROKICK%20MY/BUGLIST.md).
 
-### Sudah diperbaiki sesi ini (working tree, siap commit)
+### Sudah diperbaiki sesi ini (Commit `8e02c9f`)
 | ID | Perbaikan |
 |---|---|
 | BUG-02 | `uploadToS3` gagal-tertutup di produksi; base64 fallback hanya dev (`lib/s3.ts`) |
