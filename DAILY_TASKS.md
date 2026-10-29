@@ -37,7 +37,11 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 - [x] Migrasi 0006 dijalankan ke DB produksi atas izin user (14:52): 958 produk sebelum dan sesudah, semuanya `product_line = 'Jersey'`.
 - [x] Commit kode jaket & audit fixes (`c543b98`).
 - [ ] Push ke `origin/main` untuk trigger deploy Coolify.
-- [ ] Tentukan harga jaket dan tambahkan ke matriks `cara upload jersey.md`.
+- [x] Penyesuaian matriks harga baru di seluruh database (958 produk) & skrip upload:
+  - Klub Pendek: Rp 100.000 / Klub Panjang: Rp 120.000
+  - Negara Pendek: Rp 120.000 / Negara Panjang: Rp 140.000
+  - Retro Pendek: Rp 130.000 / Retro Panjang: Rp 150.000
+  - Matriks harga diperbarui di `cara upload jersey.md` dan `.claude/skills/jersey-uploader/SKILL.md`. Auto-calculation harga dipasang di `scripts/upload-jersey.mjs`.
 - [ ] **Commit & Push**: Minta izin user untuk `git add`, `git commit`, dan `git push origin main` agar Coolify mem-build seluruh perbaikan.
 - [ ] **Deploy Check**: Verifikasi build di Coolify dan cek live site `https://prokickstore1.com`.
 - [ ] **P3 (opsional)**: Arsipkan atau bersihkan file temporary lama di `scratch/` (BUG-17).

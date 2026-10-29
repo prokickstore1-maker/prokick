@@ -16,16 +16,16 @@ Panduan operasional untuk mengunggah jersey dari supplier (`zoabcd.com`) ke ProK
 
 | Kategori | Varian | Deteksi URL/Judul | Harga | Kolom `price` |
 |---|---|---|---|---|
-| Jersey Klub (Player Issue) | Lengan Pendek | Default (tanpa `ls`) | Rp 120.000 | `"120000.00"` |
-| Jersey Klub (Player Issue) | Lengan Panjang | `ls`, `-ls-`, `long sleeve` | Rp 150.000 | `"150000.00"` |
-| Tim Nasional | Lengan Pendek | Default | Rp 150.000 | `"150000.00"` |
-| Tim Nasional | Lengan Panjang | `ls`, `-ls-`, `long sleeve` | Rp 180.000 | `"180000.00"` |
-| Retro / Vintage | Lengan Pendek | `retro`, `vintage`, `classic` | Rp 150.000 | `"150000.00"` |
-| Retro / Vintage | Lengan Panjang | `ls` + retro | Rp 180.000 | `"180000.00"` |
+| Jersey Klub (Player Issue) | Lengan Pendek | Default (tanpa `ls`) | Rp 100.000 | `"100000.00"` |
+| Jersey Klub (Player Issue) | Lengan Panjang | `ls`, `-ls-`, `long sleeve` | Rp 120.000 | `"120000.00"` |
+| Tim Nasional | Lengan Pendek | Default (tanpa `ls`) | Rp 120.000 | `"120000.00"` |
+| Tim Nasional | Lengan Panjang | `ls`, `-ls-`, `long sleeve` | Rp 140.000 | `"140000.00"` |
+| Retro / Vintage | Lengan Pendek | `retro`, `vintage`, `classic` | Rp 130.000 | `"130000.00"` |
+| Retro / Vintage | Lengan Panjang | `ls` + retro | Rp 150.000 | `"150000.00"` |
 
-Tidak ada harga Rp 100.000. Semua jersey modern yang di-upload adalah Player Issue kualitas 1:1 Thailand.
+Semua jersey modern yang di-upload adalah Player Issue kualitas 1:1 Thailand.
 
-> **Penting:** script **tidak** menghitung harga otomatis. Default `price` = `120000.00`; untuk varian lain kirim `--price`. Cek hasilnya di log sebelum data masuk DB.
+> **Otomatisasi Harga:** Script `scripts/upload-jersey.mjs` sekarang secara otomatis menghitung harga sesuai matriks di atas berdasarkan deteksi judul/URL. Anda tetap dapat melakukan override manual menggunakan flag `--price`. Cek hasilnya di log sebelum data masuk DB.
 
 ---
 

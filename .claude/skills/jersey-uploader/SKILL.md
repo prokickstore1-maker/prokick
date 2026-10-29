@@ -25,7 +25,10 @@ Script scrape halaman supplier (`scrapeProduct`), deteksi metadata (`detectJerse
 
 ### Langkah 2: Periksa hasil
 
-- Harga default `120000.00` — script **tidak** menghitung harga dari kategori/lengan. Kirim `--price` sesuai matriks.
+- Harga otomatis dihitung sesuai matriks resmi bila `--price` tidak diberikan:
+  - Klub: SS Rp 100.000 / LS Rp 120.000
+  - Tim Nasional: SS Rp 120.000 / LS Rp 140.000
+  - Retro/Vintage: SS Rp 130.000 / LS Rp 150.000
 - Stok awal tetap `{ S:10, M:15, L:20, XL:15, XXL:10 }` (total 70), tanpa flag pengubah.
 - `edition` diturunkan dari `type === 'Retro' ? 'Vintage' : 'Current'`.
 - Upsert cocokkan `name` ATAU `team + season + kit_type + type`.
@@ -44,10 +47,12 @@ Script scrape halaman supplier (`scrapeProduct`), deteksi metadata (`detectJerse
 
 | Kategori | Varian | Kode URL/Judul | Harga (IDR) |
 |---|---|:---:|:---:|
-| Jersey Klub (Player Issue) | Lengan Pendek | tanpa `ls` | Rp 120.000 |
-| Jersey Klub (Player Issue) | Lengan Panjang | `ls`, `-ls-` | Rp 150.000 |
-| Tim Nasional | Lengan Pendek | tanpa `ls` | Rp 150.000 |
-| Tim Nasional | Lengan Panjang | `ls`, `-ls-` | Rp 180.000 |
+| Jersey Klub (Player Issue) | Lengan Pendek | tanpa `ls` | Rp 100.000 |
+| Jersey Klub (Player Issue) | Lengan Panjang | `ls`, `-ls-` | Rp 120.000 |
+| Tim Nasional | Lengan Pendek | tanpa `ls` | Rp 120.000 |
+| Tim Nasional | Lengan Panjang | `ls`, `-ls-` | Rp 140.000 |
+| Retro / Vintage | Lengan Pendek | `retro`, `vintage` | Rp 130.000 |
+| Retro / Vintage | Lengan Panjang | `ls` + retro | Rp 150.000 |
 | Retro (Vintage) | Lengan Pendek | `retro`/`classic` | Rp 150.000 |
 | Retro (Vintage) | Lengan Panjang | `ls` + retro | Rp 180.000 |
 

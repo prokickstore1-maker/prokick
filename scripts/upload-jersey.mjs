@@ -242,7 +242,27 @@ async function run() {
   const country = args.country || detected.country;
   const edition = productLine === 'Jaket' ? 'Current' : detected.edition;
   const description = args.description || detected.description;
-  const price = args.price ? String(args.price) : '120000.00';
+
+  // Auto-calculate official price matrix if --price is not explicitly passed
+  let calculatedPrice = '100000.00';
+  if (productLine === 'Jaket') {
+    calculatedPrice = '180000.00';
+  } else {
+    const isLongSleeve = /-ls-|\bls\b|long sleeve/i.test(`${rawTitle} ${url} ${name}`);
+    const isRetro = edition === 'Vintage' || type === 'Retro' || /retro|vintage|classic/i.test(`${rawTitle} ${url} ${name}`);
+    const isNational = category === 'Tim Nasional';
+
+    if (isRetro) {
+      calculatedPrice = isLongSleeve ? '150000.00' : '130000.00';
+    } else if (isNational) {
+      calculatedPrice = isLongSleeve ? '140000.00' : '120000.00';
+    } else {
+      // Klub Player Issue
+      calculatedPrice = isLongSleeve ? '120000.00' : '100000.00';
+    }
+  }
+
+  const price = args.price ? String(args.price) : calculatedPrice;
   const slug = slugify(name);
 
   const stockData = { S: 10, M: 15, L: 20, XL: 15, XXL: 10 };
