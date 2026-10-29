@@ -127,8 +127,6 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
     setIsSubmitting(true);
 
     try {
-      const selectedPayment = paymentOptions.find((p) => p.id === paymentMethodId);
-
       const result = await createOrderAction({
         customerName,
         // disimpan sudah dalam format internasional — wa.me invoice/admin tak perlu tebak lagi
@@ -138,7 +136,6 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
         postcode,
         state,
         paymentMethodId,
-        paymentMethodLabel: selectedPayment?.label || "QRIS / Transfer",
         // stable per cart contents → double-submit / retry returns the same order
         idempotencyKey: (idemKeyRef.current ||= crypto.randomUUID()),
         items: items.map((i) => ({

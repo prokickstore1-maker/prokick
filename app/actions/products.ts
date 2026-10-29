@@ -1,13 +1,15 @@
 "use server";
 
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { jerseys, jerseyImages } from "@/db/schema";
 import { db, checkDbConnection } from "@/lib/db";
 import { isAdmin } from "@/lib/admin-auth";
 import { uploadProductImage } from "@/lib/s3";
+import { PRODUCT_LINES, PRODUCT_LINE_JACKET, JACKET_KINDS } from "@/lib/product-lines";
 
 export interface ProductInput {
+  productLine: string; // "Jersey" | "Jaket"
   name: string; team: string; league: string; season: string; type: string; category: string;
   country: string; edition: string; kitType: string;
   price: string; description: string; image: string; sizes: string[];
@@ -22,10 +24,13 @@ function clean(input: ProductInput): ProductInput {
   const tidy = (v: string) => v.trim().replace(/\s+/g, " ");
   // Normalisasi harga Rupiah: hapus 'Rp', spasi, titik ribuan (mis. 'Rp 350.000' -> '350000')
   const cleanPrice = input.price ? input.price.replace(/[^0-9]/g, "") : "0";
+  const isJacketLine = tidy(input.productLine || "") === PRODUCT_LINE_JACKET;
   return {
     ...input,
+    productLine: isJacketLine ? PRODUCT_LINE_JACKET : PRODUCT_LINES[0],
     name: tidy(input.name), team: tidy(input.team), league: tidy(input.league), season: tidy(input.season),
-    type: tidy(input.type), category: tidy(input.category), country: tidy(input.country),
+    // jaket tidak punya grade jersey — type distandarkan, subjenis ada di kitType
+    type: isJacketLine ? "Jaket" : tidy(input.type), category: tidy(input.category), country: tidy(input.country),
     edition: tidy(input.edition), kitType: tidy(input.kitType),
     price: cleanPrice,
   };
@@ -36,6 +41,7 @@ function validImages(images: string[] | undefined) {
 }
 
 function valid(input: ProductInput) {
+  if (input.productLine === PRODUCT_LINE_JACKET && !(JACKET_KINDS as readonly string[]).includes(input.kitType)) return false;
   return [input.name, input.team, input.league, input.season, input.type, input.category, input.edition, input.kitType].every((v) => v.trim()) &&
     Number.isFinite(Number(input.price)) && Number(input.price) >= 0 && input.sizes.length > 0 && input.sizes.length <= 10 &&
     input.sizes.every((size) => /^[A-Z0-9]{1,5}$/.test(size)) && input.country.length <= 40 && input.edition.length <= 20 && input.kitType.length <= 20 &&
@@ -76,7 +82,8 @@ export async function createProductAction(input: ProductInput) {
       await tx.insert(jerseyImages).values(gallery.map((url, index) => ({ jerseyId: row.id, url, displayOrder: index })));
     }
   });
-  revalidatePath("/admin/products"); revalidatePath("/admin/jerseys"); revalidatePath("/jersey"); revalidatePath("/");
+  revalidateTag("jerseys-all", { expire: 0 });
+  revalidatePath("/admin/products"); revalidatePath("/admin/jerseys"); revalidatePath("/jersey"); revalidatePath("/jaket"); revalidatePath("/");
   return { success: true };
 }
 
@@ -99,7 +106,8 @@ export async function updateProductAction(id: string, input: ProductInput) {
       await tx.insert(jerseyImages).values(gallery.map((url, index) => ({ jerseyId: id, url, displayOrder: index })));
     }
   });
-  revalidatePath("/admin/products"); revalidatePath("/admin/jerseys"); revalidatePath("/jersey"); revalidatePath(`/product/${id}`);
+  revalidateTag("jerseys-all", { expire: 0 });
+  revalidatePath("/admin/products"); revalidatePath("/admin/jerseys"); revalidatePath("/jersey"); revalidatePath("/jaket"); revalidatePath(`/product/${id}`);
   return { success: true };
 }
 
@@ -120,8 +128,9 @@ export async function deleteProductAction(id: string) {
       await tx.delete(jerseyImages).where(eq(jerseyImages.jerseyId, id));
       await tx.delete(jerseys).where(eq(jerseys.id, id));
     });
+    revalidateTag("jerseys-all", { expire: 0 });
     revalidatePath("/admin/products"); revalidatePath("/admin/jerseys");
-    revalidatePath("/jersey"); revalidatePath("/");
+    revalidatePath("/jersey"); revalidatePath("/jaket"); revalidatePath("/");
     return { success: true };
   } catch (err) {
     console.error("Gagal menghapus produk:", err);

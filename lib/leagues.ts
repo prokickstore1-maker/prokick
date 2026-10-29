@@ -25,7 +25,7 @@ const PREFERRED_LEAGUE_ORDER = [
  * Daftar liga & klub diturunkan dari data produk yang benar-benar ada — bukan hardcode.
  * Tambah produk dengan league/team baru → filter & dropdown navbar ikut bertambah sendiri.
  */
-export function buildLeagueOptions(jerseys: NormalizedJersey[]): LeagueOption[] {
+export function buildLeagueOptions(jerseys: NormalizedJersey[], basePath = "/jersey"): LeagueOption[] {
   const leagueMap = new Map<string, Set<string>>();
 
   for (const jersey of jerseys) {
@@ -60,8 +60,8 @@ export function buildLeagueOptions(jerseys: NormalizedJersey[]): LeagueOption[] 
     const teams = [...teamsSet].sort().map((teamName) => ({
       name: teamName,
       href: isNation
-        ? `/jersey?league=Nation&country=${encodeURIComponent(teamName)}`
-        : `/jersey?league=${encodeURIComponent(league)}&team=${encodeURIComponent(teamName)}`,
+        ? `${basePath}?league=Nation&country=${encodeURIComponent(teamName)}`
+        : `${basePath}?league=${encodeURIComponent(league)}&team=${encodeURIComponent(teamName)}`,
     }));
 
     options.push({

@@ -90,24 +90,39 @@ function detectJerseyMetadata(rawTitle, rawDesc, url) {
     season = `${startYear}/${endYear}`;
   }
 
-  // 2. Detect Kit Type (Home, Away, Third, Fourth)
+  // 2. Detect Product Line (Jersey vs Jaket) & Subtype
+  let productLine = 'Jersey';
   let kitType = 'Home';
-  if (combined.includes('away') || /\b-a-\b/.test(combined)) {
-    kitType = 'Away';
-  } else if (combined.includes('third') || combined.includes('3rd') || /\b-th-\b/.test(combined) || /\b-3rd-\b/.test(combined)) {
-    kitType = 'Third';
-  } else if (combined.includes('fourth') || combined.includes('4th')) {
-    kitType = 'Fourth';
-  }
-
-  // 3. Detect Jersey Version / Type
   let type = 'Player Issue';
-  if (combined.includes('retro') || combined.includes('vintage') || combined.includes('classic')) {
-    type = 'Retro';
-  } else if (combined.includes('player') || combined.includes('pv') || combined.includes('authentic')) {
-    type = 'Player Issue';
-  } else if (combined.includes('fan') || combined.includes('fans') || combined.includes('stadium')) {
-    type = 'Fans Version';
+
+  if (combined.includes('tracksuit') || combined.includes('track-suit') || combined.includes('training suit')) {
+    productLine = 'Jaket';
+    kitType = 'Tracksuit';
+    type = 'Jaket';
+  } else if (combined.includes('windbreaker') || combined.includes('wind-breaker')) {
+    productLine = 'Jaket';
+    kitType = 'Windbreaker';
+    type = 'Jaket';
+  } else if (combined.includes('jacket') || combined.includes('jaket') || combined.includes('anthem')) {
+    productLine = 'Jaket';
+    kitType = 'Jaket';
+    type = 'Jaket';
+  } else {
+    if (combined.includes('away') || /\b-a-\b/.test(combined)) {
+      kitType = 'Away';
+    } else if (combined.includes('third') || combined.includes('3rd') || /\b-th-\b/.test(combined) || /\b-3rd-\b/.test(combined)) {
+      kitType = 'Third';
+    } else if (combined.includes('fourth') || combined.includes('4th')) {
+      kitType = 'Fourth';
+    }
+
+    if (combined.includes('retro') || combined.includes('vintage') || combined.includes('classic')) {
+      type = 'Retro';
+    } else if (combined.includes('player') || combined.includes('pv') || combined.includes('authentic')) {
+      type = 'Player Issue';
+    } else if (combined.includes('fan') || combined.includes('fans') || combined.includes('stadium')) {
+      type = 'Fans Version';
+    }
   }
 
   // 4. Detect Team, League, Country
@@ -126,11 +141,15 @@ function detectJerseyMetadata(rawTitle, rawDesc, url) {
     }
   }
 
-  const edition = type === 'Retro' ? 'Vintage' : 'Current';
-  const cleanName = `${team} ${kitType} ${season} ${type}`;
-  const defaultDesc = `Jersey ${team} ${kitType} musim ${season} ${type}. Menggunakan material performa tinggi berpori mikro yang sejuk dan ringan dengan detail emblem presisi dan jahitan autentik.`;
+  const edition = productLine === 'Jaket' ? 'Current' : (type === 'Retro' ? 'Vintage' : 'Current');
+  const cleanName = productLine === 'Jaket'
+    ? `${team} ${kitType} ${season}`
+    : `${team} ${kitType} ${season} ${type}`;
+  const defaultDesc = productLine === 'Jaket'
+    ? `${kitType} ${team} musim ${season}. Material luar berkualitas tinggi yang nyaman untuk aktivitas harian maupun olahraga, dilengkapi detail crest bordir presisi.`
+    : `Jersey ${team} ${kitType} musim ${season} ${type}. Menggunakan material performa tinggi berpori mikro yang sejuk dan ringan dengan detail emblem presisi dan jahitan autentik.`;
 
-  return { name: cleanName, team, league, season, type, kitType, category, country, edition, description: defaultDesc };
+  return { productLine, name: cleanName, team, league, season, type, kitType, category, country, edition, description: defaultDesc };
 }
 
 async function scrapeProduct(url) {
@@ -212,11 +231,16 @@ async function run() {
   const team = args.team || detected.team;
   const league = args.league || detected.league;
   const season = args.season || detected.season;
-  const type = args.type || detected.type;
-  const kitType = args.kitType || detected.kitType;
+  // Auto-detect atau override via --productLine Jaket --kitType Tracksuit|Jaket|Windbreaker
+  const productLine = args.productLine ? (args.productLine === 'Jaket' ? 'Jaket' : 'Jersey') : detected.productLine;
+  const kitType = args.kitType || (productLine === 'Jaket' && !['Tracksuit', 'Jaket', 'Windbreaker'].includes(detected.kitType) ? 'Jaket' : detected.kitType);
+  if (productLine === 'Jaket' && !['Tracksuit', 'Jaket', 'Windbreaker'].includes(kitType)) {
+    throw new Error('Jaket wajib --kitType Tracksuit | Jaket | Windbreaker');
+  }
+  const type = productLine === 'Jaket' ? 'Jaket' : (args.type || detected.type);
   const category = args.category || detected.category;
   const country = args.country || detected.country;
-  const edition = detected.edition;
+  const edition = productLine === 'Jaket' ? 'Current' : detected.edition;
   const description = args.description || detected.description;
   const price = args.price ? String(args.price) : '120000.00';
   const slug = slugify(name);
@@ -228,6 +252,7 @@ async function run() {
   console.log(`🚀 PROKICK STORE UNIVERSAL JERSEY UPLOADER`);
   console.log(`Jersey Name : ${name}`);
   console.log(`Team        : ${team} (${league} - ${country})`);
+  console.log(`Line        : ${productLine}`);
   console.log(`Season/Type : ${season} | ${type} | ${kitType}`);
   console.log(`Retail Price: Rp ${Number(price).toLocaleString('id-ID')}`);
   console.log(`Total Angles: ${imageUrls.length} Photos`);
@@ -295,8 +320,9 @@ async function run() {
   try {
     const existing = await sql`
       SELECT id FROM jerseys 
-      WHERE name ILIKE ${name} 
-         OR (team = ${team} AND season = ${season} AND kit_type = ${kitType} AND type = ${type})
+      WHERE product_line = ${productLine}
+        AND (name ILIKE ${name}
+         OR (team = ${team} AND season = ${season} AND kit_type = ${kitType} AND type = ${type}))
       LIMIT 1
     `;
 
@@ -308,7 +334,8 @@ async function run() {
       console.log(`🔄 Updating existing jersey in database (ID: ${jerseyId})...`);
       await sql`
         UPDATE jerseys
-        SET name = ${name},
+        SET product_line = ${productLine},
+            name = ${name},
             team = ${team},
             league = ${league},
             season = ${season},
@@ -330,10 +357,10 @@ async function run() {
       console.log(`✨ Inserting new jersey into database...`);
       const inserted = await sql`
         INSERT INTO jerseys (
-          name, team, league, season, type, category, country, edition, kit_type,
+          product_line, name, team, league, season, type, category, country, edition, kit_type,
           price, description, image, sizes, stock_data, stock
         ) VALUES (
-          ${name}, ${team}, ${league}, ${season}, ${type}, ${category}, ${country}, ${edition}, ${kitType},
+          ${productLine}, ${name}, ${team}, ${league}, ${season}, ${type}, ${category}, ${country}, ${edition}, ${kitType},
           ${price}, ${description}, ${primaryImage},
           ${JSON.stringify(Object.keys(stockData))}, ${JSON.stringify(stockData)}, ${totalStock}
         ) RETURNING id

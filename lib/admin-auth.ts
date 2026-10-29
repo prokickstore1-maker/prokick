@@ -26,12 +26,16 @@ export function createAdminToken() {
 
 export function isAdminToken(token: string | undefined) {
   if (!token) return false;
-  const [value, supplied] = token.split(".");
-  if (!value || !supplied) return false;
-  const expiry = Number(value.split("_")[1]);
-  if (!Number.isFinite(expiry) || expiry < Date.now()) return false;
-  const expected = signature(value);
-  return supplied.length === expected.length && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+  try {
+    const [value, supplied] = token.split(".");
+    if (!value || !supplied) return false;
+    const expiry = Number(value.split("_")[1]);
+    if (!Number.isFinite(expiry) || expiry < Date.now()) return false;
+    const expected = signature(value);
+    return supplied.length === expected.length && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+  } catch {
+    return false;
+  }
 }
 
 export async function authenticateAdmin(email: string, password: string) {

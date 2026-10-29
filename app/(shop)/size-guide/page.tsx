@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Ruler, CheckCircle2, MessageCircle, AlertCircle } from "lucide-react";
 import { getSetting } from "@/lib/data";
 import { toIntlPhone } from "@/lib/utils";
+import { JACKET_SIZES } from "@/lib/product-lines";
 
 export const metadata: Metadata = {
   title: "Panduan Ukuran (Size Guide) | ProKick Store",
@@ -38,15 +39,15 @@ export default async function SizeGuidePage() {
             <span className="text-xs font-bold uppercase tracking-wider">Fitting &amp; Sizing Chart</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black font-display uppercase tracking-tight text-white">
-            Panduan Ukuran Jersey
+            Panduan Ukuran Jersey &amp; Jaket
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-2 max-w-xl">
-            Pastikan ukuran jersey yang Anda pesan pas dan nyaman. Simak perbedaan tipe fitting serta tabel ukuran resmi ProKick Store di bawah ini.
+            Pastikan ukuran jersey, tracksuit, jaket, atau windbreaker yang Anda pesan pas dan nyaman. Simak tabel ukuran resmi ProKick Store di bawah ini.
           </p>
         </div>
 
-        {/* 1. Comparison: Player Issue vs Fan / Retro */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 1. Comparison: Player Issue vs Fan / Retro vs Jaket */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-6 rounded-2xl bg-[#121217] border border-[#E2F952]/30 space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E2F952]/10 text-[#E2F952] text-[11px] font-bold uppercase tracking-wider">
               <span>Slim Fit / Athletic</span>
@@ -74,6 +75,20 @@ export default async function SizeGuidePage() {
               <span><strong>Rekomendasi:</strong> Pilih ukuran reguler yang biasa Anda gunakan untuk kaos standar.</span>
             </div>
           </div>
+
+          <div className="p-6 rounded-2xl bg-[#121217] border border-white/10 space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-bold uppercase tracking-wider">
+              <span>Outerwear Fit</span>
+            </div>
+            <h2 className="text-lg font-bold text-white uppercase font-display">Jaket, Tracksuit &amp; Windbreaker</h2>
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              Dirancang sebagai luaran (outerwear) untuk latihan maupun harian. Memiliki ruang dada lebih lega dibanding jersey agar tetap nyaman dilapisi kaos di bagian dalam.
+            </p>
+            <div className="pt-2 border-t border-white/6 flex items-start gap-2 text-xs text-zinc-300">
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-zinc-400" />
+              <span><strong>Rekomendasi:</strong> Sesuaikan dengan tinggi &amp; berat badan pada tabel ukuran Jaket di bawah.</span>
+            </div>
+          </div>
         </div>
 
         {/* 2. Official Size Chart Table */}
@@ -81,7 +96,7 @@ export default async function SizeGuidePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
             <div>
               <h2 className="text-xl font-bold uppercase tracking-tight text-white font-display">
-                Tabel Ukuran Resmi (cm)
+                Tabel Ukuran Jersey (cm)
               </h2>
               <p className="text-xs text-zinc-400 mt-0.5">
                 Dimensi diukur dalam keadaan jersey dibentangkan di bidang datar (flat measure).
@@ -107,6 +122,49 @@ export default async function SizeGuidePage() {
                     <td className="py-3 px-4 text-zinc-300 text-center font-mono">{row.length} cm</td>
                     <td className="py-3 px-4 text-zinc-300 text-center font-mono">{row.width} cm</td>
                     <td className="py-3 px-4 text-zinc-300 text-center font-mono">{row.chest} cm</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* 2b. Official Jacket / Tracksuit / Windbreaker Size Chart Table */}
+        <section className="rounded-2xl border border-[#E2F952]/25 bg-[#121217] p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-0.5">
+                Tracksuit &bull; Jaket &bull; Windbreaker
+              </span>
+              <h2 className="text-xl font-bold uppercase tracking-tight text-white font-display">
+                Panduan Ukuran Jaket &amp; Tracksuit
+              </h2>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Acuan dimensi panjang, lebar dada (bust), serta rekomendasi tinggi dan berat badan.
+              </p>
+            </div>
+            <span className="text-[11px] text-zinc-400 italic">Toleransi ukuran ±1–2 cm</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5 text-zinc-300 uppercase tracking-wider font-bold">
+                  <th className="py-3 px-4 text-center">Size</th>
+                  <th className="py-3 px-4 text-center">Length</th>
+                  <th className="py-3 px-4 text-center">Bust</th>
+                  <th className="py-3 px-4 text-center">Height</th>
+                  <th className="py-3 px-4 text-center">Weight</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/6 font-mono">
+                {JACKET_SIZES.map((row) => (
+                  <tr key={row.label} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3 px-4 font-black text-white text-center bg-white/2">{row.label}</td>
+                    <td className="py-3 px-4 text-zinc-300 text-center">{row.length}</td>
+                    <td className="py-3 px-4 text-zinc-300 text-center">{row.bust}</td>
+                    <td className="py-3 px-4 text-zinc-300 text-center">{row.height}</td>
+                    <td className="py-3 px-4 text-zinc-300 text-center">{row.weight}</td>
                   </tr>
                 ))}
               </tbody>

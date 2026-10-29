@@ -10,6 +10,7 @@ Satu pintu masuk. Cari dokumen lain dari sini.
 | `DESIGN.md` | Token visual aktual (warna, font, radius), motion, aturan konten | Kerja UI |
 | `HANDOFF.md` | Status kerja terakhir, perubahan perilaku, langkah berikut | Awal sesi kerja |
 | `DAILY_TASKS.md` | Catatan target harian, pekerjaan selesai, dan prioritas besok | Setiap awal & akhir sesi kerja harian |
+| `MVP.md` | Master blueprint & checklist arsitektur e-commerce fullstack reusable | Inisiasi proyek baru / acuan fitur |
 | `AGENTS.md` / `CLAUDE.md` | Instruksi agent (Next.js versi berbeda, antislop) | Otomatis termuat |
 | `cara upload jersey.md` | Prosedur impor jersey dari supplier: kurasi, harga, jalankan `scripts/upload-jersey.mjs`, bersihkan file lokal | Menambah produk massal |
 | `bug-audit/AUDIT.md` | Temuan bug: OPEN vs FIXED, sudah direkonsiliasi 2026-10-27 | Sebelum klaim selesai / memperbaiki bug |
@@ -20,6 +21,8 @@ Satu pintu masuk. Cari dokumen lain dari sini.
 | `graphify-out/` | Graf kode hasil generate (bukan dokumentasi manual) | Eksplorasi arsitektur |
 
 ## Ringkasan sistem (kode = sumber kebenaran)
+
+**Lini produk**: `jerseys.product_line` = `Jersey` | `Jaket`. Jaket (`/jaket`) subjenis di `kit_type`: Tracksuit / Jaket / Windbreaker, per klub & negara, tanpa customizer. Konstanta di `lib/product-lines.ts`.
 
 **Storefront** (`app/(shop)/`): home (hero banner, search langsung, trust strip, klub/timnas, tier promo, best seller/retro/new arrival), `/jersey` (filter+sort+paginasi di SQL), `/product/[id]` (customizer nameset/patch), `/cart`, `/invoice/[orderId]`, `/track-order`, `/privacy`, `/terms`.
 
@@ -33,17 +36,14 @@ Satu pintu masuk. Cari dokumen lain dari sini.
 
 - Kode berorientasi penuh Indonesia: IDR, 38 provinsi + zona Jawa/Luar Jawa + blokir Sulawesi, J&T Express, QRIS/transfer/e-wallet dari DB.
 - Working tree belum di-commit (perubahan aplikasi + dokumentasi).
-- `bug-audit/AUDIT.md` sudah diperiksa ulang terhadap source. **Open**: #24 (slip receipt pakai object key, bukan URL presign), #28 (aksi admin optimistic tanpa cek hasil), #32 (badge/CTA banner hardcode), #36–#39, #43 (kredensial S3 fallback di source), #45 (tanpa middleware), #46 (label metode bayar masih diterima dari client).
-- Typecheck belum dijalankan ulang pada sesi dokumentasi ini; jalankan `node_modules/.bin/tsc --noEmit` sebelum klaim selesai.
+- `bug-audit/AUDIT.md` & `BUGLIST.md`: seluruh bug P0–P3 dan temuan #24, #28, #32, #37, #38, #39, #43, #46 **sudah FIXED** (2026-10-29).
+- Migrasi `0006_add_product_line.sql` sudah dijalankan di DB produksi (958 produk tetap aman).
+- `node_modules/.bin/tsc --noEmit` **EXIT=0**.
 
 ## Backlog prioritas
 
-1. **#43** — rotasi kredensial S3, hapus nilai default di `lib/s3.ts` dan `app/api/img/[...key]/route.ts`, gagal-tertutup.
-2. **#24** — invoice & admin memakai object key mentah sebagai `src`; alihkan ke `/api/orders/[orderId]/receipt`.
-3. **#28** — `orders-table.tsx` (Confirm Paid/Save Tracking/Mark Completed) dan `jersey-stock-table.tsx` harus memeriksa `result.success` sebelum menulis state.
-4. **#46** — hapus `paymentMethodLabel` dari `CreateOrderInput`; pakai `method.label` untuk Telegram.
-5. **#32, #38** — kolom badge/CTA banner; commit `.env.example` (longgarkan `.gitignore`).
-6. **#39, #36, #37, #45** — metadata receipt, revokasi sesi, fail-state secret, middleware (arsitektur).
+1. **Commit & Push ke `origin/main`** (menunggu izin user) agar Coolify men-deploy seluruh pembaruan.
+2. **Isi Katalog Jaket** (via Admin atau `scripts/upload-jersey.mjs`).
 
 ## Aturan main (ringkas)
 

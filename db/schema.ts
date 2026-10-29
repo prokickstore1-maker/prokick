@@ -28,6 +28,7 @@ export const paymentMethods = pgTable("payment_methods", {
 // 3. Pure Football Jerseys
 export const jerseys = pgTable("jerseys", {
   id: uuid("id").primaryKey().defaultRandom(),
+  productLine: text("product_line").default("Jersey").notNull(), // "Jersey" | "Jaket" — jaket memakai kitType: "Tracksuit" | "Jaket" | "Windbreaker"
   name: text("name").notNull(), // e.g. "Real Madrid Home 2026/27 Player Issue", "Timnas Indonesia Special Edition"
   team: text("team").notNull(), // e.g. "Real Madrid", "Arsenal", "Indonesia"
   league: text("league").notNull(), // "Premier League", "La Liga", "Serie A", "World Cup", "Retro Classic"
@@ -57,6 +58,7 @@ export const jerseys = pgTable("jerseys", {
   index("jerseys_is_best_seller_idx").on(table.isBestSeller),
   index("jerseys_is_new_idx").on(table.isNew),
   index("jerseys_category_idx").on(table.category),
+  index("jerseys_product_line_idx").on(table.productLine),
 ]);
 
 // 4. Multi-angle Jersey Images

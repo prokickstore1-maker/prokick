@@ -69,6 +69,8 @@ JSON.stringify(
 node scripts/upload-jersey.mjs --url "https://www.zoabcd.com/products/..." --price 150000
 ```
 
+Jaket: tambahkan `--productLine Jaket --kitType Tracksuit|Jaket|Windbreaker` (harga jaket ditentukan manual lewat `--price`; belum ada di matriks).
+
 Flag yang didukung: `--url` (wajib), `--name`, `--team`, `--league`, `--season`, `--type`, `--kitType`, `--category`, `--country`, `--description`, `--price`.
 
 Perilaku aktual yang perlu diketahui:

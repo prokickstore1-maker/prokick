@@ -29,6 +29,7 @@ export function Footer({
             </h4>
             <ul className="space-y-2 text-zinc-400">
               <li><Link href="/jersey" className="hover:text-white transition-colors">Semua Jersey Bola</Link></li>
+              <li><Link href="/jaket" className="hover:text-white transition-colors">Jaket, Tracksuit &amp; Windbreaker</Link></li>
               {leagues.filter((l) => l.value).map((l) => (
                 <li key={l.value}>
                   <Link

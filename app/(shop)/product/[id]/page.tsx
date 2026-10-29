@@ -6,6 +6,7 @@ import { toShippingSettings, STANDARD_NAMESET_FEE, STANDARD_PATCH_FEE } from "@/
 import { JerseyCustomizer } from "@/components/jersey/jersey-customizer";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { ChevronRight } from "lucide-react";
+import { isJacket } from "@/lib/product-lines";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,9 @@ export default async function ProductDetailPage({
   }
 
   // Related kits: query terarah (liga sama atau best seller), limit 4 di SQL
-  const relatedKits = await getRelatedKits(jersey.league, jersey.id, 4);
+  const jacket = isJacket(jersey);
+  const listHref = jacket ? "/jaket" : "/jersey";
+  const relatedKits = await getRelatedKits(jersey.league, jersey.id, 4, jersey.productLine);
 
   // fee nameset/patch dari settings admin — sinkron dengan server checkout
   const shipSettings = toShippingSettings(await getShippingSettingsMap());
@@ -67,8 +70,8 @@ export default async function ProductDetailPage({
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
-          <Link href="/jersey" className="hover:text-white transition-colors">
-            Kits
+          <Link href={listHref} className="hover:text-white transition-colors">
+            {jacket ? "Jaket" : "Kits"}
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
           <span className="text-zinc-200 font-semibold truncate max-w-xs">{jersey.name}</span>
@@ -95,10 +98,10 @@ export default async function ProductDetailPage({
                 </h2>
               </div>
               <Link
-                href="/jersey"
+                href={listHref}
                 className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1 uppercase tracking-wider transition-colors"
               >
-                <span>View All Kits</span>
+                <span>{jacket ? "Lihat Semua Jaket" : "View All Kits"}</span>
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>

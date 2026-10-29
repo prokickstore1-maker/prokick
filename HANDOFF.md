@@ -1,6 +1,11 @@
 # HANDOFF — PROKICK Indonesia (Update: 2026-10-27)
 
 ## 1. Status Terbaru Sistem
+- **Update 2026-10-29**:
+  1. Lini produk **Jaket** (`Tracksuit`, `Jaket`, `Windbreaker`) aktif penuh: halaman `/jaket`, menu navbar, section beranda, customizer otomatis nonaktif untuk jaket, size chart khusus jaket (modal PDP & `/size-guide`), filter tab admin (`Semua`/`Jersey`/`Jaket`), dan auto-detect di `scripts/upload-jersey.mjs`.
+  2. Migrasi `drizzle/0006_add_product_line.sql` **sudah dijalankan di DB produksi** (958 produk utuh).
+  3. Seluruh temuan aktif di `bug-audit/AUDIT.md` (**#28, #32, #37, #38, #39, #43, #46**) resmi **FIXED**.
+  4. `node_modules/.bin/tsc --noEmit` **EXIT=0**.
 - **Status Type-Check**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Clean, 0 error).
 - **HTTP Server**: `http://localhost:3000/` HTTP 200, `/robots.txt` HTTP 200, `/sitemap.xml` HTTP 200 (965 URLs: 7 statis + 958 produk).
 - **Git State**: Local branch `main` mendahului `origin/main` (commit `1f06886`, `26886fb`, `7337388`).

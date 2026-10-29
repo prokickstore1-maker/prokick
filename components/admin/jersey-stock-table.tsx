@@ -24,14 +24,23 @@ interface JerseyStockTableProps {
 export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
   const [jerseysList, setJerseysList] = useState<NormalizedJersey[]>(initialJerseys);
   const [search, setSearch] = useState("");
+  const [lineFilter, setLineFilter] = useState<"ALL" | "Jersey" | "Jaket">("ALL");
   const [loadingSize, setLoadingSize] = useState<string | null>(null);
 
-  const filtered = jerseysList.filter(
-    (j) =>
-      j.name.toLowerCase().includes(search.toLowerCase()) ||
-      j.team.toLowerCase().includes(search.toLowerCase()) ||
-      j.league.toLowerCase().includes(search.toLowerCase())
-  );
+  const jerseyCount = jerseysList.filter((j) => (j.productLine || "Jersey") === "Jersey").length;
+  const jacketCount = jerseysList.filter((j) => j.productLine === "Jaket").length;
+
+  const filtered = jerseysList.filter((j) => {
+    const line = j.productLine || "Jersey";
+    if (lineFilter !== "ALL" && line !== lineFilter) return false;
+    const q = search.toLowerCase();
+    return (
+      j.name.toLowerCase().includes(q) ||
+      j.team.toLowerCase().includes(q) ||
+      j.league.toLowerCase().includes(q) ||
+      j.kitType.toLowerCase().includes(q)
+    );
+  });
 
   const handleStockAdjust = async (jerseyId: string, size: string, delta: number) => {
     if (delta === 0) return;
@@ -68,12 +77,32 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
 
   return (
     <div className="space-y-4 text-[#FAFAFA]">
-      {/* Search Input */}
+      {/* Filter Lini & Search Input */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {([
+            ["ALL", `Semua (${jerseysList.length})`],
+            ["Jersey", `Jersey (${jerseyCount})`],
+            ["Jaket", `Jaket (${jacketCount})`],
+          ] as const).map(([val, label]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setLineFilter(val)}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+                lineFilter === val
+                  ? "bg-white text-black font-extrabold"
+                  : "bg-[#181820] text-zinc-400 hover:text-white border border-[#27272A]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="relative max-w-md w-full">
           <Input
             type="text"
-            placeholder="Cari jersey, klub, atau kompetisi…"
+            placeholder="Cari jersey, jaket, klub, atau kompetisi…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-lg pl-10 text-xs font-medium bg-[#181820] border-[#27272A] text-white placeholder:text-zinc-500"
@@ -187,7 +216,7 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
                       <div>
                         <span className="font-bold text-white block">{j.name}</span>
                         <span className="text-[10px] text-zinc-500 font-mono">
-                          {j.type} • Season {j.season}
+                          {j.productLine === "Jaket" ? `Jaket (${j.kitType})` : j.type} • Season {j.season}
                         </span>
                       </div>
                     </div>

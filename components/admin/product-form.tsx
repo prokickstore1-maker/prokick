@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ImagePlus } from "lucide-react";
 import { NormalizedJersey } from "@/lib/data";
 import { buildLeagueOptions } from "@/lib/leagues";
+import { PRODUCT_LINE_JACKET, PRODUCT_LINE_JERSEY, JACKET_KINDS, JERSEY_KIT_TYPES } from "@/lib/product-lines";
 import { createProductAction, updateProductAction, uploadProductImageAction, ProductInput } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const empty: ProductInput = { name: "", team: "", league: "Premier League", season: "2026/2027", type: "Fans Version", category: "Klub", country: "", edition: "Current", kitType: "Home", price: "", description: "", image: "", sizes: ["S", "M", "L", "XL"], isBestSeller: false, isFeatured: false, isNew: false };
+const empty: ProductInput = { productLine: PRODUCT_LINE_JERSEY, name: "", team: "", league: "Premier League", season: "2026/2027", type: "Fans Version", category: "Klub", country: "", edition: "Current", kitType: "Home", price: "", description: "", image: "", sizes: ["S", "M", "L", "XL"], isBestSeller: false, isFeatured: false, isNew: false };
 
 // Dedup case-insensitive + trim — "premier league" & "Premier League" tampil sekali (bentuk kanonik pertama)
 function uniqueLower(list: string[]): string[] {
@@ -65,7 +66,7 @@ function resizeToDataUrl(file: File): Promise<string> {
 
 export function ProductForm({ initialProducts, product }: { initialProducts: NormalizedJersey[]; product?: NormalizedJersey }) {
   const [form, setForm] = useState<ProductInput>(() => product ? {
-    ...empty, name: product.name, team: product.team, league: product.league, season: product.season, type: product.type,
+    ...empty, productLine: product.productLine || PRODUCT_LINE_JERSEY, name: product.name, team: product.team, league: product.league, season: product.season, type: product.type,
     category: product.category, country: product.country, edition: product.edition || "Current", kitType: product.kitType || "Home",
     price: product.price, description: product.description || "", image: product.image || "", sizes: product.sizes,
     stockData: product.stockData, isBestSeller: product.isBestSeller, isFeatured: product.isFeatured, isNew: product.isNew ?? false,
@@ -79,6 +80,15 @@ export function ProductForm({ initialProducts, product }: { initialProducts: Nor
   const [isSaving, setIsSaving] = useState(false);
   const [dragging, setDragging] = useState(false);
   const update = (key: keyof ProductInput, value: string | boolean | string[] | Record<string, number>) => setForm((prev) => ({ ...prev, [key]: value }));
+  const isJacketLine = form.productLine === PRODUCT_LINE_JACKET;
+  // ganti lini: kitType di-reset ke nilai pertama lini baru supaya tidak tertinggal "Home" di jaket
+  const changeLine = (line: string) => setForm((prev) => ({
+    ...prev,
+    productLine: line,
+    kitType: line === PRODUCT_LINE_JACKET ? JACKET_KINDS[0] : JERSEY_KIT_TYPES[0],
+    type: line === PRODUCT_LINE_JACKET ? "Jaket" : "Fans Version",
+    edition: line === PRODUCT_LINE_JACKET ? "Current" : prev.edition,
+  }));
 
   // Pilih file: hanya simpan File-nya, tanpa upload — S3 baru ditembak saat Simpan
   async function handleImageSelect(files: File[]) {
@@ -176,6 +186,16 @@ export function ProductForm({ initialProducts, product }: { initialProducts: Nor
       <fieldset className="space-y-3">
         <legend className="text-xs font-black uppercase tracking-wider text-[#FAFAFA] mb-2">1 · Identitas produk</legend>
         <div className="grid gap-3 sm:grid-cols-2">
+          <Label className="space-y-1 text-xs font-bold uppercase tracking-wider text-zinc-400 sm:col-span-2">
+            Lini produk
+            <Select value={form.productLine} onValueChange={changeLine}>
+              <SelectTrigger className="w-full font-normal normal-case tracking-normal text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PRODUCT_LINE_JERSEY}>Jersey</SelectItem>
+                <SelectItem value={PRODUCT_LINE_JACKET}>Jaket (Tracksuit / Jaket / Windbreaker)</SelectItem>
+              </SelectContent>
+            </Select>
+          </Label>
           {textField("name", "Nama produk")}
           {textField("team", "Klub / tim")}
         </div>
@@ -241,9 +261,9 @@ export function ProductForm({ initialProducts, product }: { initialProducts: Nor
             </datalist>
           </Label>
           {selectField("category", "Kategori", uniqueLower(["Klub", "Tim Nasional", ...initialProducts.map((j) => j.category)]))}
-          {selectField("type", "Tipe jersey", ["Player Issue", "Fans Version", "Retro", "Kids"])}
-          {selectField("edition", "Edisi", ["Current", "Vintage"])}
-          {selectField("kitType", "Tipe kit", ["Home", "Away", "Third", "Training"])}
+          {!isJacketLine && selectField("type", "Tipe jersey", ["Player Issue", "Fans Version", "Retro", "Kids"])}
+          {!isJacketLine && selectField("edition", "Edisi", ["Current", "Vintage"])}
+          {selectField("kitType", isJacketLine ? "Jenis jaket" : "Tipe kit", isJacketLine ? [...JACKET_KINDS] : [...JERSEY_KIT_TYPES])}
           {textField("season", "Musim", undefined, "Contoh: 2026/2027")}
           <Label className="space-y-1 text-xs font-bold uppercase tracking-wider text-zinc-400">
             Negara

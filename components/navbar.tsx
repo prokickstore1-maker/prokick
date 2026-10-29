@@ -8,6 +8,7 @@ import { ShoppingBag, Search, Menu, ChevronDown } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { LeagueOption } from "@/lib/leagues";
+import { JACKET_KINDS } from "@/lib/product-lines";
 
 const DEFAULT_TICKER =
   "Gratis Ongkir Se-Indonesia min. 2 Kaos | QRIS & e-Wallet Instan | J&T Express";
@@ -81,6 +82,30 @@ export function Navbar({
           <Link href="/jersey" className="hover:text-white transition-colors">
             All Kits
           </Link>
+          <div className="relative group/nav py-2">
+            <Link href="/jaket" className="hover:text-white transition-colors flex items-center gap-1.5">
+              <span>Jaket</span>
+              <ChevronDown className="w-3 h-3 text-zinc-500 group-hover/nav:text-zinc-200 group-hover/nav:rotate-180 transition-transform duration-200" />
+            </Link>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1.5 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 pointer-events-none group-hover/nav:pointer-events-auto z-50">
+              <div className="bg-[#121217] border border-white/10 rounded-xl p-2.5 shadow-2xl backdrop-blur-xl space-y-0.5 min-w-[200px]">
+                <Link href="/jaket" className="block px-2.5 py-1 mb-1 border-b border-white/6 text-[10px] font-extrabold uppercase tracking-widest text-[#E2F952] hover:underline">
+                  Semua Jaket
+                </Link>
+                {JACKET_KINDS.map((k) => (
+                  <Link key={k} href={`/jaket?kitType=${encodeURIComponent(k)}`} className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/8 transition-colors">
+                    {k}
+                  </Link>
+                ))}
+                <Link href="/jaket?category=Klub" className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/8 transition-colors">
+                  Per Klub
+                </Link>
+                <Link href="/jaket?category=Tim%20Nasional" className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/8 transition-colors">
+                  Per Negara
+                </Link>
+              </div>
+            </div>
+          </div>
           {leagues.filter((l) => l.value).map((l) => {
             const hasTeams = l.teams && l.teams.length > 0;
             const isWide = l.teams.length > 5;
@@ -245,6 +270,14 @@ export function Navbar({
                 >
                   <span>All Football Kits</span>
                   <span className="text-[11px] text-zinc-400 font-bold">2026/27</span>
+                </Link>
+                <Link
+                  href="/jaket"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="min-h-11 border-b border-white/5 text-white hover:text-volt flex items-center justify-between"
+                >
+                  <span>Jaket &amp; Tracksuit</span>
+                  <span className="text-[11px] text-zinc-400 font-bold">{JACKET_KINDS.join(" · ")}</span>
                 </Link>
                 {leagues.filter((l) => l.value).map((l) => {
                   const hasTeams = l.teams && l.teams.length > 0;

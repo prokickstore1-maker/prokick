@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getBestSellers, getNewArrivals, getRetroJerseys, getActiveBanners, getNationalCountries, getShippingSettingsMap, getCachedLeagueOptions } from "@/lib/data";
+import { getBestSellers, getNewArrivals, getRetroJerseys, getLatestJackets, getActiveBanners, getNationalCountries, getShippingSettingsMap, getCachedLeagueOptions } from "@/lib/data";
+import { JACKET_KINDS } from "@/lib/product-lines";
 import { toShippingSettings } from "@/lib/promo";
 import { formatIDR } from "@/lib/utils";
 import { buildLeagueOptions } from "@/lib/leagues";
@@ -13,10 +14,11 @@ import { TOP_CLUBS } from "@/lib/clubs";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [trending, newArrivals, retroJerseys, banners, rawSettings, nationalCountries, leagueOptions] = await Promise.all([
+  const [trending, newArrivals, retroJerseys, jackets, banners, rawSettings, nationalCountries, leagueOptions] = await Promise.all([
     getBestSellers(8),
     getNewArrivals(8),
     getRetroJerseys(8),
+    getLatestJackets(8),
     getActiveBanners(),
     getShippingSettingsMap(),
     getNationalCountries(),
@@ -328,6 +330,34 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
               {retroJerseys.map((jersey) => (
                 <JerseyCard key={jersey.id} jersey={jersey} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 6b. Jaket, Tracksuit & Windbreaker */}
+        {jackets.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
+                  {JACKET_KINDS.join(" · ")}
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
+                  Jaket &amp; Tracksuit
+                </h2>
+              </div>
+              <Link
+                href="/jaket"
+                className="min-h-11 flex items-center gap-1.5 -my-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-wider transition-colors"
+              >
+                <span>Lihat Semua Jaket</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+              {jackets.map((jacket) => (
+                <JerseyCard key={jacket.id} jersey={jacket} />
               ))}
             </div>
           </section>

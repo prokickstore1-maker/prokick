@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getJerseyById, getShippingSettingsMap, getPaymentMethodById } from "@/lib/data";
+import { isJacket } from "@/lib/product-lines";
 import { calculatePromoEngine, ShippingZone, toShippingSettings } from "@/lib/promo";
 import { getShippingZoneByProvince, isSulawesiProvince } from "@/lib/indonesia";
 import { createOrderWithStock, getOrderByIdempotencyKey, updateOrderPaymentProof, updateOrderStatus, updateOrderAdminNotes, StoredOrder, getOrderById } from "@/lib/orders-store";
@@ -21,7 +22,6 @@ export interface CreateOrderInput {
   postcode: string;
   state: string;
   paymentMethodId: string;
-  paymentMethodLabel: string;
   idempotencyKey?: string;
   items: Array<{
     jerseyId: string;
@@ -106,8 +106,9 @@ export async function createOrderAction(input: CreateOrderInput) {
         };
       }
       const verifiedName = dbJersey.name;
-      const hasNameset = Boolean(item.namesetName && item.namesetName.trim());
-      const hasPatch = Boolean(item.patch && item.patch.trim());
+      const customizable = !isJacket(dbJersey);
+      const hasNameset = customizable && Boolean(item.namesetName && item.namesetName.trim());
+      const hasPatch = customizable && Boolean(item.patch && item.patch.trim());
 
       verifiedItems.push({
         id: crypto.randomUUID(),
@@ -116,10 +117,10 @@ export async function createOrderAction(input: CreateOrderInput) {
         size: item.size,
         quantity: item.quantity,
         unitPrice: verifiedPrice.toFixed(2),
-        namesetName: item.namesetName?.trim() || null,
-        namesetNumber: item.namesetNumber?.trim() || null,
+        namesetName: customizable ? item.namesetName?.trim() || null : null,
+        namesetNumber: customizable ? item.namesetNumber?.trim() || null : null,
         namesetPrice: hasNameset ? shipSettings.namesetFee.toFixed(2) : "0.00",
-        patch: item.patch?.trim() || null,
+        patch: customizable ? item.patch?.trim() || null : null,
         patchPrice: hasPatch ? shipSettings.patchFee.toFixed(2) : "0.00",
       });
 
@@ -169,7 +170,7 @@ export async function createOrderAction(input: CreateOrderInput) {
       subtotal: promoResult.rawSubtotal.toFixed(2),
       totalAmount: promoResult.grandTotal.toFixed(2),
       paymentMethodId: input.paymentMethodId,
-      paymentMethodLabel: (input.paymentMethodLabel || "QRIS / Transfer").slice(0, 100),
+      paymentMethodLabel: method.label,
       paymentSnapshot,
       paymentProofUrl: null,
       paymentStatus: "PENDING",
@@ -232,8 +233,9 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
       (match[2] === "webp" && signature.startsWith("52494646") && buffer.subarray(8, 12).toString() === "WEBP");
     if (!validSignature) return { success: false, error: "Receipt file content is invalid." };
 
-    // Upload to S3
-    const proofUrl = await uploadToS3(buffer, `receipt-${order.orderNumber}.jpg`, mimeType);
+    // Upload to S3 dengan ekstensi yang sesuai konten terverifikasi (#39)
+    const ext = match[2] === "png" ? "png" : match[2] === "webp" ? "webp" : "jpg";
+    const proofUrl = await uploadToS3(buffer, `receipt-${order.orderNumber}.${ext}`, mimeType);
 
     // Update order status to PROCESSING (throws kalau status order sudah bukan PENDING_PAYMENT)
     try {

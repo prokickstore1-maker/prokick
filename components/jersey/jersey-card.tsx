@@ -7,6 +7,7 @@ import { useState } from "react";
 import { formatIDR } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart";
 import { NormalizedJersey } from "@/lib/data";
+import { isJacket } from "@/lib/product-lines";
 
 interface JerseyCardProps {
   jersey: NormalizedJersey;
@@ -77,7 +78,11 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
 
           {/* Top-Left Authentic Tag */}
           <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
-            {isRetro ? (
+            {isJacket(jersey) ? (
+              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
+                {jersey.kitType}
+              </span>
+            ) : isRetro ? (
               <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
                 Retro{retroYear ? ` '${retroYear}` : ""}
               </span>

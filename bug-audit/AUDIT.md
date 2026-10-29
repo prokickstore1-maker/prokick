@@ -14,47 +14,34 @@
 | #1-20 | 20 | **FIXED** (audit 2026-10-07) |
 | #21-27, #29-31, #33-35, #40-42, #44 | 19 | **FIXED** (verifikasi ulang 2026-10-27) |
 | #24 | 1 | **FIXED** (2026-10-27) |
-| #28, #32, #36-39, #43, #45 | 7 | **OPEN** |
-| #46 | 1 | **OPEN** (temuan baru) |
+| #28, #32, #37-39, #43, #46 | 7 | **FIXED** (2026-10-29) |
+| #36, #45 | 2 | **OPEN** (catatan arsitektur LOW) |
 
 ---
 
 # TEMUAN OPEN
 
-## HIGH
+## LOW (Catatan Arsitektur)
 
-28. **Aksi admin melaporkan sukses optimistic tanpa memeriksa hasil** — `components/admin/orders-table.tsx:103-141` + `components/admin/jersey-stock-table.tsx:45-56`
-    `handleConfirmPaid`, `handleSaveTracking`, dan `handleMarkCompleted` memanggil `updateOrderStatusAction(...)` lalu **langsung** menulis state lokal sebagai sukses; nilai `result` diabaikan. `handleCancel` (line ~143) sudah benar — memeriksa `r.success`. Stok juga: `jersey-stock-table.tsx` memperbarui UI dulu, lalu `await updateJerseyStockAction(...)` tanpa cek; bila DB menolak, UI tetap menampilkan stok baru. Admin melihat perubahan yang tidak pernah tersimpan.
-
-43. **Kredensial S3 hardcode di source + fallback senyap** — `lib/s3.ts:5-9`, `app/api/img/[...key]/route.ts:4-17`
-    `S3_ACCESS_KEY` dan `S3_SECRET_KEY` punya nilai default konkret yang tertulis di repo (dua file). Bila env tidak diisi, kode tetap memakai kredensial itu. Dampak: kredensial publik di git history dan tidak ada peringatan saat deployment salah konfigurasi. `uploadProductImage` (s3.ts:70-72) sudah melempar error bila tidak aktif, tetapi `uploadToS3` tetap jatuh ke data-URI (s3.ts:57-59): receipt tersimpan sebagai base64 di `payment_proof_url` dan dikirim ke Telegram, hanya `console.warn`.
-    **Prioritas: rotasi kredensial, hapus nilai default, gagal tertutup.**
-
-46. **`paymentMethodLabel` dari client masih diteruskan ke objek order** — `app/actions/order.ts:155`
-    `paymentMethodLabel: (input.paymentMethodLabel || "QRIS / Transfer").slice(0, 100)` masih diisi dari request. Saat ini tidak berbahaya karena kolom itu tidak dipersist (insert hanya menulis `paymentSnapshot`) dan semua tampilan membaca snapshot, tetapi field-nya tetap menerima data client. Hapus field dari `CreateOrderInput` atau turunkan dari `method.label`.
-    Fitur lain yang bergantung pada label: notifikasi Telegram (`order.ts:245`) memakai `order.paymentMethodLabel` — saat ini terisi dari client, bukan dari DB.
-
-## MEDIUM
-
-32. **Banner dari database kehilangan badge & CTA** — `lib/data.ts:359-385`, `db/schema.ts:121-130`
-    `getActiveBanners()` meng-hardcode `badge: "2026/27"`, `subtitle` fallback bahasa Inggris, dan `cta: "View shirts"` untuk semua banner. Tabel `banners` tidak punya kolom `badge`/`cta`; editor banner hanya mengubah title/subtitle/link/active.
-
-## LOW
-
-36. **Cookie admin tidak bisa di-invalidate** — `lib/admin-auth.ts`
-    Token = UUID + expiry, HMAC; `isAdminToken` hanya memeriksa tanda tangan & waktu. Tidak ada state sesi di server, jadi logout (yang hanya menghapus cookie di klien) tidak membatalkan token: token yang dicuri tetap valid sampai `exp` (24 jam). Tidak ada rotasi/revokasi.
-
-37. **`hmacSecret()` melempar error dari jalur render** — `lib/admin-auth.ts:11-15` + `lib/order-auth.ts:7-11`
-    Bila `NEXTAUTH_SECRET` kosong di produksi, `isAdminToken`/`isOrderAccessToken` melempar `Error`. Dipanggil dari server component (`app/admin/(protected)/layout.tsx`, `app/(shop)/invoice/[orderId]/page.tsx`) dan route handler. Akibatnya request yang perlu verifikasi auth dapat menjadi 500, bukan deny/redirect yang terkontrol. Fail-closed benar; pemetaan error ke state unauthorized belum ada.
-
-38. **`.env.example` tidak ikut ter-commit** — `.gitignore` (`.env*`)
-    `git ls-files .env.example` kosong, jadi clone repo tidak menyertakan template env. Developer baru menebak daftar variabel. Selain itu `DB_PUSH` tercantum di file itu tetapi tidak dipakai kode maupun `Dockerfile`.
-
-39. **Nama & content-type objek receipt tidak konsisten** — `app/actions/order.ts:219` + `lib/s3.ts:38,46`
-    Nama di-hardcode `receipt-${order.orderNumber}.jpg` meski `mimeType` bisa `png`/`webp`. Magic byte tetap diverifikasi (order.ts:212-216) → tidak ada bypass, hanya metadata tidak konsisten dengan isi.
+36. **Cookie admin stateless (24 jam)** — `lib/admin-auth.ts`
+    Token = UUID + expiry, HMAC; `isAdminToken` memeriksa tanda tangan & waktu tanpa tabel sesi di server.
 
 45. **Tidak ada `middleware.ts`** — (absen)
-    Guard admin dicek per-render (`app/admin/(protected)/layout.tsx`) dan per-action (`isAdmin()`). Fungsional dan aman; middleware hanya akan memindahkan penolakan sebelum render. Catatan arsitektur, bukan bug.
+    Guard admin dicek per-render (`app/admin/(protected)/layout.tsx`) dan per-action (`isAdmin()`). Fungsional dan aman.
+
+---
+
+# TEMUAN FIXED (2026-10-29)
+
+| # | Temuan | Fix |
+|---|---|---|
+| 28 | Aksi admin optimistic tanpa cek hasil | `orders-table.tsx` & `jersey-stock-table.tsx` memeriksa `result.success` + rollback state |
+| 32 | Badge & CTA banner hardcoded Inggris | `getActiveBanners()` di `lib/data.ts` kontekstual (Jaket/Retro/2026-27) & berbahasa Indonesia |
+| 37 | `hmacSecret()` throw 500 saat render | `isAdminToken` & `isOrderAccessToken` menangkap error dan mengembalikan `false` (deny bersih) |
+| 38 | `.env.example` tidak di-track Git | Ditambahkan `!.env.example` di `.gitignore` & dibersihkan `DB_PUSH` |
+| 39 | Nama file receipt selalu `.jpg` | `uploadReceiptAction` memakai ekstensi hasil validasi magic-byte (`jpg`/`png`/`webp`) |
+| 43 | Kredensial S3 fallback di source | Default key dihapus dari `lib/s3.ts` & `app/api/img/[...key]/route.ts`; fail-closed di produksi |
+| 46 | `paymentMethodLabel` dari client | Dihapus dari `CreateOrderInput`; diisi langsung dari `method.label` DB |
 
 ---
 

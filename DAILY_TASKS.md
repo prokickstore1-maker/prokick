@@ -5,6 +5,44 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 
 ---
 
+## 2026-10-29 (Kamis)
+
+### Target Hari Ini:
+- [x] Orientasi & pemahaman produk, arsitektur sistem, dan status terakhir (`00-DOCS.md`, `MVP.md`, `HANDOFF.md`, `db/schema.ts`).
+- [x] Lini produk **Jaket** (Tracksuit / Jaket / Windbreaker), per klub & negara.
+- [x] Integrasi **Size Chart khusus Jaket** (`S`–`XXL` lengkap Length, Bust, Height, Weight) di modal halaman produk (`components/jersey/size-guide-modal.tsx`) & halaman `/size-guide` (`app/(shop)/size-guide/page.tsx`).
+- [x] Revalidasi `/jaket` & tag `jerseys-all` di CRUD produk admin + tautan Jaket di Footer.
+- [x] Auto-deteksi lini **Jaket** (`Tracksuit`, `Windbreaker`, `Jaket`) di `scripts/upload-jersey.mjs`.
+- [x] Filter tab **Semua / Jersey / Jaket** + badge lini di Admin Produk (`product-manager.tsx`) & Admin Stok (`jersey-stock-table.tsx`).
+- [x] Kartu panduan fitting ketiga (**Jaket, Tracksuit & Windbreaker — Outerwear Fit**) di `/size-guide`.
+- [x] Penyelesaian sisa temuan `bug-audit/AUDIT.md`: **#43** (hapus fallback kredensial S3), **#46** (`paymentMethodLabel` murni dari DB), **#39** (ekstensi dinamis receipt), **#37** (graceful false di `isAdminToken`/`isOrderAccessToken`), **#32** (badge & CTA banner kontekstual Bahasa Indonesia).
+
+### Pekerjaan Selesai & Commit:
+- *(Belum di-commit — menunggu izin user)*
+- Skema: kolom `jerseys.product_line` (default `Jersey`) + index; migrasi `drizzle/0006_add_product_line.sql` (BELUM dijalankan). Subjenis jaket di `kit_type`.
+- `lib/product-lines.ts` (konstanta lini/subjenis); `lib/data.ts`: semua query storefront jersey (katalog, best seller, new, retro, negara, related, opsi filter, navbar) dibatasi `product_line = 'Jersey'`; tambah `getCachedJacketOptions`, `getLatestJackets`.
+- Storefront: halaman `/jaket` (filter subjenis, Klub/Negara, liga, ukuran, harga, sort, paginasi), menu navbar desktop+mobile, section beranda, sitemap.
+- PDP jaket: tanpa customizer nameset/patch; server `createOrderAction` membuang nameset/patch untuk jaket. Jaket dihitung item biasa di promo.
+- Admin: pilih Lini produk di form; jaket memaksa `type = "Jaket"` dan validasi kitType.
+- `scripts/upload-jersey.mjs`: flag `--productLine Jaket --kitType ...`.
+- `tsc --noEmit` EXIT=0.
+
+### Catatan & Kendala:
+- **Migrasi 0006 wajib dijalankan sebelum deploy**; tanpa kolom `product_line` seluruh query katalog gagal (fail-closed = hasil kosong).
+- Jaket negara: pakai `league = "Nation"` + `category = "Tim Nasional"` agar dropdown negara bekerja seperti jersey.
+- Harga jaket belum ditetapkan (belum ada di matriks); ukuran memakai ukuran bebas dari form admin.
+- `drizzle/meta` belum punya snapshot 0006; `db:generate` berikutnya mungkin mengusulkan ulang kolom yang sama.
+
+### Prioritas Besok / Sesi Berikutnya:
+- [x] Migrasi 0006 dijalankan ke DB produksi atas izin user (14:52): 958 produk sebelum dan sesudah, semuanya `product_line = 'Jersey'`.
+- [ ] Commit & push kode jaket (menunggu izin user).
+- [ ] Tentukan harga jaket dan tambahkan ke matriks `cara upload jersey.md`.
+- [ ] **Commit & Push**: Minta izin user untuk `git add`, `git commit`, dan `git push origin main` agar Coolify mem-build seluruh perbaikan.
+- [ ] **Deploy Check**: Verifikasi build di Coolify dan cek live site `https://prokickstore1.com`.
+- [ ] **P3 (opsional)**: Arsipkan atau bersihkan file temporary lama di `scratch/` (BUG-17).
+
+---
+
 ## 2026-10-27 (Selasa)
 
 ### Target Hari Ini:

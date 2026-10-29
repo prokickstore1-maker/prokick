@@ -21,10 +21,14 @@ export function createOrderAccessToken(orderId: string) {
 
 export function isOrderAccessToken(token: string | undefined, orderId: string) {
   if (!token) return false;
-  const [tokenOrderId, supplied] = token.split(".");
-  const expected = sign(orderId);
-  return tokenOrderId === orderId && Boolean(supplied) && supplied.length === expected.length &&
-    crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+  try {
+    const [tokenOrderId, supplied] = token.split(".");
+    const expected = sign(orderId);
+    return tokenOrderId === orderId && Boolean(supplied) && supplied.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+  } catch {
+    return false;
+  }
 }
 
 // Cookie holds "id.sig" pairs (newline-separated) so a second order never

@@ -5,8 +5,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const endpoint = process.env.S3_ENDPOINT || "https://is3.cloudhost.id";
 const region = process.env.S3_REGION || "id-jkt-1";
 const bucket = process.env.S3_BUCKET || "prokick";
-const accessKeyId = process.env.S3_ACCESS_KEY || "1AGI99A7GVOO0GXP9DSS";
-const secretAccessKey = process.env.S3_SECRET_KEY || "9zuKVG1gs87AEPJTVSc67yQC6QJawR0Z2a7vahFn";
+const accessKeyId = process.env.S3_ACCESS_KEY || "";
+const secretAccessKey = process.env.S3_SECRET_KEY || "";
 
 const isS3Configured = Boolean(endpoint && accessKeyId && secretAccessKey);
 

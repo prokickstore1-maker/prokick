@@ -3,6 +3,7 @@ import { jerseys, jerseyImages, banners, paymentMethods, settings, testimonials 
 import { unstable_cache } from "next/cache";
 import { eq, desc, asc, inArray, and, or, ne, ilike, gte, lte, sql, count, type SQL } from "drizzle-orm";
 import { buildLeagueOptions, type LeagueOption } from "@/lib/leagues";
+import { PRODUCT_LINE_JERSEY, PRODUCT_LINE_JACKET } from "@/lib/product-lines";
 
 export interface BannerView {
   id: string;
@@ -16,6 +17,7 @@ export interface BannerView {
 
 export interface NormalizedJersey {
   id: string;
+  productLine: string;
   name: string;
   team: string;
   league: string;
@@ -65,6 +67,7 @@ function normalizeJerseyRow(r: JerseyRow, gallery?: { url: string }[]): Normaliz
   const images = gallery?.length ? gallery : undefined;
   return {
     ...r,
+    productLine: r.productLine || PRODUCT_LINE_JERSEY,
     image: images?.[0]?.url || r.image,
     images,
     sizes: typeof r.sizes === "string" ? JSON.parse(r.sizes) : (r.sizes || []),
@@ -79,10 +82,14 @@ function normalizeJerseyRow(r: JerseyRow, gallery?: { url: string }[]): Normaliz
 
 // Listing admin & opsi filter — tanpa galeri 7k foto (kartu cukup image depan)
 // Tanpa checkDbConnection pre-check: query asli sudah try/catch → gagal = []
-export async function getAllJerseys(filterLeague?: string): Promise<NormalizedJersey[]> {
+// productLine kosong = semua lini (admin); diisi = hanya lini itu (navbar/filter storefront)
+export async function getAllJerseys(filterLeague?: string, productLine?: string): Promise<NormalizedJersey[]> {
   try {
     const rows = await db.query.jerseys.findMany({
-      where: filterLeague ? eq(jerseys.league, filterLeague) : undefined,
+      where: and(
+        filterLeague ? eq(jerseys.league, filterLeague) : undefined,
+        productLine ? eq(jerseys.productLine, productLine) : undefined
+      ),
       orderBy: [desc(jerseys.createdAt)],
     });
     return rows.map((r) => normalizeJerseyRow(r));
@@ -117,6 +124,7 @@ export async function getJerseyById(id: string): Promise<NormalizedJersey | null
 // ---------------------------------------------------------------------------
 
 export interface CatalogFilter {
+  productLine?: string; // default "Jersey" — jaket hanya muncul bila diminta eksplisit
   league?: string;
   team?: string;
   category?: string;
@@ -134,7 +142,7 @@ export interface CatalogFilter {
 export type CatalogSort = "featured" | "price-asc" | "price-desc";
 
 function buildCatalogWhere(f: CatalogFilter): SQL | undefined {
-  const conds: (SQL | undefined)[] = [];
+  const conds: (SQL | undefined)[] = [eq(jerseys.productLine, f.productLine || PRODUCT_LINE_JERSEY)];
   if (f.league) conds.push(ilike(jerseys.league, f.league));
   if (f.team) conds.push(ilike(jerseys.team, f.team));
   if (f.category) conds.push(ilike(jerseys.category, f.category));
@@ -201,7 +209,7 @@ export async function getJerseysPaginated(
 export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
   try {
     const rows = await db.query.jerseys.findMany({
-      where: eq(jerseys.isBestSeller, true),
+      where: and(eq(jerseys.isBestSeller, true), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
       orderBy: [desc(jerseys.createdAt)],
       limit,
     });
@@ -209,7 +217,7 @@ export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
     if (rows.length < limit) {
       const existingIds = new Set(rows.map((r) => r.id));
       const fallbacks = await db.query.jerseys.findMany({
-        where: and(ne(jerseys.type, "Retro")),
+        where: and(ne(jerseys.type, "Retro"), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
         orderBy: [desc(jerseys.isFeatured), desc(jerseys.isNew), desc(jerseys.createdAt)],
         limit: limit * 2,
       });
@@ -232,7 +240,7 @@ export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
 export async function getNewArrivals(limit = 8): Promise<NormalizedJersey[]> {
   try {
     const rows = await db.query.jerseys.findMany({
-      where: eq(jerseys.isNew, true),
+      where: and(eq(jerseys.isNew, true), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
       orderBy: [desc(jerseys.createdAt)],
       limit,
     });
@@ -247,10 +255,13 @@ export async function getNewArrivals(limit = 8): Promise<NormalizedJersey[]> {
 export async function getRetroJerseys(limit = 8): Promise<NormalizedJersey[]> {
   try {
     const rows = await db.query.jerseys.findMany({
-      where: or(
-        eq(jerseys.edition, "Vintage"),
-        ilike(jerseys.type, "%Retro%"),
-        ilike(jerseys.league, "%Retro%")
+      where: and(
+        eq(jerseys.productLine, PRODUCT_LINE_JERSEY),
+        or(
+          eq(jerseys.edition, "Vintage"),
+          ilike(jerseys.type, "%Retro%"),
+          ilike(jerseys.league, "%Retro%")
+        )
       ),
       orderBy: [desc(jerseys.createdAt)],
       limit,
@@ -268,7 +279,7 @@ export async function getNationalCountries(): Promise<string[]> {
     const rows = await db
       .selectDistinct({ country: jerseys.country })
       .from(jerseys)
-      .where(eq(jerseys.category, "Tim Nasional"))
+      .where(and(eq(jerseys.category, "Tim Nasional"), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)))
       .orderBy(jerseys.country);
     return rows.map((r) => r.country).filter(Boolean);
   } catch (e) {
@@ -278,11 +289,12 @@ export async function getNationalCountries(): Promise<string[]> {
 }
 
 // Halaman detail: related = liga sama ATAU best seller, limit 4
-export async function getRelatedKits(league: string, excludeId: string, limit = 4): Promise<NormalizedJersey[]> {
+export async function getRelatedKits(league: string, excludeId: string, limit = 4, productLine: string = PRODUCT_LINE_JERSEY): Promise<NormalizedJersey[]> {
   try {
     const rows = await db.query.jerseys.findMany({
       where: and(
         ne(jerseys.id, excludeId),
+        eq(jerseys.productLine, productLine),
         or(eq(jerseys.league, league), eq(jerseys.isBestSeller, true))
       ),
       orderBy: [desc(jerseys.isBestSeller), desc(jerseys.createdAt)],
@@ -296,7 +308,7 @@ export async function getRelatedKits(league: string, excludeId: string, limit = 
 }
 
 // Opsi dropdown filter katalog (distinct) — tanpa load seluruh tabel
-export async function getCatalogFilterOptions(): Promise<{
+export async function getCatalogFilterOptions(productLine: string = PRODUCT_LINE_JERSEY): Promise<{
   categories: string[];
   types: string[];
   editions: string[];
@@ -305,13 +317,14 @@ export async function getCatalogFilterOptions(): Promise<{
 }> {
   const empty = { categories: [], types: [], editions: [], seasons: [], sizes: [] };
   try {
+    const line = eq(jerseys.productLine, productLine);
     const [cats, types, editions, seasons, sizeRows] = await Promise.all([
-      db.selectDistinct({ v: jerseys.category }).from(jerseys).orderBy(jerseys.category),
-      db.selectDistinct({ v: jerseys.type }).from(jerseys).orderBy(jerseys.type),
-      db.selectDistinct({ v: jerseys.edition }).from(jerseys).orderBy(jerseys.edition),
-      db.selectDistinct({ v: jerseys.season }).from(jerseys).orderBy(desc(jerseys.season)),
+      db.selectDistinct({ v: jerseys.category }).from(jerseys).where(line).orderBy(jerseys.category),
+      db.selectDistinct({ v: jerseys.type }).from(jerseys).where(line).orderBy(jerseys.type),
+      db.selectDistinct({ v: jerseys.edition }).from(jerseys).where(line).orderBy(jerseys.edition),
+      db.selectDistinct({ v: jerseys.season }).from(jerseys).where(line).orderBy(desc(jerseys.season)),
       // sizes = JSON array; unnest ke elemen lalu distinct
-      client`SELECT DISTINCT sz FROM jerseys, json_array_elements_text(sizes::json) AS sz ORDER BY 1` as Promise<{ sz: string }[]>,
+      client`SELECT DISTINCT sz FROM jerseys, json_array_elements_text(sizes::json) AS sz WHERE product_line = ${productLine} ORDER BY 1` as Promise<{ sz: string }[]>,
     ]);
     return {
       categories: cats.map((r) => r.v).filter(Boolean),
@@ -329,12 +342,37 @@ export async function getCatalogFilterOptions(): Promise<{
 // Opsi liga/klub untuk navbar & footer — cached 60 detik, di-invalidate admin via revalidateTag("jerseys-all")
 export const getCachedLeagueOptions: () => Promise<LeagueOption[]> = unstable_cache(
   async () => {
-    const rows = await getAllJerseys();
+    const rows = await getAllJerseys(undefined, PRODUCT_LINE_JERSEY);
     return buildLeagueOptions(rows);
   },
   ["league-options"],
   { tags: ["jerseys-all"], revalidate: 60 }
 );
+
+// Opsi liga/klub/negara khusus jaket (navbar & filter /jaket)
+export const getCachedJacketOptions: () => Promise<LeagueOption[]> = unstable_cache(
+  async () => {
+    const rows = await getAllJerseys(undefined, PRODUCT_LINE_JACKET);
+    return buildLeagueOptions(rows, "/jaket");
+  },
+  ["jacket-options"],
+  { tags: ["jerseys-all"], revalidate: 60 }
+);
+
+// Homepage: jaket unggulan/terbaru tanpa tarik seluruh tabel
+export async function getLatestJackets(limit = 8): Promise<NormalizedJersey[]> {
+  try {
+    const rows = await db.query.jerseys.findMany({
+      where: eq(jerseys.productLine, PRODUCT_LINE_JACKET),
+      orderBy: [desc(jerseys.isFeatured), desc(jerseys.createdAt)],
+      limit,
+    });
+    return rows.map((r) => normalizeJerseyRow(r));
+  } catch (e) {
+    console.warn("DB latest jackets failed:", e);
+    return [];
+  }
+}
 
 // Banner aktif — cached 60 detik; admin invalidasi via revalidateTag("banners", "max")
 export const getActiveBanners = unstable_cache(
@@ -344,15 +382,20 @@ export const getActiveBanners = unstable_cache(
         where: eq(banners.active, true),
         orderBy: [banners.displayOrder],
       });
-      return rows.map((r) => ({
-        id: r.id,
-        image: r.image,
-        badge: "2026/27",
-        title: r.title || "MATCHDAY SHIRTS",
-        subtitle: r.subtitle || "2026/27 football shirts for supporters.",
-        link: r.link || "/jersey",
-        cta: "View shirts",
-      }));
+      return rows.map((r) => {
+        const link = r.link || "/jersey";
+        const isJacketBanner = link.startsWith("/jaket") || /jaket|tracksuit|windbreaker/i.test(r.title || "");
+        const isRetroBanner = /vintage|retro/i.test(link) || /retro|vintage|klasik/i.test(r.title || "");
+        return {
+          id: r.id,
+          image: r.image,
+          badge: isJacketBanner ? "Jaket & Tracksuit" : isRetroBanner ? "Retro Classic" : "2026/27",
+          title: r.title || "KOLEKSI MUSIM INI",
+          subtitle: r.subtitle || "Koleksi pilihan untuk suporter sepak bola Indonesia.",
+          link,
+          cta: isJacketBanner ? "Lihat Jaket" : "Lihat Koleksi",
+        };
+      });
     } catch (e) {
       console.warn("DB query banners failed:", e);
       return [];

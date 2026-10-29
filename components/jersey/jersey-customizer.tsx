@@ -8,6 +8,7 @@ import { useCartStore } from "@/stores/cart";
 import { NormalizedJersey } from "@/lib/data";
 import { SizeGuideModal } from "@/components/jersey/size-guide-modal";
 import { getAvailablePatches } from "@/lib/patches";
+import { isJacket } from "@/lib/product-lines";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ export function JerseyCustomizer({
   freeShippingMinItems = 2,
 }: JerseyCustomizerProps) {
   const addItem = useCartStore((state) => state.addItem);
+  const jacket = isJacket(jersey);
 
   // Size Selection — default ke ukuran pertama yang berstok (konsisten jersey-card)
   const firstInStock = jersey.sizes.find((s) => {
@@ -60,9 +62,9 @@ export function JerseyCustomizer({
 
   const basePrice = parseFloat(jersey.price);
   // fee hanya saat nama diketik — sama dengan server (order.ts)
-  const hasNameset = enableNameset && namesetName.trim().length > 0;
+  const hasNameset = !jacket && enableNameset && namesetName.trim().length > 0;
   const namesetCost = hasNameset ? namesetFee : 0;
-  const patchCost = enablePatch ? patchFee : 0;
+  const patchCost = !jacket && enablePatch ? patchFee : 0;
   const unitTotal = basePrice + namesetCost + patchCost;
   const grandTotal = unitTotal * quantity;
 
@@ -83,8 +85,8 @@ export function JerseyCustomizer({
       namesetName: hasNameset ? namesetName.toUpperCase().trim() : undefined,
       namesetNumber: hasNameset ? namesetNumber.trim() : undefined,
       namesetPrice: hasNameset ? namesetFee : 0,
-      patch: enablePatch ? selectedPatch : undefined,
-      patchPrice: enablePatch ? patchFee : 0,
+      patch: !jacket && enablePatch ? selectedPatch : undefined,
+      patchPrice: !jacket && enablePatch ? patchFee : 0,
     });
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
@@ -202,7 +204,7 @@ export function JerseyCustomizer({
                   {stockForSelectedSize} In Stock ({selectedSize})
                 </span>
               )}
-              <SizeGuideModal />
+              <SizeGuideModal isJacket={jacket} />
             </div>
           </div>
 
@@ -235,7 +237,8 @@ export function JerseyCustomizer({
           </div>
         </div>
 
-        {/* 2. Interactive Customizer: Nameset & Patch */}
+        {/* 2. Interactive Customizer: Nameset & Patch (hanya jersey) */}
+        {!jacket && (
         <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-5 bg-[#121217] border-white/10 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 font-display">
@@ -327,6 +330,7 @@ export function JerseyCustomizer({
             )}
           </div>
         </div>
+        )}
 
         {/* 3. Action Buttons & Quantity */}
         <div className="space-y-3 pt-2">
@@ -379,7 +383,7 @@ export function JerseyCustomizer({
           <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400 pt-2">
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <Truck className="w-4 h-4 text-volt shrink-0" />
-              <span>Free Delivery on {freeShippingMinItems}+ Kits</span>
+              <span>Free Delivery on {freeShippingMinItems}+ {jacket ? "Items" : "Kits"}</span>
             </div>
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <QrCode className="w-4 h-4 text-zinc-300 shrink-0" />

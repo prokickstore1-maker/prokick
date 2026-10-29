@@ -18,9 +18,16 @@ import {
 export function ProductManager({ initialProducts }: { initialProducts: NormalizedJersey[] }) {
   const [products, setProducts] = useState(initialProducts);
   const [query, setQuery] = useState("");
+  const [lineFilter, setLineFilter] = useState<"ALL" | "Jersey" | "Jaket">("ALL");
   const [message, setMessage] = useState("");
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
-  const filtered = products.filter((p) => `${p.name} ${p.team} ${p.league}`.toLowerCase().includes(query.toLowerCase()));
+  const jerseyCount = products.filter((p) => (p.productLine || "Jersey") === "Jersey").length;
+  const jacketCount = products.filter((p) => p.productLine === "Jaket").length;
+  const filtered = products.filter((p) => {
+    const line = p.productLine || "Jersey";
+    if (lineFilter !== "ALL" && line !== lineFilter) return false;
+    return `${p.name} ${p.team} ${p.league} ${line} ${p.kitType}`.toLowerCase().includes(query.toLowerCase());
+  });
 
   async function remove(id: string) {
     if (!window.confirm("Hapus produk ini?")) return;
@@ -47,7 +54,29 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
       <Link href="/admin/products/new">+ Tambah produk baru</Link>
     </Button>
 
-    <Input aria-label="Cari produk" className="text-sm" placeholder="Cari produk…" value={query} onChange={(e) => setQuery(e.target.value)} />
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        {([
+          ["ALL", `Semua (${products.length})`],
+          ["Jersey", `Jersey (${jerseyCount})`],
+          ["Jaket", `Jaket (${jacketCount})`],
+        ] as const).map(([val, label]) => (
+          <button
+            key={val}
+            type="button"
+            onClick={() => setLineFilter(val)}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+              lineFilter === val
+                ? "bg-white text-black font-extrabold"
+                : "bg-[#181820] text-zinc-400 hover:text-white border border-[#27272A]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <Input aria-label="Cari produk" className="text-sm sm:max-w-xs" placeholder="Cari produk…" value={query} onChange={(e) => setQuery(e.target.value)} />
+    </div>
 
     {/* Mobile: kartu vertikal — nama tak terpotong, aksi tap-target ramah jempol */}
     <div className="space-y-2 sm:hidden">
@@ -62,7 +91,7 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
             )}
             <div className="min-w-0">
               <h3 className="font-bold text-sm text-white truncate">{p.name}</h3>
-              <p className="text-xs text-zinc-400 truncate">{p.league} · {p.type}</p>
+              <p className="text-xs text-zinc-400 truncate">{p.productLine === "Jaket" ? `Jaket · ${p.kitType}` : `Jersey · ${p.type}`} · {p.league}</p>
               <p className="font-mono font-black text-sm text-white mt-0.5">Rp {p.price} · <span className="text-zinc-400 font-bold">{p.stock} pcs</span></p>
             </div>
           </div>
@@ -80,6 +109,7 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
           <TableHeader className="bg-[#181820]">
             <TableRow className="hover:bg-transparent border-[#27272A] text-zinc-300">
               <TableHead>Produk</TableHead>
+              <TableHead>Lini / Jenis</TableHead>
               <TableHead>Liga</TableHead>
               <TableHead>Harga</TableHead>
               <TableHead>Stok</TableHead>
@@ -90,6 +120,15 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
             {filtered.map((p) => (
               <TableRow key={p.id} className="border-[#27272A] hover:bg-[#181820]">
                 <TableCell className="font-semibold text-white">{p.name}</TableCell>
+                <TableCell>
+                  <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold border ${
+                    p.productLine === "Jaket"
+                      ? "bg-volt/10 text-volt border-volt/30"
+                      : "bg-[#181820] text-zinc-300 border-[#27272A]"
+                  }`}>
+                    {p.productLine === "Jaket" ? `Jaket · ${p.kitType}` : `Jersey · ${p.type}`}
+                  </span>
+                </TableCell>
                 <TableCell>{p.league}</TableCell>
                 <TableCell>Rp {p.price}</TableCell>
                 <TableCell className={p.stock > 0 ? "" : "text-red-400"}>{p.stock} pcs</TableCell>
