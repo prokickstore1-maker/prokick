@@ -16,15 +16,21 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 - [x] Filter tab **Semua / Jersey / Jaket** + badge lini di Admin Produk (`product-manager.tsx`) & Admin Stok (`jersey-stock-table.tsx`).
 - [x] Kartu panduan fitting ketiga (**Jaket, Tracksuit & Windbreaker — Outerwear Fit**) di `/size-guide`.
 - [x] Penyelesaian sisa temuan `bug-audit/AUDIT.md`: **#43** (hapus fallback kredensial S3), **#46** (`paymentMethodLabel` murni dari DB), **#39** (ekstensi dinamis receipt), **#37** (graceful false di `isAdminToken`/`isOrderAccessToken`), **#32** (badge & CTA banner kontekstual Bahasa Indonesia).
+- [x] Import massal katalog jaket dari Play-Foot (`https://play-foot.fr/en/collections/vestes-jackets` halaman 1–12):
+  - [x] Scanner kurasi ketat: HANYA jaket dengan latar belakang kawat jaring besi studio (black wire mesh grid) sesuai standar foto user.
+  - [x] Penyaringan aset: banner panduan ukuran Play-Foot (`IMG_1779`) dibuang dari galeri produk.
+  - [x] Penetapan harga resmi jaket flat **Rp 200.000**.
+  - [x] 159 jaket (160 total jaket di DB) berhasil diunggah ke Object Storage S3 & PostgreSQL lengkap dengan 689 foto multi-sudut.
 
 ### Pekerjaan Selesai & Commit:
 - **Commit `c543b98`**: `feat(jaket): add jacket product line, size chart, admin filters, and resolve audit items`
+- **Commit `e517e58`**: `fix(pricing): update official jersey pricing matrix in docs, uploader, and production database`
+- **Skrip `scripts/import-playfoot-jackets.mjs`**: Pengimpor otomatis jaket berlatar kawat jaring besi Play-Foot ke S3 IDCloudHost dan PostgreSQL DB produksi.
 - Skema: kolom `jerseys.product_line` (default `Jersey`) + index; migrasi `drizzle/0006_add_product_line.sql` (sudah dijalankan di DB produksi). Subjenis jaket di `kit_type`.
 - `lib/product-lines.ts` (konstanta lini/subjenis); `lib/data.ts`: semua query storefront jersey (katalog, best seller, new, retro, negara, related, opsi filter, navbar) dibatasi `product_line = 'Jersey'`; tambah `getCachedJacketOptions`, `getLatestJackets`.
 - Storefront: halaman `/jaket` (filter subjenis, Klub/Negara, liga, ukuran, harga, sort, paginasi), menu navbar desktop+mobile, section beranda, sitemap.
 - PDP jaket: tanpa customizer nameset/patch; server `createOrderAction` membuang nameset/patch untuk jaket. Jaket dihitung item biasa di promo.
 - Admin: pilih Lini produk di form; jaket memaksa `type = "Jaket"` dan validasi kitType.
-- `scripts/upload-jersey.mjs`: flag `--productLine Jaket --kitType ...`.
 - `tsc --noEmit` EXIT=0.
 
 ### Catatan & Kendala:
