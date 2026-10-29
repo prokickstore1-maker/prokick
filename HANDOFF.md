@@ -8,7 +8,7 @@
   4. `node_modules/.bin/tsc --noEmit` **EXIT=0**.
 - **Status Type-Check**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Clean, 0 error).
 - **HTTP Server**: `http://localhost:3000/` HTTP 200, `/robots.txt` HTTP 200, `/sitemap.xml` HTTP 200 (965 URLs: 7 statis + 958 produk).
-- **Git State**: Local branch `main` mendahului `origin/main` (commit `1f06886`, `26886fb`, `7337388`).
+- **Git State**: Local branch `main` mendahului `origin/main` (commit terbaru `c543b98`: lini produk Jaket + size chart + audit fixes).
 - **Aturan Operasional Wajib**:
   1. `tsc --noEmit` wajib EXIT=0 sebelum mengklaim pekerjaan selesai.
   2. Wajib perbarui `DAILY_TASKS.md` dan `HANDOFF.md` di setiap akhir sesi kerja.
