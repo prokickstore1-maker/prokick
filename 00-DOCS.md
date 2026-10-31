@@ -9,6 +9,7 @@ Satu pintu masuk. Cari dokumen lain dari sini.
 | `README.md` | Stack, setup, env vars, alur utama (katalog → checkout → bayar → kirim), struktur, deploy | Baru clone / butuh peta alur |
 | `DESIGN.md` | Token visual aktual (warna, font, radius), motion, aturan konten | Kerja UI |
 | `HANDOFF.md` | Status kerja terakhir, perubahan perilaku, langkah berikut | Awal sesi kerja |
+| `task.md` | Checklist persiapan handoff, verifikasi alur, guardrail, dan rilis Coolify | Sebelum serah terima / deploy |
 | `DAILY_TASKS.md` | Catatan target harian, pekerjaan selesai, dan prioritas besok | Setiap awal & akhir sesi kerja harian |
 | `MVP.md` | Master blueprint & checklist arsitektur e-commerce fullstack reusable | Inisiasi proyek baru / acuan fitur |
 | `AGENTS.md` / `CLAUDE.md` | Instruksi agent (Next.js versi berbeda, antislop) | Otomatis termuat |
