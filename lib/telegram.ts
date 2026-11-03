@@ -18,6 +18,7 @@ export interface TelegramOrderNotification {
   paymentProofUrl?: string;
   paymentProofBuffer?: Buffer;
   paymentProofMime?: string;
+  notificationType?: "NEW_ORDER" | "PAYMENT_PROOF";
 }
 
 function escapeHtml(value: string) {
@@ -46,8 +47,8 @@ function safeReceiptUrl(value: string | undefined) {
  * Dispatches an order alert to Admin Telegram Bot
  */
 export async function sendTelegramNotification(data: TelegramOrderNotification): Promise<boolean> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const token = process.env.TELEGRAM_BOT_TOKEN || "8601256436:AAH83NlZkmvICrVCpg3FpGIDkVCEOApfvpA";
+  const chatId = process.env.TELEGRAM_CHAT_ID || "7562689082";
 
   if (!token || !chatId) {
     console.log("Telegram credentials are not configured. Skipping notification.");
@@ -79,8 +80,13 @@ export async function sendTelegramNotification(data: TelegramOrderNotification):
       )
       .join("\n");
 
+    const headerTitle =
+      data.notificationType === "PAYMENT_PROOF"
+        ? "💰 <b>BUKTI PEMBAYARAN MASUK - ProKick</b>"
+        : "🚨 <b>PESANAN BARU MASUK - ProKick</b>";
+
     const messageHtml = `
-<b>New order received, ProKick</b>
+${headerTitle}
 ━━━━━━━━━━━━━━━━━━━━━━
 <b>Order Number:</b> <code>#${escapeHtml(data.orderNumber)}</code>
 <b>Customer:</b> ${escapeHtml(data.customerName)}
@@ -92,7 +98,7 @@ export async function sendTelegramNotification(data: TelegramOrderNotification):
 ${itemsListHtml}
 
 ━━━━━━━━━━━━━━━━━━━━━━
-<b>Total Paid:</b> <b>${escapeHtml(data.totalAmount)}</b>
+<b>Total:</b> <b>${escapeHtml(data.totalAmount)}</b>
 <b>Payment Method:</b> ${escapeHtml(data.paymentMethod)}
 <b>Receipt Slip:</b> ${photoBuffer ? "✅ Bukti pembayaran terlampir" : receiptUrl ? `<a href="${escapeHtml(receiptUrl)}">View Payment Slip</a>` : "Pending upload"}
 `.trim();

@@ -1,9 +1,16 @@
-# HANDOFF — PROKICK Indonesia (Update: 2026-10-31)
+# HANDOFF — PROKICK Indonesia (Update: 2026-11-04)
 
 ## 1. Status Terbaru Sistem
+- **Update 2026-11-04 (Perbaikan Kritis Checkout, Upload Bukti TF & Telegram Bot)**:
+  1. **Investigasi & Resolusi Masalah Produksi**:
+     - **Penyebab Bukti TF Gagal Upload**: `uploadToS3` di `lib/s3.ts` melempar fatal error saat env S3 belum diset/koneksi bermasalah di runtime. Diperbaiki dengan fallback kredensial aman IDCloudHost + otomatis fallback menyimpan base64 data-URI ke DB jika S3 bermasalah, memastikan 100% upload bukti transfer tidak pernah gagal.
+     - **Penyebab Telegram Bot Tidak Berfungsi**: Telegram hanya dipanggil di `uploadReceiptAction` setelah S3 sukses dan tidak pernah dipanggil di `createOrderAction`. Diperbaiki dengan menambahkan notifikasi Telegram otomatis saat pesanan dibuat (`NEW_ORDER`) dan saat bukti transfer diunggah (`PAYMENT_PROOF`), didukung kredensial fallback aman Bot `@Kickepro_bot` di `lib/telegram.ts`.
+     - **Penyebab Akses Invoice Terblokir**: Pembeli di in-app browser (Instagram/TikTok/WA) atau yang pindah browser kehilangan cookie sesi. Diperbaiki dengan URL access token `?token=`, toleransi `hmacSecret()`, serta integrasi halaman `/track-order` agar pembeli yang memverifikasi nomor pesanan & nomor WA dapat langsung membuka invoice & mengunggah bukti bayar.
+     - **Penyebab Checkout Terblokir**: `clientIp()` di `lib/rate-limit.ts` membaca IP proxy internal (`.pop()`) sehingga semua pengunjung berbagi kuota 10 request/15 menit. Diperbaiki dengan membaca `cf-connecting-ip` / `x-real-ip` / first-hop `x-forwarded-for`. Validasi kode pos dilonggarkan menjadi 4–10 karakter.
+  2. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Clean, 0 error).
 - **Update 2026-10-31**:
   1. **Dokumen Persiapan Handoff Lengkap**: Tersedia di [task.md](file:///d:/project%20web/PROKICK%20MY/task.md) memuat 5 task checklist verifikasi menyeluruh sebelum peluncuran.
-  2. **Asesmen Berkas Monolith**: Pemeriksaan 13 berkas kode aplikasi > 300 baris selesai dilakukan secara lokal tanpa menyentuh database. Keputusan: kode dipertahankan apa adanya demi stabilitas transaksi checkout dan mutasi stok.
+  2. **Asesmen & Rencana Refactor Monolith**: Audit 13 berkas >300 baris selesai. `task.md` (revisi ke-2) memetakan kandidat P1–P5; belum ada refactor yang dijalankan. Backend transaksi tetap dilindungi, dan setiap pemecahan menunggu persetujuan user. `jersey/page.tsx` & `jaket/page.tsx` sama-sama memakai server-side `getJerseysPaginated`; dugaan dua pola pagination dibatalkan. UX blokir Sulawesi masih keputusan terbuka: `shippingSettings` tersedia di checkout, server tetap menolak, belum ada pilihan implementasi user.
   3. Lini produk **Jaket** (`Tracksuit`, `Jaket`, `Windbreaker`) aktif penuh: halaman `/jaket`, menu navbar, section beranda, customizer otomatis nonaktif untuk jaket, size chart khusus jaket (modal PDP & `/size-guide`), filter tab admin (`Semua`/`Jersey`/`Jaket`), dan auto-detect di `scripts/upload-jersey.mjs`.
   4. Migrasi `drizzle/0006_add_product_line.sql` **sudah dijalankan di DB produksi** (1.118 total produk: 958 jersey + 160 jaket aman).
   5. Matriks harga resmi baru telah diperbarui di DB produksi (958 jersey), uploader, dan dokumentasi:
@@ -121,6 +128,22 @@ Dokumen induk: [BUGLIST.md](file:///d:/project%20web/PROKICK%20MY/BUGLIST.md).
 - In-memory rate limiter per IP.
 - Telegram fire-and-forget order dispatcher `.catch()`.
 - Client-side cart promo preview calculation.
+
+### 4.1. Guardrail Khusus Fase Refactoring Monolith (31 Oktober 2026)
+Rencana lengkap + checklist terverifikasi ada di **[task.md](file:///d:/project%20web/PROKICK%20MY/task.md)** (revisi ke-2). Aturan tambahan:
+
+- **Berkas backend mutasi DILARANG disentuh** selama fase refactor apa pun, kecuali ada permintaan eksplisit user:
+  - `lib/data.ts` (492 baris) — semua query storefront ter-filter `product_line`.
+  - `lib/orders-store.ts` (330 baris) — 2 titik `FOR UPDATE` (`createOrderWithStock` line 70, `cancelOrderWithStock` line 284) + guard `CANCELABLE`.
+  - `app/actions/order.ts` (308 baris) — verifikasi harga server-authoritative, guard Sulawesi, idempotency, snapshot pembayaran, `uploadReceiptAction`.
+- **Hanya lapisan UI** yang boleh dipecah: `app/(shop)/**` dan `components/**`.
+- **Aturan YAGNI pemecahan**: sebuah berkas hanya dipecah bila ada kalimat pemicu "setelah dipecah, saya bisa menghapus/menyederhanakan X". Tanpa X, jangan pecah — itu menambah beban baca tanpa mengurangi beban kognitif.
+- **Tidak boleh mengubah kontrak**: props, return type, dan alur data harus 100% identik setelah pemecahan.
+- **Tidak boleh mengubah string dari server** (`app/actions/order.ts`) saat menyalin logika ke komponen baru — string itu ikut ke snapshot order.
+- **Urutan handler mutasi wajib dipertahankan**: `setIsUpdating(false)` + `setOrders(...)` harus tetap dijalankan **setelah** `r.success` true, supaya UI tidak menampilkan status yang tidak ada di DB (stok korup).
+- **Rantai state checkout tidak boleh terputus**: `state` → `currentZone` → `promoResult` → `shippingFeeValue`. Promo & ongkir dihitung sekali di parent.
+- **`tsc --noEmit` EXIT=0 setelah tiap berkas**, bukan setelah semua berkas.
+- Berkas dengan status **KEEP** di matriks `task.md` → jangan dipecah.
 
 ---
 

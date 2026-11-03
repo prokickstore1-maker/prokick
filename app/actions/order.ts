@@ -10,7 +10,7 @@ import { uploadToS3, getReceiptUrl } from "@/lib/s3";
 import { sendTelegramNotification } from "@/lib/telegram";
 import crypto from "node:crypto";
 import { isAdmin } from "@/lib/admin-auth";
-import { grantOrderAccess, canAccessOrder } from "@/lib/order-auth";
+import { grantOrderAccess, canAccessOrder, createOrderAccessToken } from "@/lib/order-auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { toIntlPhone } from "@/lib/utils";
 
@@ -60,8 +60,9 @@ export async function createOrderAction(input: CreateOrderInput) {
     if (!input.customerName || !input.customerPhone || !input.streetAddress || !input.city || !input.postcode || !input.state) {
       return { success: false, error: "Please complete all mandatory delivery fields." };
     }
-    if (!/^\d{5}$/.test(input.postcode.trim())) {
-      return { success: false, error: "Kode pos harus 5 digit angka." };
+    const cleanPostcode = input.postcode ? input.postcode.trim() : "";
+    if (cleanPostcode.length < 4 || cleanPostcode.length > 10) {
+      return { success: false, error: "Kode pos tidak valid (minimal 4 - 10 karakter)." };
     }
     if (input.streetAddress.trim().length > 200 || input.city.trim().length > 100) {
       return { success: false, error: "Alamat terlalu panjang. Ringkas alamat jalan (maks 200 karakter) dan kota (maks 100 karakter)." };
@@ -186,19 +187,53 @@ export async function createOrderAction(input: CreateOrderInput) {
     if (input.idempotencyKey) {
       const existing = await getOrderByIdempotencyKey(input.idempotencyKey);
       if (existing) {
-        await grantOrderAccess(existing.id);
-        return { success: true, orderId: existing.id, orderNumber: existing.orderNumber };
+        try {
+          await grantOrderAccess(existing.id);
+        } catch (e) {
+          console.warn("grantOrderAccess warning:", e);
+        }
+        return {
+          success: true,
+          orderId: existing.id,
+          orderNumber: existing.orderNumber,
+          token: createOrderAccessToken(existing.id),
+        };
       }
     }
 
     // 5. Reserve stock + insert order in ONE transaction (rolls back together on failure)
     await createOrderWithStock(newOrder);
-    await grantOrderAccess(newOrder.id);
+
+    try {
+      await grantOrderAccess(newOrder.id);
+    } catch (e) {
+      console.warn("grantOrderAccess warning:", e);
+    }
+
+    // Kirim notifikasi Telegram untuk pesanan baru masuk (background)
+    sendTelegramNotification({
+      orderNumber: newOrder.orderNumber,
+      customerName: newOrder.customerName,
+      customerPhone: newOrder.customerPhone,
+      customerAddress: newOrder.customerAddress,
+      shippingZone: newOrder.shippingZone,
+      items: newOrder.items.map((i) => ({
+        name: i.name,
+        size: i.size,
+        quantity: i.quantity,
+        nameset: i.namesetName ? `${i.namesetName} #${i.namesetNumber || "0"}` : undefined,
+        patch: i.patch || undefined,
+      })),
+      totalAmount: `Rp ${Number(newOrder.totalAmount).toLocaleString("id-ID")}`,
+      paymentMethod: `${method.label} (Menunggu Pembayaran)`,
+      notificationType: "NEW_ORDER",
+    }).catch((err) => console.error("Telegram new order notification failed:", err));
 
     return {
       success: true,
       orderId: newOrder.id,
       orderNumber: newOrder.orderNumber,
+      token: createOrderAccessToken(newOrder.id),
     };
   } catch (error) {
     console.error("Order creation failed:", error);
@@ -260,11 +295,12 @@ export async function uploadReceiptAction(orderId: string, base64Data: string, m
         nameset: i.namesetName ? `${i.namesetName} #${i.namesetNumber || "0"}` : undefined,
         patch: i.patch || undefined,
       })),
-      totalAmount: `Rp${order.totalAmount}`,
-      paymentMethod: order.paymentMethodLabel || "QRIS / Transfer",
+      totalAmount: `Rp ${Number(order.totalAmount).toLocaleString("id-ID")}`,
+      paymentMethod: `${order.paymentMethodLabel || "QRIS / Transfer"} (BUKTI DIUNGGAH)`,
       paymentProofBuffer: buffer,
       paymentProofMime: mimeType,
       paymentProofUrl: await getReceiptUrl(proofUrl),
+      notificationType: "PAYMENT_PROOF",
     }).catch((err) => console.error("Telegram background notification failed:", err));
 
     revalidatePath(`/invoice/${order.id}`);

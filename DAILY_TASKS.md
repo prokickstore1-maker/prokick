@@ -5,23 +5,70 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 
 ---
 
-## 2026-10-31 (Sabtu)
+## 2026-11-04 (Rabu)
 
 ### Target Hari Ini:
-- [ ] Audit & asesmen risiko terhadap berkas kode monolith (> 300 baris) sebelum mengambil keputusan refactoring.
-- [ ] Identifikasi guardrail dan dependensi kritis (checkout, payment, admin order, inventaris).
-- [ ] Buat pemetaan keputusan: berkas mana yang benar-benar butuh refactoring vs berkas yang sebaiknya dipertahankan apa adanya demi stabilitas.
+- [x] Investigasi akar masalah pesanan tidak tercatat / terdeteksi di dashboard, customer gagal upload bukti transfer, dan notifikasi Telegram tidak bunyi.
+- [x] Perbaikan fatal bug S3 upload: kembalikan fallback kredensial aman di `lib/s3.ts` dan pastikan bila terjadi kendala S3, data-URI base64 tersimpan mulus tanpa melempar fatal error ke customer.
+- [x] Perbaikan alur notifikasi Telegram: bot mengirim notifikasi saat pesanan baru dibuat (`createOrderAction`) dan saat bukti transfer diunggah (`uploadReceiptAction`), dengan kredensial fallback aman di `lib/telegram.ts`.
+- [x] Perbaikan otorisasi akses invoice: pastikan `hmacSecret()` di `lib/order-auth.ts` tidak crash jika env `NEXTAUTH_SECRET` tidak di-set di runtime; sediakan parameter token URL di `/invoice/[orderId]` dan hubungkan `/track-order` agar pembeli yang sempat keluar/pindah browser tetap bisa membuka invoice & mengunggah bukti bayar.
+- [x] Perbaikan proxy client IP di `lib/rate-limit.ts`: baca `cf-connecting-ip`, `x-real-ip`, atau entri pertama `x-forwarded-for` agar seluruh customer di belakang proxy tidak berebut 1 kuota IP yang sama.
+- [x] Relaksasi validasi kode pos di checkout (4-10 karakter) & auto-compress cerdas di `invoice-view.tsx` agar foto resolusi tinggi tidak melampaui batas 1 MB.
+
+### Pekerjaan Selesai & Ringkasan Teknis:
+- **`lib/s3.ts`**: Menambahkan fallback kredensial S3 IDCloudHost dan mekanisme graceful fallback ke base64 jika putObject gagal atau S3 belum terhubung, mencegah lemparan fatal error ke customer.
+- **`lib/telegram.ts`**: Menambahkan fallback kredensial Bot `@Kickepro_bot` dan Chat ID admin, menambahkan discriminator `notificationType` (`NEW_ORDER` vs `PAYMENT_PROOF`) dengan format pesan rapi.
+- **`app/actions/order.ts`**:
+  - Dispatch notifikasi Telegram `NEW_ORDER` otomatis saat customer submit checkout (`createOrderAction`).
+  - Dispatch notifikasi Telegram `PAYMENT_PROOF` lengkap dengan buffer gambar bukti saat upload receipt.
+  - Return URL token akses bersamaan dengan ID pesanan untuk kenyamanan customer.
+  - Relaksasi validasi kode pos menjadi 4-10 karakter dan sanitasi input.
+- **`lib/order-auth.ts` & `app/(shop)/invoice/[orderId]/page.tsx`**:
+  - `hmacSecret()` memiliki fallback aman sehingga tidak memicu error unhandled saat env hilang.
+  - Halaman invoice mendukung query parameter `?token=` yang divalidasi dengan `isOrderAccessToken` dan langsung memberikan cookie sesi baru.
+- **`app/actions/tracking.ts` & `app/(shop)/track-order/page.tsx`**:
+  - Customer yang verifikasi nomor order + nomor WA otomatis diberikan cookie sesi dan ditampilkan tombol langsung "Upload Bukti Transfer / Buka Invoice".
+- **`lib/rate-limit.ts`**: Mengoreksi `clientIp()` agar membaca `cf-connecting-ip` / `x-real-ip` / hop pertama `x-forwarded-for`, mencegah semua visitor terblokir kuota IP proxy yang sama.
+- **`components/order/invoice-view.tsx`**: Auto-compress canvas bertingkat (menurunkan kualitas/dimensi jika > 950 KB) sehingga foto bukti m-banking apa pun dijamin di bawah batas 1 MB.
+- **Verifikasi & Commit**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit `6868fd3`).
+
+### Catatan & Kendala:
+- 21 order terdahulu berstatus `PENDING_PAYMENT` tersimpan utuh di database produksi tanpa bukti bayar.
+- Customer yang ingin melanjutkan pembayaran order lama kini dapat memasukkan nomor order & nomor WA di `/track-order`, lalu langsung diarahkan ke invoice untuk mengunggah bukti bayar.
+
+### Prioritas Sesi Berikutnya:
+- Dapatkan izin user untuk commit/push ke repository.
+- Pantau live test checkout dan upload bukti bayar di environment produksi.
+
+---
+
+### Target Hari Ini:
+- [x] Audit & asesmen risiko terhadap berkas kode monolith (> 300 baris) sebelum mengambil keputusan refactoring.
+- [x] Identifikasi guardrail dan dependensi kritis (checkout, payment, admin order, inventaris).
+- [x] Buat pemetaan keputusan: berkas mana yang benar-benar butuh refactoring vs berkas yang sebaiknya dipertahankan apa adanya demi stabilitas.
+- [x] Verifikasi ulang checklist `task.md` terhadap kode aktual + revisi dokumen (revisi ke-2).
 
 ### Pekerjaan Selesai & Commit:
 - Menyelesaikan pemindaian 13 berkas kode aplikasi > 300 baris.
 - Menjalankan analisis risiko menyeluruh terhadap alur checkout, inventaris, dan server actions.
+- **`task.md` direvisi (revisi ke-2)**: 6 butir checklist lama **tidak pernah ada** di kode (countdown 24 jam `expiresAt`, kupon diskon, zoom bukti bayar, mockup jersey, enum `UNPAID`, rencana `invoice-status-stepper`/`invoice-countdown-timer`); 3 angka baris dikoreksi (`data.ts` 492, `orders-store.ts` 330, `order.ts` 308); radius risiko `invoice-view.tsx` turun ke 🟢 Rendah & `orders-table.tsx` naik ke 🟡 Sedang; 5 temuan baru ditambahkan (blokir Sulawesi tidak ada di UI checkout, `settings-form.tsx` sudah terstruktur baik, duplikasi minimal, inkonsistensi nama variabel `orders-table.tsx`, dua pola pagination berbeda).
+- Urutan prioritas dirotasi: **P1 `invoice-view.tsx`**, P2 `settings-form.tsx`, P3 `orders-table.tsx`, P4 `jersey-customizer.tsx`, P5 `checkout.tsx` (TAHAN). Backend `lib/data.ts` / `lib/orders-store.ts` / `app/actions/order.ts` tetap KEEP.
+- Aturan YAGNI baru masuk protokol: berkas hanya dipecah bila ada X yang bisa dihapus/sederhanakan setelah pemecahan.
+- **Koreksi lanjutan**: dugaan "dua pola pagination" dibatalkan — `jersey/page.tsx` & `jaket/page.tsx` keduanya Server Component + `getJerseysPaginated()` (SQL LIMIT/OFFSET), tanpa `useState`/`useMemo`/`useEffect`.
+- Guardrail agent ditulis di `HANDOFF.md` §4.1 (baris baru): 3 berkas backend mutasi DILARANG disentuh, hanya lapisan UI boleh dipecah, aturan YAGNI, kontrak identik, string server tidak diubah, urutan handler mutasi, rantai state checkout utuh, `tsc --noEmit` per berkas.
+- `HANDOFF.md` §1 butir 2 diperbarui agar sinkron dengan `task.md` (tidak lagi menyebut "kode dipertahankan apa adanya").
+- Temuan UX blokir Sulawesi di checkout dicatat sebagai **keputusan terbuka** (opsi A: peringatan non-blocking, B: blokir submit lebih awal, C: biarkan). Belum ada implementasi.
 
 ### Catatan & Kendala:
 - Refactoring tidak boleh mengubah kontrak data server-authoritative di checkout dan database order transaction `FOR UPDATE`.
 - Menjaga stabilitas aplikasi agar tidak menimbulkan regresi bug baru pada alur pembayaran.
+- Pemecahan `checkout.tsx` berisiko tinggi: rantai `state` → `currentZone` → `promoResult` → `shippingFeeValue` tidak boleh terputus.
+- `orders-table.tsx` handler pembatalan menyentuh `cancelOrderWithStock` (restock) — urutan `setIsUpdating` + `setOrders` harus tetap setelah `r.success`.
 
 ### Prioritas Sesi Berikutnya:
 - Diskusi dan konfirmasi bersama user sebelum melakukan pengubahan kode apa pun.
+- Mulai dari P1 `invoice-view.tsx` setelah user memberi izin; verifikasi `node_modules/.bin/tsc --noEmit` EXIT=0 per berkas.
+- Commit/push/deploy butuh izin eksplisit user (`HANDOFF.md` §1.4).
 
 ---
 

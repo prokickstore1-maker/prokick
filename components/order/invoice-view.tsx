@@ -106,7 +106,24 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
           }
 
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+          let quality = 0.82;
+          let compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+          let estimatedBytes = Math.ceil((compressedDataUrl.length - compressedDataUrl.indexOf(",") - 1) * 0.75);
+          
+          if (estimatedBytes > 950 * 1024) {
+            compressedDataUrl = canvas.toDataURL("image/jpeg", 0.65);
+            estimatedBytes = Math.ceil((compressedDataUrl.length - compressedDataUrl.indexOf(",") - 1) * 0.75);
+          }
+          if (estimatedBytes > 950 * 1024) {
+            const smallCanvas = document.createElement("canvas");
+            smallCanvas.width = Math.round(width * 0.75);
+            smallCanvas.height = Math.round(height * 0.75);
+            const smallCtx = smallCanvas.getContext("2d");
+            if (smallCtx) {
+              smallCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
+              compressedDataUrl = smallCanvas.toDataURL("image/jpeg", 0.6);
+            }
+          }
           resolve(compressedDataUrl);
         };
         img.onerror = () => reject(new Error("Failed to load image into canvas"));

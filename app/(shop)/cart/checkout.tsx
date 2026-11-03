@@ -165,7 +165,8 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
       idemKeyRef.current = null;
 
       // Redirect customer to invoice page
-      router.push(`/invoice/${result.orderId}`);
+      const token = (result as { token?: string }).token;
+      router.push(token ? `/invoice/${result.orderId}?token=${encodeURIComponent(token)}` : `/invoice/${result.orderId}`);
     } catch (err) {
       console.error(err);
       setErrorMessage("Network error occurred. Please try submitting again.");

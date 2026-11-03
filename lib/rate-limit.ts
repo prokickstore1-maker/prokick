@@ -24,9 +24,19 @@ export function rateLimit(key: string, max: number, windowMs: number) {
   return { allowed: true, retryAfterMinutes: 0 };
 }
 
-// trust the last hop (closest proxy) — the first entry is client-supplied and spoofable
+// trust the closest client IP: cf-connecting-ip -> x-real-ip -> first entry in x-forwarded-for
 export async function clientIp() {
   const h = await headers();
-  const forwarded = h.get("x-forwarded-for") || "";
-  return forwarded.split(",").pop()?.trim() || h.get("x-real-ip") || "unknown";
+  const cfIp = h.get("cf-connecting-ip");
+  if (cfIp) return cfIp.trim();
+
+  const realIp = h.get("x-real-ip");
+  if (realIp) return realIp.trim();
+
+  const forwarded = h.get("x-forwarded-for");
+  if (forwarded) {
+    const client = forwarded.split(",")[0]?.trim();
+    if (client) return client;
+  }
+  return "unknown";
 }

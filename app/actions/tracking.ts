@@ -2,6 +2,7 @@
 
 import { getOrderById } from "@/lib/orders-store";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { grantOrderAccess, createOrderAccessToken } from "@/lib/order-auth";
 
 // "+6281234567890" and "081234567890" are the same number; the UI placeholder offers both
 function samePhone(a: string, b: string) {
@@ -17,6 +18,23 @@ export async function trackOrderAction(orderNumber: string, phone: string) {
   const limit = rateLimit(`track:${await clientIp()}`, 10, 15 * 60 * 1000);
   if (!limit.allowed) return { success: false, error: `Too many attempts. Try again in ${limit.retryAfterMinutes} min.` };
   const order = await getOrderById(orderNumber.trim());
-  if (!order || !samePhone(order.customerPhone, phone)) return { success: false, error: "Order not found." };
-  return { success: true, order: { orderNumber: order.orderNumber, status: order.orderStatus, trackingNumber: order.trackingNumber, createdAt: order.createdAt.toISOString() } };
+  if (!order || !samePhone(order.customerPhone, phone)) return { success: false, error: "Pesanan tidak ditemukan. Pastikan nomor pesanan dan WhatsApp sudah benar." };
+  
+  try {
+    await grantOrderAccess(order.id);
+  } catch (err) {
+    console.warn("grantOrderAccess on trackOrder warning:", err);
+  }
+
+  return {
+    success: true,
+    order: {
+      orderId: order.id,
+      token: createOrderAccessToken(order.id),
+      orderNumber: order.orderNumber,
+      status: order.orderStatus,
+      trackingNumber: order.trackingNumber,
+      createdAt: order.createdAt.toISOString(),
+    },
+  };
 }

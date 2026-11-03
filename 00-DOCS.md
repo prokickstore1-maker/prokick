@@ -6,6 +6,7 @@ Satu pintu masuk. Cari dokumen lain dari sini.
 
 | File | Isi | Kapan dibaca |
 |---|---|---|
+| `PETA-KODE.md` | Peta ringkas fitur → file, kontrak data, batas aman, dan daftar verifikasi per alur | Sebelum menambah/mengubah fitur; onboarding teman |
 | `README.md` | Stack, setup, env vars, alur utama (katalog → checkout → bayar → kirim), struktur, deploy | Baru clone / butuh peta alur |
 | `DESIGN.md` | Token visual aktual (warna, font, radius), motion, aturan konten | Kerja UI |
 | `HANDOFF.md` | Status kerja terakhir, perubahan perilaku, langkah berikut | Awal sesi kerja |

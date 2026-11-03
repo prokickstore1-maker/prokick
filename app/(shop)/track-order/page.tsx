@@ -12,6 +12,8 @@ export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [result, setResult] = useState<{
+    orderId?: string;
+    token?: string;
     orderNumber: string;
     status: string;
     trackingNumber?: string | null;
@@ -132,6 +134,17 @@ export default function TrackOrderPage() {
               <p className="text-xs text-zinc-400 leading-relaxed">
                 Pesanan Anda sedang dalam tahap verifikasi. Detail resi otomatis terupdate setelah paket diserahkan ke J&amp;T Express.
               </p>
+            )}
+
+            {result.orderId && (
+              <div className="pt-2 border-t border-white/10">
+                <Button asChild className="w-full rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                  <a href={`/invoice/${result.orderId}${result.token ? `?token=${encodeURIComponent(result.token)}` : ""}`}>
+                    <span>{result.status === "PENDING_PAYMENT" ? "Upload Bukti Transfer / Buka Invoice" : "Lihat Invoice Pesanan"}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </Button>
+              </div>
             )}
           </div>
         )}
