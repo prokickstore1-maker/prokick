@@ -21,38 +21,69 @@ export interface ProductInput {
 
 // Rapikan input teks admin: trim + collapse spasi ganda, cegah "Premier  League" dsb.
 function clean(input: ProductInput): ProductInput {
-  const tidy = (v: string) => v.trim().replace(/\s+/g, " ");
-  // Normalisasi harga Rupiah: hapus 'Rp', spasi, titik ribuan (mis. 'Rp 350.000' -> '350000')
-  const cleanPrice = input.price ? input.price.replace(/[^0-9]/g, "") : "0";
+  const tidy = (v: string) => (v || "").trim().replace(/\s+/g, " ");
+  // Normalisasi harga Rupiah:
+  // Jika dari DB berupa desimal sen seperti "135000.00" atau "200000.00", buang ".00" dulu agar tidak terkalikan 100x.
+  const rawPrice = (input.price || "").trim().replace(/^[Rr][Pp]\s*/, "");
+  const withoutCents = /^\d+\.\d{1,2}$/.test(rawPrice) ? rawPrice.split(".")[0] : rawPrice;
+  const cleanPrice = withoutCents ? withoutCents.replace(/[^0-9]/g, "") : "0";
   const isJacketLine = tidy(input.productLine || "") === PRODUCT_LINE_JACKET;
+  const cleanName = tidy(input.name);
+  const cleanTeam = tidy(input.team) || cleanName || "Klub";
+  const cleanLeague = tidy(input.league) || "Premier League";
+  const cleanSeason = tidy(input.season) || "2026/2027";
+  const cleanCategory = tidy(input.category) || "Klub";
+  const cleanEdition = tidy(input.edition) || "Current";
+  const cleanKitType = isJacketLine
+    ? ((JACKET_KINDS as readonly string[]).includes(tidy(input.kitType)) ? tidy(input.kitType) : JACKET_KINDS[0])
+    : (tidy(input.kitType) || "Home");
+  const cleanSizes = Array.isArray(input.sizes) && input.sizes.length > 0
+    ? input.sizes.map((s) => s.trim().toUpperCase()).filter((s) => /^[A-Z0-9]{1,5}$/.test(s)).slice(0, 10)
+    : ["S", "M", "L", "XL"];
   return {
     ...input,
     productLine: isJacketLine ? PRODUCT_LINE_JACKET : PRODUCT_LINES[0],
-    name: tidy(input.name), team: tidy(input.team), league: tidy(input.league), season: tidy(input.season),
+    name: cleanName,
+    team: cleanTeam,
+    league: cleanLeague,
+    season: cleanSeason,
     // jaket tidak punya grade jersey — type distandarkan, subjenis ada di kitType
-    type: isJacketLine ? "Jaket" : tidy(input.type), category: tidy(input.category), country: tidy(input.country),
-    edition: tidy(input.edition), kitType: tidy(input.kitType),
-    price: cleanPrice,
+    type: isJacketLine ? "Jaket" : (tidy(input.type) || "Fans Version"),
+    category: cleanCategory,
+    country: tidy(input.country).slice(0, 40),
+    edition: cleanEdition.slice(0, 20),
+    kitType: cleanKitType.slice(0, 20),
+    sizes: cleanSizes.length > 0 ? cleanSizes : ["S", "M", "L", "XL"],
+    price: cleanPrice || "0",
   };
 }
 
+function isAllowedImageUrl(u: string) {
+  return /^https?:\/\//.test(u) || u.startsWith("/") || u.startsWith("data:image/");
+}
+
 function validImages(images: string[] | undefined) {
-  return !images || (images.length <= 16 && images.every((u) => /^https?:\/\//.test(u) || u.startsWith("/")));
+  return !images || (images.length <= 16 && images.every(isAllowedImageUrl));
 }
 
 function valid(input: ProductInput) {
   if (input.productLine === PRODUCT_LINE_JACKET && !(JACKET_KINDS as readonly string[]).includes(input.kitType)) return false;
   return [input.name, input.team, input.league, input.season, input.type, input.category, input.edition, input.kitType].every((v) => v.trim()) &&
-    Number.isFinite(Number(input.price)) && Number(input.price) >= 0 && input.sizes.length > 0 && input.sizes.length <= 10 &&
+    Number.isFinite(Number(input.price)) && Number(input.price) >= 0 && Number(input.price) <= 99999999 &&
+    input.sizes.length > 0 && input.sizes.length <= 10 &&
     input.sizes.every((size) => /^[A-Z0-9]{1,5}$/.test(size)) && input.country.length <= 40 && input.edition.length <= 20 && input.kitType.length <= 20 &&
     validImages(input.images);
 }
 
 async function guard(input: ProductInput) {
-  if (!(await isAdmin())) return "Unauthorized";
-  if (!(await checkDbConnection())) return "Database unavailable";
-  if (!valid(input)) return "Invalid product data";
-  if (input.image && !/^https?:\/\//.test(input.image) && !input.image.startsWith("/")) return "Invalid image URL";
+  if (!(await isAdmin())) return "Sesi admin berakhir. Silakan login ulang.";
+  if (!(await checkDbConnection())) return "Database sedang tidak terhubung.";
+  if (!input.name.trim()) return "Nama produk wajib diisi.";
+  if (!Number.isFinite(Number(input.price)) || Number(input.price) < 0 || Number(input.price) > 99999999) {
+    return "Harga produk tidak valid (masukkan angka seperti 135000 atau 200000).";
+  }
+  if (!valid(input)) return "Data produk belum lengkap atau format ukuran/foto tidak valid.";
+  if (input.image && !isAllowedImageUrl(input.image)) return "URL gambar produk tidak valid.";
   return null;
 }
 

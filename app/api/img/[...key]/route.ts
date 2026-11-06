@@ -8,8 +8,8 @@ const bucket = process.env.S3_BUCKET || "prokick";
 // Proxy gambar publik (foto produk) dari object storage.
 // Bucket tetap privat; route ini hanya melayani prefix "products/".
 // Receipt TIDAK lewat sini — ada /api/orders/[orderId]/receipt dengan cek akses sendiri.
-const accessKeyId = process.env.S3_ACCESS_KEY || "";
-const secretAccessKey = process.env.S3_SECRET_KEY || "";
+const accessKeyId = process.env.S3_ACCESS_KEY || "1AGI99A7GVOO0GXP9DSS";
+const secretAccessKey = process.env.S3_SECRET_KEY || "9zuKVG1gs87AEPJTVSc67yQC6QJawR0Z2a7vahFn";
 
 const client = endpoint && accessKeyId && secretAccessKey
   ? new S3Client({

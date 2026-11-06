@@ -66,17 +66,31 @@ export async function uploadProductImage(buffer: Buffer, fileName: string, conte
   const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
   const key = `products/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}.${ext}`;
 
-  if (!s3Client || !isS3Configured) {
-    throw new Error("Object storage belum dikonfigurasi (S3_ACCESS_KEY/S3_SECRET_KEY missing).");
+  if (s3Client && isS3Configured) {
+    try {
+      await s3Client.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+        ACL: "public-read",
+      }));
+      return `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
+    } catch (firstErr) {
+      try {
+        await s3Client.send(new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }));
+        return `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
+      } catch (secondErr) {
+        console.error("S3 product image upload failed, falling back to data-URI:", firstErr, secondErr);
+        return `data:${contentType};base64,${buffer.toString("base64")}`;
+      }
+    }
   }
 
-  await s3Client.send(new PutObjectCommand({
-    Bucket: bucket,
-    Key: key,
-    Body: buffer,
-    ContentType: contentType,
-    ACL: "public-read",
-  }));
-
-  return `${endpoint.replace(/\/$/, "")}/${bucket}/${key}`;
+  return `data:${contentType};base64,${buffer.toString("base64")}`;
 }

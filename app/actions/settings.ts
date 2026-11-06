@@ -29,16 +29,28 @@ export async function updateStoreSettingAction(key: string, value: string) {
   return { success: true };
 }
 
+function isValidImgUrl(url?: string | null) {
+  if (!url) return true;
+  if (url.startsWith("data:image/")) return true;
+  return (url.startsWith("/") || /^https?:\/\//.test(url)) && url.length <= 2000;
+}
+
 export async function updateBannerAction(id: string, input: { title: string; subtitle: string; link: string; active: boolean; image?: string; displayOrder?: number }) {
   const error = await guard();
   if (error) return { success: false, error };
-  const imageOk = !input.image || ((input.image.startsWith("/") || /^https?:\/\//.test(input.image)) && input.image.length <= 500);
-  if (!id || input.title.length > 120 || input.subtitle.length > 240 || !input.link.startsWith("/") || !imageOk ||
+  const rawLink = (input.link || "").trim();
+  const normalizedLink = !rawLink
+    ? "/jersey"
+    : rawLink.startsWith("/") || /^https?:\/\//.test(rawLink)
+    ? rawLink
+    : `/${rawLink}`;
+  const imageOk = isValidImgUrl(input.image);
+  if (!id || input.title.length > 120 || input.subtitle.length > 240 || !imageOk ||
       (input.displayOrder !== undefined && (!Number.isInteger(input.displayOrder) || input.displayOrder < 0))) {
     return { success: false, error: "Invalid banner" };
   }
 
-  await db.update(banners).set(input).where(eq(banners.id, id));
+  await db.update(banners).set({ ...input, link: normalizedLink }).where(eq(banners.id, id));
   revalidateTag("banners", { expire: 0 });
   revalidatePath("/");
   revalidatePath("/admin/settings");
@@ -48,7 +60,7 @@ export async function updateBannerAction(id: string, input: { title: string; sub
 export async function updatePaymentMethodAction(id: string, input: { label: string; accountName: string; accountNumber: string; isActive: boolean; qrImageUrl?: string | null }) {
   const error = await guard();
   if (error) return { success: false, error };
-  if (!id || !input.label.trim() || input.label.length > 100 || input.accountName.length > 120 || input.accountNumber.length > 80 || (input.qrImageUrl && input.qrImageUrl.length > 500)) {
+  if (!id || !input.label.trim() || input.label.length > 100 || input.accountName.length > 120 || input.accountNumber.length > 80 || !isValidImgUrl(input.qrImageUrl)) {
     return { success: false, error: "Invalid payment method" };
   }
 
@@ -64,7 +76,7 @@ function validPaymentInput(input: { label: string; accountName: string; accountN
   return typeof input.label === "string" && input.label.trim().length > 0 && input.label.length <= 100 &&
     typeof input.accountName === "string" && input.accountName.length <= 120 &&
     typeof input.accountNumber === "string" && input.accountNumber.length <= 80 &&
-    (typeof input.qrImageUrl !== "string" || input.qrImageUrl.length <= 500);
+    isValidImgUrl(input.qrImageUrl);
 }
 
 // tipe harus dikenali UI checkout — tipe asing bikin metode tak tampil/gagal di checkout
@@ -113,8 +125,7 @@ function validTestimonialInput(input: TestimonialInput) {
     Number.isInteger(input.rating) && input.rating >= 1 && input.rating <= 5 &&
     typeof input.comment === "string" && input.comment.trim().length > 0 && input.comment.length <= 600 &&
     (input.club === undefined || input.club.length <= 80) &&
-    (input.proofImage === undefined || input.proofImage === null ||
-      ((input.proofImage.startsWith("/") || /^https?:\/\//.test(input.proofImage)) && input.proofImage.length <= 500));
+    isValidImgUrl(input.proofImage);
 }
 
 export async function createTestimonialAction(input: TestimonialInput) {

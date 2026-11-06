@@ -196,9 +196,9 @@ export function JerseyCustomizer({
 
         {/* 1. Size Selector */}
         <div className="space-y-3 pt-4 border-t border-white/10">
-          <div className="flex justify-between items-center text-xs">
+          <div className="flex flex-wrap justify-between items-center gap-2 text-xs">
             <span className="font-bold text-white uppercase tracking-wider font-display">Select Size:</span>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {stockForSelectedSize !== undefined && (
                 <span className="text-volt font-mono text-xs font-semibold">
                   {stockForSelectedSize} In Stock ({selectedSize})
@@ -239,8 +239,8 @@ export function JerseyCustomizer({
 
         {/* 2. Interactive Customizer: Nameset & Patch (hanya jersey) */}
         {!jacket && (
-        <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-5 bg-[#121217] border-white/10 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-4 sm:p-5 bg-[#121217] border-white/10 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 font-display">
               <span>Official Customization</span>
             </span>
@@ -359,7 +359,7 @@ export function JerseyCustomizer({
             {/* Add to Cart CTA */}
             <Button
               onClick={handleAddToCart}
-              className={`hidden sm:flex flex-1 h-auto py-4 px-6 rounded-full text-xs uppercase tracking-wider font-bold shadow-lg ${
+              className={`flex flex-1 h-auto py-4 px-4 sm:px-6 rounded-full text-xs uppercase tracking-wider font-bold shadow-lg ${
                 isAdded
                   ? "bg-volt text-black hover:bg-volt scale-[1.01]"
                   : ""
