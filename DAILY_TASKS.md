@@ -11,12 +11,14 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 - [x] Tambah fungsi query `getFeaturedItems` di `lib/data.ts` untuk mengambil produk unggulan (`is_featured = true`) lintas lini (`Jersey` maupun `Jaket`), diurutkan berdasarkan `updatedAt DESC`.
 - [x] Tambah section **Featured Collection** (`Pilihan Unggulan`) di halaman beranda (`app/(shop)/page.tsx`) tepat di atas section **Best Sellers**.
 - [x] Tambah filter tab **Unggulan (`FEATURED`)** di halaman Admin Produk (`components/admin/product-manager.tsx`) untuk memudahkan kurasi produk promosi.
+- [x] Pembatasan pengiriman ke seluruh Pulau Sulawesi di checkout (`app/(shop)/cart/checkout.tsx`) dan server action (`app/actions/order.ts`): pembeli tetap bisa memilih provinsi Sulawesi, saat klik submit order muncul pesan pembatasan pengiriman dan tombol WhatsApp admin langsung terbuka (`+628881658229`). Setting `sulawesiBlocked = '1'` aktif di DB.
 
 ### Pekerjaan Selesai & Ringkasan Teknis:
 - **[`lib/data.ts`](file:///d:/project%20web/PROKICK%20MY/lib/data.ts)**: Menambahkan `getFeaturedItems(limit = 8)` dengan filter `eq(jerseys.isFeatured, true)` tanpa pembatasan `productLine` sehingga baik Jersey maupun Jaket yang dipromosikan tampil bersama, dengan urutan `[desc(jerseys.updatedAt), desc(jerseys.createdAt)]`.
 - **[`app/(shop)/page.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/page.tsx)**: Menambahkan section **Featured Collection** tepat di atas section **Best Sellers** sesuai instruksi desain (`DESIGN.md` & `antislop` Mode 1).
 - **[`components/admin/product-manager.tsx`](file:///d:/project%20web/PROKICK%20MY/components/admin/product-manager.tsx)**: Menambahkan tab filter `Unggulan` di dashboard admin produk agar admin dapat langsung memantau daftar produk yang sedang tampil di Featured Collection.
-- **Verifikasi & Commit**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit `01d4e45`).
+- **[`app/(shop)/cart/checkout.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/cart/checkout.tsx) & [`app/actions/order.ts`](file:///d:/project%20web/PROKICK%20MY/app/actions/order.ts)**: Mengaktifkan proteksi pembatasan pengiriman Pulau Sulawesi (Sulawesi Selatan, Utara, Tengah, Barat, Tenggara, & Gorontalo). Pembeli tetap bebas mengisi formulir & memilih provinsi; saat klik submit, sistem memblokir order dan menampilkan alert informatif beserta tombol langsung WhatsApp admin (+628881658229) dengan prefilled message. Setting `sulawesiBlocked` bernilai `'1'` di database produksi.
+- **Verifikasi**: `node_modules/.bin/tsc --noEmit` EXIT=0.
 
 ### Catatan & Kendala:
 - Saat ini 2 produk (`Real Madrid Tracksuit Jacket Retro 1902 White Black` & `Arsenal Home 2026/2027 Player Issue`) otomatis tampil di section Featured Collection.

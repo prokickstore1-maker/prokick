@@ -1,11 +1,12 @@
 # HANDOFF — PROKICK Indonesia (Update: 2026-11-06)
 
 ## 1. Status Terbaru Sistem
-- **Update 2026-11-06 (Section Featured Collection di Atas Best Sellers)**:
+- **Update 2026-11-06 (Section Featured Collection & Pembatasan Pengiriman Sulawesi)**:
   1. **Featured Collection Beranda**: Menambahkan fungsi `getFeaturedItems(limit = 8)` di [`lib/data.ts`](file:///d:/project%20web/PROKICK%20MY/lib/data.ts) yang mengambil produk `is_featured = true` lintas lini (`Jersey` maupun `Jaket`) diurutkan berdasarkan `updatedAt DESC`, dan menampilkan section **Featured Collection** tepat di atas **Best Sellers** di [`app/(shop)/page.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/page.tsx).
-  2. **Filter Admin Unggulan**: Menambahkan tab filter `Unggulan` di [`components/admin/product-manager.tsx`](file:///d:/project%20web/PROKICK%20MY/components/admin/product-manager.tsx) agar admin mudah memantau daftar produk promosi.
-  3. **Upload Produk Baru (2026-11-05)**: `Real Madrid Tracksuit Jacket Retro 1902 White Black` (`id: 6575d839-5be3-4455-b286-12fe73ac8d03`, 5 foto S3, stok 5/size, seluruh highlight aktif).
-  4. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0**.
+  2. **Pembatasan Pengiriman Sulawesi (Keputusan Ditutup & Aktif)**: Sesuai instruksi, pembeli dari seluruh Pulau Sulawesi (Sulawesi Selatan, Utara, Tengah, Barat, Tenggara, & Gorontalo) tetap bisa mengisi alamat & memilih provinsi. Saat submit order, muncul pesan pembatasan pengiriman disertai tombol WhatsApp resmi admin (+628881658229) dengan pesan otomatis. Proteksi server-side aktif via setting `sulawesiBlocked = '1'` di DB produksi.
+  3. **Filter Admin Unggulan**: Menambahkan tab filter `Unggulan` di [`components/admin/product-manager.tsx`](file:///d:/project%20web/PROKICK%20MY/components/admin/product-manager.tsx) agar admin mudah memantau daftar produk promosi.
+  4. **Upload Produk Baru (2026-11-05)**: `Real Madrid Tracksuit Jacket Retro 1902 White Black` (`id: 6575d839-5be3-4455-b286-12fe73ac8d03`, 5 foto S3, stok 5/size, seluruh highlight aktif).
+  5. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0**.
 - **Update 2026-11-04 (Perbaikan Kritis Checkout, Upload Bukti TF & Telegram Bot)**:
   1. **Investigasi & Resolusi Masalah Produksi**:
      - **Penyebab Bukti TF Gagal Upload**: `uploadToS3` di `lib/s3.ts` melempar fatal error saat env S3 belum diset/koneksi bermasalah di runtime. Diperbaiki dengan fallback kredensial aman IDCloudHost + otomatis fallback menyimpan base64 data-URI ke DB jika S3 bermasalah, memastikan 100% upload bukti transfer tidak pernah gagal.

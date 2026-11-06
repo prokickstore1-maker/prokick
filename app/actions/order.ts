@@ -78,7 +78,11 @@ export async function createOrderAction(input: CreateOrderInput) {
 
     // Tutup sementara Sulawesi (on/off via admin: setting sulawesiBlocked)
     if (rawSettings.sulawesiBlocked === "1" && isSulawesiProvince(input.state)) {
-      return { success: false, error: "Pengiriman ke Sulawesi sedang ditutup sementara. Silakan pilih provinsi lain atau hubungi admin." };
+      const adminWa = (rawSettings.whatsappNumber || "6281234567890").replace(/\D/g, "");
+      return {
+        success: false,
+        error: `Pengiriman ke pulau Sulawesi saat ini dibatasi. Silakan hubungi admin via WhatsApp di +${adminWa} untuk konfirmasi pengiriman manual.`,
+      };
     }
 
     // 1. Authoritative Server-Side Price Verification

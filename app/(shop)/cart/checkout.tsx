@@ -14,11 +14,12 @@ import {
   QrCode,
   Landmark,
   Trash2,
+  MessageCircle,
 } from "lucide-react";
 import { useCartStore } from "@/stores/cart";
 import { calculatePromoEngine, toShippingSettings } from "@/lib/promo";
 import { formatIDR, toIntlPhone } from "@/lib/utils";
-import { INDONESIAN_PROVINCES, getShippingZoneByProvince } from "@/lib/indonesia";
+import { INDONESIAN_PROVINCES, getShippingZoneByProvince, isSulawesiProvince } from "@/lib/indonesia";
 import { createOrderAction } from "@/app/actions/order";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,6 +107,11 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
 
     if (!customerName || !customerPhone || !streetAddress || !city || !postcode || !state) {
       setErrorMessage("Please complete all delivery details.");
+      return;
+    }
+
+    if (shippingSettings.sulawesiBlocked === "1" && isSulawesiProvince(state)) {
+      setErrorMessage("Pengiriman ke wilayah Sulawesi saat ini dibatasi. Silakan hubungi admin via WhatsApp untuk konfirmasi pesanan.");
       return;
     }
 
@@ -212,9 +218,33 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
         </div>
 
         {errorMessage && (
-          <div role="alert" className="p-4 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-300 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200 motion-reduce:animate-none">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMessage}</span>
+          <div role="alert" className="p-4 sm:p-5 rounded-xl bg-red-950/40 border border-red-500/40 text-xs text-red-300 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200 motion-reduce:animate-none">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
+              <div className="space-y-1 flex-1">
+                <span className="font-semibold leading-relaxed block">{errorMessage}</span>
+                {shippingSettings.sulawesiBlocked === "1" && isSulawesiProvince(state) && (
+                  <p className="text-[11px] text-zinc-300">
+                    Admin kami siap membantu memproses estimasi ongkir dan pengiriman khusus ke lokasi Anda.
+                  </p>
+                )}
+              </div>
+            </div>
+            {shippingSettings.sulawesiBlocked === "1" && isSulawesiProvince(state) && (
+              <div className="pt-1">
+                <a
+                  href={`https://wa.me/${(shippingSettings.whatsappNumber || "6281234567890").replace(/\D/g, "")}?text=${encodeURIComponent(
+                    `Halo Admin ProKick, saya ingin memesan produk ke ${state} (${city || "Sulawesi"}), namun pengiriman di web sedang dibatasi. Mohon bantuannya.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-md"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Hubungi Admin WhatsApp (+{(shippingSettings.whatsappNumber || "6281234567890").replace(/\D/g, "")})</span>
+                </a>
+              </div>
+            )}
           </div>
         )}
 
