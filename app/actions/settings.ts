@@ -131,14 +131,19 @@ function validTestimonialInput(input: TestimonialInput) {
 export async function createTestimonialAction(input: TestimonialInput) {
   const error = await guard();
   if (error) return { success: false, error };
-  if (!validTestimonialInput(input)) return { success: false, error: "Invalid testimonial" };
+  const normalized: TestimonialInput = {
+    ...input,
+    name: (input.name || "").trim() || "Pembeli ProKick",
+    comment: (input.comment || "").trim() || "Pesanan mendarat dengan aman, bahan & detail mantap!",
+  };
+  if (!validTestimonialInput(normalized)) return { success: false, error: "Invalid testimonial" };
 
   await db.insert(testimonials).values({
-    name: input.name.trim(),
-    rating: input.rating,
-    comment: input.comment.trim(),
-    club: input.club?.trim() || null,
-    proofImage: input.proofImage || null,
+    name: normalized.name.trim(),
+    rating: normalized.rating,
+    comment: normalized.comment.trim(),
+    club: normalized.club?.trim() || null,
+    proofImage: normalized.proofImage || null,
     active: true,
   });
   revalidateTag("testimonials", { expire: 0 });

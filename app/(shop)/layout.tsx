@@ -1,7 +1,6 @@
 import { CartDrawerWrapper } from "@/components/cart/cart-drawer-client";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
-import { TestimonialsSection } from "@/components/testimonials/testimonials-section";
 import { getCachedLeagueOptions, getShippingSettingsMap } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +18,6 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       </a>
       <Navbar leagues={leagues} shippingSettings={shippingSettings} />
       <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
-      <TestimonialsSection />
       <Footer settingsMap={shippingSettings} leagues={leagues} />
       <CartDrawerWrapper shippingSettings={shippingSettings} />
     </>

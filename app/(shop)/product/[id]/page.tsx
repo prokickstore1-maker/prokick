@@ -5,6 +5,7 @@ import { getJerseyById, getRelatedKits, getShippingSettingsMap } from "@/lib/dat
 import { toShippingSettings, STANDARD_NAMESET_FEE, STANDARD_PATCH_FEE } from "@/lib/promo";
 import { JerseyCustomizer } from "@/components/jersey/jersey-customizer";
 import { JerseyCard } from "@/components/jersey/jersey-card";
+import { TestimonialsSection } from "@/components/testimonials/testimonials-section";
 import { ChevronRight } from "lucide-react";
 import { isJacket } from "@/lib/product-lines";
 
@@ -53,10 +54,10 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  // Related kits: query terarah (liga sama atau best seller), limit 4 di SQL
+  // Related kits: Prioritas 1 Klub sama → Prioritas 2 Liga sama → Prioritas 3 Best Seller, limit 4
   const jacket = isJacket(jersey);
   const listHref = jacket ? "/jaket" : "/jersey";
-  const relatedKits = await getRelatedKits(jersey.league, jersey.id, 4, jersey.productLine);
+  const relatedKits = await getRelatedKits(jersey.league, jersey.id, 4, jersey.productLine, jersey.team);
 
   // fee nameset/patch dari settings admin — sinkron dengan server checkout
   const shipSettings = toShippingSettings(await getShippingSettingsMap());
@@ -113,6 +114,9 @@ export default async function ProductDetailPage({
             </div>
           </div>
         )}
+
+        {/* Testimoni Pembeli di bawah Related Kits */}
+        <TestimonialsSection compact />
       </div>
     </div>
   );

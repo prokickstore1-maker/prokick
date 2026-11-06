@@ -205,117 +205,195 @@ export async function getJerseysPaginated(
   }
 }
 
-// Homepage: produk pilihan promosi (Jersey maupun Jaket) dengan is_featured = true
-export async function getFeaturedItems(limit = 8): Promise<NormalizedJersey[]> {
-  try {
-    const rows = await db.query.jerseys.findMany({
-      where: eq(jerseys.isFeatured, true),
-      orderBy: [desc(jerseys.updatedAt), desc(jerseys.createdAt)],
-      limit,
-    });
-    return rows.map((r) => normalizeJerseyRow(r));
-  } catch (e) {
-    console.warn("DB featured items failed:", e);
-    return [];
-  }
-}
-
-// Homepage: 8 best seller tanpa tarik seluruh tabel (auto-fill jika kurang dari limit)
-export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
-  try {
-    const rows = await db.query.jerseys.findMany({
-      where: and(eq(jerseys.isBestSeller, true), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
-      orderBy: [desc(jerseys.createdAt)],
-      limit,
-    });
-    // Jika jumlah jersey berlabel isBestSeller kurang dari limit, lengkapi dengan jersey terbaru agar grid selalu penuh
-    if (rows.length < limit) {
-      const existingIds = new Set(rows.map((r) => r.id));
-      const fallbacks = await db.query.jerseys.findMany({
-        where: and(ne(jerseys.type, "Retro"), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
-        orderBy: [desc(jerseys.isFeatured), desc(jerseys.isNew), desc(jerseys.createdAt)],
-        limit: limit * 2,
+// Homepage: produk pilihan promosi (Jersey maupun Jaket) dengan is_featured = true — cached 60 detik
+export const getFeaturedItems = unstable_cache(
+  async (limit = 8): Promise<NormalizedJersey[]> => {
+    try {
+      const rows = await db.query.jerseys.findMany({
+        where: eq(jerseys.isFeatured, true),
+        orderBy: [desc(jerseys.updatedAt), desc(jerseys.createdAt)],
+        limit,
       });
-      for (const f of fallbacks) {
-        if (!existingIds.has(f.id)) {
-          rows.push(f);
-          existingIds.add(f.id);
-          if (rows.length >= limit) break;
+      return rows.map((r) => normalizeJerseyRow(r));
+    } catch (e) {
+      console.warn("DB featured items failed:", e);
+      return [];
+    }
+  },
+  ["homepage-featured-items"],
+  { tags: ["jerseys-all"], revalidate: 60 }
+);
+
+// Homepage: 8 best seller tanpa tarik seluruh tabel (auto-fill jika kurang dari limit) — cached 60 detik
+export const getBestSellers = unstable_cache(
+  async (limit = 8): Promise<NormalizedJersey[]> => {
+    try {
+      const rows = await db.query.jerseys.findMany({
+        where: and(eq(jerseys.isBestSeller, true), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
+        orderBy: [desc(jerseys.createdAt)],
+        limit,
+      });
+      // Jika jumlah jersey berlabel isBestSeller kurang dari limit, lengkapi dengan jersey terbaru agar grid selalu penuh
+      if (rows.length < limit) {
+        const existingIds = new Set(rows.map((r) => r.id));
+        const fallbacks = await db.query.jerseys.findMany({
+          where: and(ne(jerseys.type, "Retro"), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
+          orderBy: [desc(jerseys.isFeatured), desc(jerseys.isNew), desc(jerseys.createdAt)],
+          limit: limit * 2,
+        });
+        for (const f of fallbacks) {
+          if (!existingIds.has(f.id)) {
+            rows.push(f);
+            existingIds.add(f.id);
+            if (rows.length >= limit) break;
+          }
+        }
+      }
+      return rows.map((r) => normalizeJerseyRow(r));
+    } catch (e) {
+      console.warn("DB best sellers failed:", e);
+      return [];
+    }
+  },
+  ["homepage-best-sellers"],
+  { tags: ["jerseys-all"], revalidate: 60 }
+);
+
+// Homepage: 8 new arrival tanpa tarik seluruh tabel — cached 60 detik
+export const getNewArrivals = unstable_cache(
+  async (limit = 8): Promise<NormalizedJersey[]> => {
+    try {
+      const rows = await db.query.jerseys.findMany({
+        where: and(eq(jerseys.isNew, true), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
+        orderBy: [desc(jerseys.createdAt)],
+        limit,
+      });
+      return rows.map((r) => normalizeJerseyRow(r));
+    } catch (e) {
+      console.warn("DB new arrivals failed:", e);
+      return [];
+    }
+  },
+  ["homepage-new-arrivals"],
+  { tags: ["jerseys-all"], revalidate: 60 }
+);
+
+// Homepage: 8 retro / vintage jerseys tanpa tarik seluruh tabel — cached 60 detik
+export const getRetroJerseys = unstable_cache(
+  async (limit = 8): Promise<NormalizedJersey[]> => {
+    try {
+      const rows = await db.query.jerseys.findMany({
+        where: and(
+          eq(jerseys.productLine, PRODUCT_LINE_JERSEY),
+          or(
+            eq(jerseys.edition, "Vintage"),
+            ilike(jerseys.type, "%Retro%"),
+            ilike(jerseys.league, "%Retro%")
+          )
+        ),
+        orderBy: [desc(jerseys.createdAt)],
+        limit,
+      });
+      return rows.map((r) => normalizeJerseyRow(r));
+    } catch (e) {
+      console.warn("DB retro jerseys failed:", e);
+      return [];
+    }
+  },
+  ["homepage-retro-jerseys"],
+  { tags: ["jerseys-all"], revalidate: 60 }
+);
+
+// Homepage: daftar negara tim nasional (distinct, bukan scan semua jersey) — cached 60 detik
+export const getNationalCountries = unstable_cache(
+  async (): Promise<string[]> => {
+    try {
+      const rows = await db
+        .selectDistinct({ country: jerseys.country })
+        .from(jerseys)
+        .where(and(eq(jerseys.category, "Tim Nasional"), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)))
+        .orderBy(jerseys.country);
+      return rows.map((r) => r.country).filter(Boolean);
+    } catch (e) {
+      console.warn("DB national countries failed:", e);
+      return [];
+    }
+  },
+  ["homepage-national-countries"],
+  { tags: ["jerseys-all"], revalidate: 60 }
+);
+
+// Halaman detail: related = Prioritas 1 Klub/Tim sama → Prioritas 2 Liga sama → Prioritas 3 Best Seller, limit 4
+export async function getRelatedKits(
+  league: string,
+  excludeId: string,
+  limit = 4,
+  productLine: string = PRODUCT_LINE_JERSEY,
+  team?: string
+): Promise<NormalizedJersey[]> {
+  try {
+    const collected: JerseyRow[] = [];
+    const seenIds = new Set<string>([excludeId]);
+
+    // 1. Prioritas Utama: Produk dari klub / tim yang sama
+    if (team && team.trim()) {
+      const sameTeam = await db.query.jerseys.findMany({
+        where: and(
+          ne(jerseys.id, excludeId),
+          eq(jerseys.productLine, productLine),
+          ilike(jerseys.team, team.trim())
+        ),
+        orderBy: [desc(jerseys.isFeatured), desc(jerseys.isBestSeller), desc(jerseys.createdAt)],
+        limit,
+      });
+      for (const r of sameTeam) {
+        if (!seenIds.has(r.id)) {
+          collected.push(r);
+          seenIds.add(r.id);
         }
       }
     }
-    return rows.map((r) => normalizeJerseyRow(r));
-  } catch (e) {
-    console.warn("DB best sellers failed:", e);
-    return [];
-  }
-}
 
-// Homepage: 8 new arrival tanpa tarik seluruh tabel
-export async function getNewArrivals(limit = 8): Promise<NormalizedJersey[]> {
-  try {
-    const rows = await db.query.jerseys.findMany({
-      where: and(eq(jerseys.isNew, true), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)),
-      orderBy: [desc(jerseys.createdAt)],
-      limit,
-    });
-    return rows.map((r) => normalizeJerseyRow(r));
-  } catch (e) {
-    console.warn("DB new arrivals failed:", e);
-    return [];
-  }
-}
+    // 2. Prioritas Kedua: Produk dari liga / kompetisi yang sama
+    if (collected.length < limit && league && league.trim()) {
+      const sameLeague = await db.query.jerseys.findMany({
+        where: and(
+          ne(jerseys.id, excludeId),
+          eq(jerseys.productLine, productLine),
+          ilike(jerseys.league, league.trim())
+        ),
+        orderBy: [desc(jerseys.isFeatured), desc(jerseys.isBestSeller), desc(jerseys.createdAt)],
+        limit: limit * 2,
+      });
+      for (const r of sameLeague) {
+        if (!seenIds.has(r.id)) {
+          collected.push(r);
+          seenIds.add(r.id);
+          if (collected.length >= limit) break;
+        }
+      }
+    }
 
-// Homepage: 8 retro / vintage jerseys tanpa tarik seluruh tabel
-export async function getRetroJerseys(limit = 8): Promise<NormalizedJersey[]> {
-  try {
-    const rows = await db.query.jerseys.findMany({
-      where: and(
-        eq(jerseys.productLine, PRODUCT_LINE_JERSEY),
-        or(
-          eq(jerseys.edition, "Vintage"),
-          ilike(jerseys.type, "%Retro%"),
-          ilike(jerseys.league, "%Retro%")
-        )
-      ),
-      orderBy: [desc(jerseys.createdAt)],
-      limit,
-    });
-    return rows.map((r) => normalizeJerseyRow(r));
-  } catch (e) {
-    console.warn("DB retro jerseys failed:", e);
-    return [];
-  }
-}
+    // 3. Fallback Terakhir: Produk unggulan / best seller dari lini yang sama
+    if (collected.length < limit) {
+      const fallbacks = await db.query.jerseys.findMany({
+        where: and(
+          ne(jerseys.id, excludeId),
+          eq(jerseys.productLine, productLine)
+        ),
+        orderBy: [desc(jerseys.isFeatured), desc(jerseys.isBestSeller), desc(jerseys.createdAt)],
+        limit: limit * 2,
+      });
+      for (const r of fallbacks) {
+        if (!seenIds.has(r.id)) {
+          collected.push(r);
+          seenIds.add(r.id);
+          if (collected.length >= limit) break;
+        }
+      }
+    }
 
-// Homepage: daftar negara tim nasional (distinct, bukan scan semua jersey)
-export async function getNationalCountries(): Promise<string[]> {
-  try {
-    const rows = await db
-      .selectDistinct({ country: jerseys.country })
-      .from(jerseys)
-      .where(and(eq(jerseys.category, "Tim Nasional"), eq(jerseys.productLine, PRODUCT_LINE_JERSEY)))
-      .orderBy(jerseys.country);
-    return rows.map((r) => r.country).filter(Boolean);
-  } catch (e) {
-    console.warn("DB national countries failed:", e);
-    return [];
-  }
-}
-
-// Halaman detail: related = liga sama ATAU best seller, limit 4
-export async function getRelatedKits(league: string, excludeId: string, limit = 4, productLine: string = PRODUCT_LINE_JERSEY): Promise<NormalizedJersey[]> {
-  try {
-    const rows = await db.query.jerseys.findMany({
-      where: and(
-        ne(jerseys.id, excludeId),
-        eq(jerseys.productLine, productLine),
-        or(eq(jerseys.league, league), eq(jerseys.isBestSeller, true))
-      ),
-      orderBy: [desc(jerseys.isBestSeller), desc(jerseys.createdAt)],
-      limit,
-    });
-    return rows.map((r) => normalizeJerseyRow(r));
+    return collected.slice(0, limit).map((r) => normalizeJerseyRow(r));
   } catch (e) {
     console.warn("DB related kits failed:", e);
     return [];
@@ -374,20 +452,24 @@ export const getCachedJacketOptions: () => Promise<LeagueOption[]> = unstable_ca
   { tags: ["jerseys-all"], revalidate: 60 }
 );
 
-// Homepage: jaket unggulan/terbaru tanpa tarik seluruh tabel
-export async function getLatestJackets(limit = 8): Promise<NormalizedJersey[]> {
-  try {
-    const rows = await db.query.jerseys.findMany({
-      where: eq(jerseys.productLine, PRODUCT_LINE_JACKET),
-      orderBy: [desc(jerseys.isFeatured), desc(jerseys.createdAt)],
-      limit,
-    });
-    return rows.map((r) => normalizeJerseyRow(r));
-  } catch (e) {
-    console.warn("DB latest jackets failed:", e);
-    return [];
-  }
-}
+// Homepage: jaket unggulan/terbaru tanpa tarik seluruh tabel — cached 60 detik
+export const getLatestJackets = unstable_cache(
+  async (limit = 8): Promise<NormalizedJersey[]> => {
+    try {
+      const rows = await db.query.jerseys.findMany({
+        where: eq(jerseys.productLine, PRODUCT_LINE_JACKET),
+        orderBy: [desc(jerseys.isFeatured), desc(jerseys.createdAt)],
+        limit,
+      });
+      return rows.map((r) => normalizeJerseyRow(r));
+    } catch (e) {
+      console.warn("DB latest jackets failed:", e);
+      return [];
+    }
+  },
+  ["homepage-latest-jackets"],
+  { tags: ["jerseys-all"], revalidate: 60 }
+);
 
 // Banner aktif — cached 60 detik; admin invalidasi via revalidateTag("banners", "max")
 export const getActiveBanners = unstable_cache(

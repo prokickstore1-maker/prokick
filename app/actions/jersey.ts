@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { db, checkDbConnection } from "@/lib/db";
 import { jerseys } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -35,8 +35,11 @@ export async function updateJerseyStockAction(jerseyId: string, size: string, de
         .set({ stockData: JSON.stringify(stockObj), stock: totalStock })
         .where(eq(jerseys.id, jerseyId));
     });
+    revalidateTag("jerseys-all", { expire: 0 });
     revalidatePath("/admin/jerseys");
     revalidatePath("/jersey");
+    revalidatePath("/jaket");
+    revalidatePath("/");
     revalidatePath(`/product/${jerseyId}`);
     return { success: true };
   } catch (e) {

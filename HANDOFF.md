@@ -13,7 +13,11 @@
      - Merapikan tata letak pemilih ukuran dan tombol `Add to Bag` di layar mobile pada [`components/jersey/jersey-customizer.tsx`](file:///d:/project%20web/PROKICK%20MY/components/jersey/jersey-customizer.tsx).
   5. **Filter Admin Unggulan**: Menambahkan tab filter `Unggulan` di [`components/admin/product-manager.tsx`](file:///d:/project%20web/PROKICK%20MY/components/admin/product-manager.tsx) agar admin mudah memantau daftar produk promosi.
   6. **Upload Produk Baru (2026-11-05)**: `Real Madrid Tracksuit Jacket Retro 1902 White Black` (`id: 6575d839-5be3-4455-b286-12fe73ac8d03`, 5 foto S3, stok 5/size, seluruh highlight aktif).
-  7. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Commit `b9dc865`).
+  7. **Cache Beranda (`unstable_cache`), Prioritas `Related Kits`, & Redesain `Testimoni`**:
+     - Mengaktifkan `unstable_cache` (`tags: ["jerseys-all"]`, 60 detik) pada 6 query produk Beranda di [`lib/data.ts`](file:///d:/project%20web/PROKICK%20MY/lib/data.ts) sehingga reload Beranda tidak menembak query berulang ke DB, dengan invalidasi otomatis saat stok/produk diubah.
+     - Memperbaiki `getRelatedKits` di [`lib/data.ts`](file:///d:/project%20web/PROKICK%20MY/lib/data.ts) agar memprioritaskan produk dari **Klub/Tim yang sama** terlebih dahulu, lalu **Liga yang sama**, baru fallback ke **Featured/Best Seller**.
+     - Memasang [`TestimonialsSection`](file:///d:/project%20web/PROKICK%20MY/components/testimonials/testimonials-section.tsx) & [`TestimonialsClient`](file:///d:/project%20web/PROKICK%20MY/components/testimonials/testimonials-client.tsx) di Beranda dan tepat di bawah `Related Kits` pada halaman detail produk (dicabut dari layout global `/cart` & `/invoice`), menggunakan kartu swipe horizontal kompak di mobile dengan thumbnail mikro `40px` *lazy-load* + pop-up *lightbox* saat diketuk.
+  8. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Commits: `21def27`, `a6f8232`).
 - **Update 2026-11-04 (Perbaikan Kritis Checkout, Upload Bukti TF & Telegram Bot)**:
   1. **Investigasi & Resolusi Masalah Produksi**:
      - **Penyebab Bukti TF Gagal Upload**: `uploadToS3` di `lib/s3.ts` melempar fatal error saat env S3 belum diset/koneksi bermasalah di runtime. Diperbaiki dengan fallback kredensial aman IDCloudHost + otomatis fallback menyimpan base64 data-URI ke DB jika S3 bermasalah, memastikan 100% upload bukti transfer tidak pernah gagal.

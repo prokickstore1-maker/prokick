@@ -8,6 +8,7 @@ import { buildLeagueOptions } from "@/lib/leagues";
 import { flagUrl } from "@/lib/countries";
 import { JerseyCard } from "@/components/jersey/jersey-card";
 import { HeroCarousel } from "@/components/home/hero-carousel";
+import { TestimonialsSection } from "@/components/testimonials/testimonials-section";
 import { ChevronRight, ShieldCheck, QrCode, Truck, Search, Award, Sparkles } from "lucide-react";
 import { TOP_CLUBS } from "@/lib/clubs";
 
@@ -483,6 +484,9 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* 8. Testimoni Pembeli (Lazy-loaded thumbnail + modal, 0 beban reload) */}
+        <TestimonialsSection />
       </div>
     </div>
   );
