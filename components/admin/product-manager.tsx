@@ -18,14 +18,16 @@ import {
 export function ProductManager({ initialProducts }: { initialProducts: NormalizedJersey[] }) {
   const [products, setProducts] = useState(initialProducts);
   const [query, setQuery] = useState("");
-  const [lineFilter, setLineFilter] = useState<"ALL" | "Jersey" | "Jaket">("ALL");
+  const [lineFilter, setLineFilter] = useState<"ALL" | "Jersey" | "Jaket" | "FEATURED">("ALL");
   const [message, setMessage] = useState("");
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const jerseyCount = products.filter((p) => (p.productLine || "Jersey") === "Jersey").length;
   const jacketCount = products.filter((p) => p.productLine === "Jaket").length;
+  const featuredCount = products.filter((p) => p.isFeatured).length;
   const filtered = products.filter((p) => {
     const line = p.productLine || "Jersey";
-    if (lineFilter !== "ALL" && line !== lineFilter) return false;
+    if (lineFilter === "FEATURED" && !p.isFeatured) return false;
+    if (lineFilter !== "ALL" && lineFilter !== "FEATURED" && line !== lineFilter) return false;
     return `${p.name} ${p.team} ${p.league} ${line} ${p.kitType}`.toLowerCase().includes(query.toLowerCase());
   });
 
@@ -55,11 +57,12 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
     </Button>
 
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {([
           ["ALL", `Semua (${products.length})`],
           ["Jersey", `Jersey (${jerseyCount})`],
           ["Jaket", `Jaket (${jacketCount})`],
+          ["FEATURED", `Unggulan (${featuredCount})`],
         ] as const).map(([val, label]) => (
           <button
             key={val}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getBestSellers, getNewArrivals, getRetroJerseys, getLatestJackets, getActiveBanners, getNationalCountries, getShippingSettingsMap, getCachedLeagueOptions } from "@/lib/data";
+import { getFeaturedItems, getBestSellers, getNewArrivals, getRetroJerseys, getLatestJackets, getActiveBanners, getNationalCountries, getShippingSettingsMap, getCachedLeagueOptions } from "@/lib/data";
 import { JACKET_KINDS } from "@/lib/product-lines";
 import { toShippingSettings } from "@/lib/promo";
 import { formatIDR } from "@/lib/utils";
@@ -14,7 +14,8 @@ import { TOP_CLUBS } from "@/lib/clubs";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [trending, newArrivals, retroJerseys, jackets, banners, rawSettings, nationalCountries, leagueOptions] = await Promise.all([
+  const [featuredItems, trending, newArrivals, retroJerseys, jackets, banners, rawSettings, nationalCountries, leagueOptions] = await Promise.all([
+    getFeaturedItems(8),
     getBestSellers(8),
     getNewArrivals(8),
     getRetroJerseys(8),
@@ -213,6 +214,28 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        {/* 5b. Featured Collection — Produk pilihan promosi (Jaket & Jersey) */}
+        {featuredItems.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
+                  Pilihan Unggulan
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
+                  Featured Collection
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+              {featuredItems.map((item, idx) => (
+                <JerseyCard key={item.id} jersey={item} priority={idx < 2} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* 6. Best sellers 2026/27 */}
         <section className="space-y-6">

@@ -205,6 +205,21 @@ export async function getJerseysPaginated(
   }
 }
 
+// Homepage: produk pilihan promosi (Jersey maupun Jaket) dengan is_featured = true
+export async function getFeaturedItems(limit = 8): Promise<NormalizedJersey[]> {
+  try {
+    const rows = await db.query.jerseys.findMany({
+      where: eq(jerseys.isFeatured, true),
+      orderBy: [desc(jerseys.updatedAt), desc(jerseys.createdAt)],
+      limit,
+    });
+    return rows.map((r) => normalizeJerseyRow(r));
+  } catch (e) {
+    console.warn("DB featured items failed:", e);
+    return [];
+  }
+}
+
 // Homepage: 8 best seller tanpa tarik seluruh tabel (auto-fill jika kurang dari limit)
 export async function getBestSellers(limit = 8): Promise<NormalizedJersey[]> {
   try {

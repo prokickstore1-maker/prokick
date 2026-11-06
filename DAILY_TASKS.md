@@ -5,6 +5,48 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 
 ---
 
+## 2026-11-06 (Jumat)
+
+### Target Hari Ini:
+- [x] Tambah fungsi query `getFeaturedItems` di `lib/data.ts` untuk mengambil produk unggulan (`is_featured = true`) lintas lini (`Jersey` maupun `Jaket`), diurutkan berdasarkan `updatedAt DESC`.
+- [x] Tambah section **Featured Collection** (`Pilihan Unggulan`) di halaman beranda (`app/(shop)/page.tsx`) tepat di atas section **Best Sellers**.
+- [x] Tambah filter tab **Unggulan (`FEATURED`)** di halaman Admin Produk (`components/admin/product-manager.tsx`) untuk memudahkan kurasi produk promosi.
+
+### Pekerjaan Selesai & Ringkasan Teknis:
+- **[`lib/data.ts`](file:///d:/project%20web/PROKICK%20MY/lib/data.ts)**: Menambahkan `getFeaturedItems(limit = 8)` dengan filter `eq(jerseys.isFeatured, true)` tanpa pembatasan `productLine` sehingga baik Jersey maupun Jaket yang dipromosikan tampil bersama, dengan urutan `[desc(jerseys.updatedAt), desc(jerseys.createdAt)]`.
+- **[`app/(shop)/page.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/page.tsx)**: Menambahkan section **Featured Collection** tepat di atas section **Best Sellers** sesuai instruksi desain (`DESIGN.md` & `antislop` Mode 1).
+- **[`components/admin/product-manager.tsx`](file:///d:/project%20web/PROKICK%20MY/components/admin/product-manager.tsx)**: Menambahkan tab filter `Unggulan` di dashboard admin produk agar admin dapat langsung memantau daftar produk yang sedang tampil di Featured Collection.
+- **Verifikasi & Commit**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit `01d4e45`).
+
+### Catatan & Kendala:
+- Saat ini 2 produk (`Real Madrid Tracksuit Jacket Retro 1902 White Black` & `Arsenal Home 2026/2027 Player Issue`) otomatis tampil di section Featured Collection.
+- Setiap produk baru yang dicentang **Unggulan** di Admin Produk akan langsung muncul di paling depan section ini.
+
+### Prioritas Sesi Berikutnya:
+- Konfirmasi commit & push ke repository jika sudah siap rilis ke produksi.
+
+---
+
+## 2026-11-05 (Kamis)
+
+### Target Hari Ini:
+- [x] Upload produk baru **Real Madrid Tracksuit Jacket Retro 1902 White Black** (Lini: `Jaket`).
+- [x] Unggah 5 foto multi-angle berkualitas tinggi ke S3 IDCloudHost (`prokick/products/`).
+- [x] Konfigurasi stok masing-masing ukuran (S: 5, M: 5, L: 5, XL: 5, XXL: 5 — total 25 pcs).
+- [x] Aktifkan seluruh toggle highlight produk (`is_featured = true`, `is_best_seller = true`, `is_new = true`).
+
+### Pekerjaan Selesai & Ringkasan Teknis:
+- **Produk Baru**: `Real Madrid Tracksuit Jacket Retro 1902 White Black` (ID: `6575d839-5be3-4455-b286-12fe73ac8d03`).
+- **Lini & Harga**: `product_line = 'Jaket'`, kategori `Klub`, harga resmi `Rp 200.000`.
+- **Aset S3 & Galeri**: 5 foto multi-angle berlatar kawat jaring besi studio terunggah rapi di S3 `prokick/products/jaket-real-madrid-tracksuit-retro-1902-*` dan tersimpan di tabel `jersey_images` (depan penuh, belakang punggung 1902, dada atas, logo Real Madrid bordir, dan logo Adidas Trefoil).
+- **Stok & Highlight**: Stok diset 5 per ukuran (S–XXL, total 25 pcs). Seluruh highlight (`is_featured`, `is_best_seller`, `is_new`) aktif `true`.
+- **Verifikasi & Commit**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit `01d4e45`).
+
+### Catatan & Kendala:
+- Produk otomatis muncul di katalog `/jaket`, filter Real Madrid, serta section Featured & Best Sellers di beranda.
+
+---
+
 ## 2026-11-04 (Rabu)
 
 ### Target Hari Ini:
@@ -30,6 +72,7 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
   - Customer yang verifikasi nomor order + nomor WA otomatis diberikan cookie sesi dan ditampilkan tombol langsung "Upload Bukti Transfer / Buka Invoice".
 - **`lib/rate-limit.ts`**: Mengoreksi `clientIp()` agar membaca `cf-connecting-ip` / `x-real-ip` / hop pertama `x-forwarded-for`, mencegah semua visitor terblokir kuota IP proxy yang sama.
 - **`components/order/invoice-view.tsx`**: Auto-compress canvas bertingkat (menurunkan kualitas/dimensi jika > 950 KB) sehingga foto bukti m-banking apa pun dijamin di bawah batas 1 MB.
+- **Verifikasi & Commit**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit `01d4e45`).
 - **Verifikasi & Commit**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit `6868fd3`).
 
 ### Catatan & Kendala:
