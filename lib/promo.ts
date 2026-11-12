@@ -47,19 +47,20 @@ export interface ShippingSettings {
   freeNamesetMinItems: number;
 }
 
-export function toShippingSettings(settings: Record<string, string>): ShippingSettings {
+export function toShippingSettings(settings?: Record<string, string>): ShippingSettings {
+  const safeSettings = settings || {};
   const num = (v: string | undefined, fallback: number) => {
     const n = Number(v);
     return Number.isFinite(n) && n >= 0 ? n : fallback;
   };
   return {
-    javaRate: num(settings.javaShippingCost ?? settings.peninsularShippingCost, BASE_SHIPPING_RATES.Jawa),
-    outsideJavaRate: num(settings.outsideJavaShippingCost ?? settings.eastShippingCost, BASE_SHIPPING_RATES["Luar Jawa"]),
-    freeShippingMinItems: Math.max(1, Math.floor(num(settings.freeShippingMinItems, 2))),
-    namesetFee: num(settings.namesetFee, STANDARD_NAMESET_FEE),
-    patchFee: num(settings.patchFee, STANDARD_PATCH_FEE),
-    freePatchMinItems: Math.max(2, Math.floor(num(settings.freePatchMinItems, 3))),
-    freeNamesetMinItems: Math.max(2, Math.floor(num(settings.freeNamesetMinItems, 5))),
+    javaRate: num(safeSettings.javaShippingCost ?? safeSettings.peninsularShippingCost, BASE_SHIPPING_RATES.Jawa),
+    outsideJavaRate: num(safeSettings.outsideJavaShippingCost ?? safeSettings.eastShippingCost, BASE_SHIPPING_RATES["Luar Jawa"]),
+    freeShippingMinItems: Math.max(1, Math.floor(num(safeSettings.freeShippingMinItems, 2))),
+    namesetFee: num(safeSettings.namesetFee, STANDARD_NAMESET_FEE),
+    patchFee: num(safeSettings.patchFee, STANDARD_PATCH_FEE),
+    freePatchMinItems: Math.max(2, Math.floor(num(safeSettings.freePatchMinItems, 3))),
+    freeNamesetMinItems: Math.max(2, Math.floor(num(safeSettings.freeNamesetMinItems, 5))),
   };
 }
 

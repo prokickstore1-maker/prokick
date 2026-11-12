@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
 
@@ -39,6 +40,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
         className="w-screen sm:max-w-md p-0 gap-0 bg-[#181820] border-l-white/10 text-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       >
         <SheetTitle className="sr-only">Shopping Bag</SheetTitle>
+        <SheetDescription className="sr-only">Daftar item belanjaan dan rincian diskon bundle.</SheetDescription>
         {/* Drawer Header */}
         <div className="p-5 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -99,13 +101,17 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
               >
                 {/* Thumbnail */}
                 <div className="w-20 h-20 rounded-xl bg-[#09090B] relative overflow-hidden shrink-0 border border-white/10 flex items-center justify-center">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-contain p-1.5"
-                    sizes="80px"
-                  />
+                  {item.image ? (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-contain p-1.5"
+                      sizes="80px"
+                    />
+                  ) : (
+                    <ShoppingBag className="w-6 h-6 text-zinc-600" />
+                  )}
                 </div>
 
                 {/* Details */}

@@ -102,11 +102,11 @@ export function JerseyCustomizer({
   const mainSrc = activeImage || jersey.image || "";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 text-white">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 text-white min-w-0 w-full max-w-full">
       {/* ==========================================================================
           LEFT: MULTI-ANGLE STUDIO SHOWCASE
           ========================================================================== */}
-      <div className="lg:col-span-7 space-y-4">
+      <div className="lg:col-span-7 space-y-4 min-w-0 w-full max-w-full">
         {/* Main Display Container - Studio Spotlight */}
         <div className="studio-stage relative aspect-[3/4] sm:aspect-[4/3] w-full rounded-3xl overflow-hidden border border-white/10 flex items-center justify-center p-6 sm:p-12 shadow-2xl">
           <Image
@@ -121,13 +121,13 @@ export function JerseyCustomizer({
         </div>
 
         {/* Multi-angle Gallery Thumbnail Selector */}
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0 w-full max-w-full">
           <div className="flex items-center justify-between text-xs text-zinc-400 px-1">
             <span>Product Images</span>
             <span>{gallery.length} Angles</span>
           </div>
 
-          <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-1 scrollbar-none min-w-0 w-full max-w-full">
             {gallery.map((img, idx) => {
               const isSelected = activeImage === img.url;
               return (
@@ -160,7 +160,7 @@ export function JerseyCustomizer({
       {/* ==========================================================================
           RIGHT: SPECIFICATIONS & INTERACTIVE CUSTOMIZER
           ========================================================================== */}
-      <div className="lg:col-span-5 space-y-6 pb-28 lg:pb-0">
+      <div className="lg:col-span-5 space-y-6 min-w-0 w-full max-w-full">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-white/10 text-zinc-300 border border-white/15">
@@ -391,18 +391,6 @@ export function JerseyCustomizer({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Sticky Mobile Purchase Bar */}
-      <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#09090B]/90 backdrop-blur-md p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <Button
-          onClick={handleAddToCart}
-          className={`w-full h-auto min-h-11 py-4 text-xs uppercase tracking-widest font-extrabold ${
-            isAdded ? "bg-volt text-black hover:bg-volt" : ""
-          }`}
-        >
-          {isAdded ? "Added to Bag!" : `Add to Bag · ${formatIDR(grandTotal)}`}
-        </Button>
       </div>
     </div>
   );

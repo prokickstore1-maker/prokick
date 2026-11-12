@@ -63,8 +63,8 @@ export default async function ProductDetailPage({
   const shipSettings = toShippingSettings(await getShippingSettingsMap());
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] py-8 px-4 sm:px-8 lg:px-12">
-      <div className="max-w-[1540px] mx-auto space-y-12">
+    <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] py-8 px-4 sm:px-8 lg:px-12 overflow-x-hidden">
+      <div className="max-w-[1540px] mx-auto space-y-12 min-w-0 max-w-full">
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs text-zinc-400">
           <Link href="/" className="hover:text-white transition-colors">

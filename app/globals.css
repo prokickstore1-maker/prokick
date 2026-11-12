@@ -113,11 +113,16 @@
   --color-amber-200: var(--color-volt);
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background-color: #09090B;
   color: #FAFAFA;
   font-family: var(--font-sans), sans-serif;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 

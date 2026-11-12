@@ -1,14 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useCartStore } from "@/stores/cart";
-
-// Dynamic import with ssr: false to decouple Radix Sheet & promo engine from initial page bundle
-const CartDrawerDynamic = dynamic(
-  () => import("@/components/cart/cart-drawer").then((mod) => mod.CartDrawer),
-  { ssr: false }
-);
+import { CartDrawer } from "@/components/cart/cart-drawer";
 
 export function CartDrawerWrapper({
   shippingSettings,
@@ -24,9 +18,9 @@ export function CartDrawerWrapper({
     }
   }, [isOpen]);
 
-  // Hanya mount setelah cart pertama kali dibuka — menjaga initial page load bebas dari chunk cart & radix sheet.
+  // Hanya mount setelah cart pertama kali dibuka.
   // Setelah pernah dibuka, tetap di-mount agar animasi slide-out Radix Sheet berjalan halus saat ditutup.
   if (!hasOpened) return null;
 
-  return <CartDrawerDynamic shippingSettings={shippingSettings} />;
+  return <CartDrawer shippingSettings={shippingSettings} />;
 }
