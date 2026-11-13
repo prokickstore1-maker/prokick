@@ -25,6 +25,8 @@ export async function updateStoreSettingAction(key: string, value: string) {
   });
   // unstable_cache memakai revalidateTag (updateTag hanya untuk tag "use cache"/fetch)
   revalidateTag("settings", { expire: 0 });
+  revalidatePath("/");
+  revalidatePath("/cart");
   revalidatePath("/admin/settings");
   return { success: true };
 }

@@ -17,20 +17,21 @@ import {
 export function CartDrawer({ shippingSettings }: { shippingSettings: Record<string, string> }) {
   const { items, isOpen, closeCart, updateQuantity, removeItem, shippingZone, setShippingZone } = useCartStore();
 
-  // Convert cart items to promo calculation items
+  const settings = toShippingSettings(shippingSettings);
+
+  // Convert cart items to promo calculation items (tarif nameset/patch selalu sinkron dengan settings admin)
   const promoItems = items.map((i) => ({
     id: i.id,
     name: i.name,
     price: i.price,
     quantity: i.quantity,
     hasNameset: Boolean(i.namesetName && i.namesetName.trim()),
-    namesetPrice: i.namesetPrice ?? 70000,
+    namesetPrice: settings.namesetFee,
     hasPatch: Boolean(i.patch && i.patch.trim()),
-    patchPrice: i.patchPrice ?? 35000,
+    patchPrice: settings.patchFee,
   }));
 
-  const promoResult = calculatePromoEngine(promoItems, shippingZone, toShippingSettings(shippingSettings));
-  const settings = toShippingSettings(shippingSettings);
+  const promoResult = calculatePromoEngine(promoItems, shippingZone, settings);
   const shippingFee = shippingZone === "Luar Jawa" ? settings.outsideJavaRate : settings.javaRate;
 
   return (
@@ -85,7 +86,9 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
               </div>
               <h3 className="text-base font-bold text-white mb-1">Your bag is empty</h3>
               <p className="text-xs text-zinc-400 max-w-xs mb-6">
-                Tambah {settings.freeShippingMinItems} kaos atau lebih untuk gratis ongkir ke seluruh Indonesia.
+                {settings.promoFreeShipping
+                  ? "Promo Hari Ini: Gratis ongkir ke seluruh Indonesia tanpa minimal beli!"
+                  : `Tambah ${settings.freeShippingMinItems} kaos atau lebih untuk gratis ongkir ke seluruh Indonesia.`}
               </p>
               <Button asChild className="rounded-lg px-6 h-auto py-2.5 text-xs uppercase tracking-wider font-extrabold">
                 <Link href="/jersey" onClick={closeCart}>

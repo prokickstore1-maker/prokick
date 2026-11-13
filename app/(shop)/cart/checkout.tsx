@@ -86,6 +86,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
   const [errorMessage, setErrorMessage] = useState("");
 
   const currentZone = getShippingZoneByProvince(state);
+  const parsedSettings = toShippingSettings(shippingSettings);
 
   const promoItems = items.map((i) => ({
     id: i.id,
@@ -93,13 +94,13 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
     price: i.price,
     quantity: i.quantity,
     hasNameset: Boolean(i.namesetName && i.namesetName.trim()),
-    namesetPrice: i.namesetPrice ?? 70000,
+    namesetPrice: parsedSettings.namesetFee,
     hasPatch: Boolean(i.patch && i.patch.trim()),
-    patchPrice: i.patchPrice ?? 35000,
+    patchPrice: parsedSettings.patchFee,
   }));
 
-  const promoResult = calculatePromoEngine(promoItems, currentZone, toShippingSettings(shippingSettings));
-  const shippingFeeValue = promoResult.freeShippingUnlocked ? 0 : toShippingSettings(shippingSettings)[currentZone === "Luar Jawa" ? "outsideJavaRate" : "javaRate"];
+  const promoResult = calculatePromoEngine(promoItems, currentZone, parsedSettings);
+  const shippingFeeValue = parsedSettings[currentZone === "Luar Jawa" ? "outsideJavaRate" : "javaRate"];
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();

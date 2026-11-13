@@ -35,6 +35,12 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
   const [patchFee, setPatchFee] = useState(settingMap.patchFee || "35000");
   const [freePatchItems, setFreePatchItems] = useState(settingMap.freePatchMinItems || "3");
   const [freeNamesetItems, setFreeNamesetItems] = useState(settingMap.freeNamesetMinItems || "5");
+  const [promoFreeShipping, setPromoFreeShipping] = useState(settingMap.promoFreeShipping === "1");
+  const [promoFreeNameset, setPromoFreeNameset] = useState(settingMap.promoFreeNameset === "1");
+  const [promoFreePatch, setPromoFreePatch] = useState(settingMap.promoFreePatch === "1");
+  const [promoCustomizationScope, setPromoCustomizationScope] = useState<"one" | "all">(
+    settingMap.promoCustomizationScope === "all" ? "all" : "one"
+  );
   const [sulawesiBlocked, setSulawesiBlocked] = useState(settingMap.sulawesiBlocked === "1");
   const [whatsapp, setWhatsapp] = useState(settingMap.whatsappNumber || "6281234567890");
   const [runningBanner, setRunningBanner] = useState(settingMap.runningBannerText || "");
@@ -89,13 +95,144 @@ export function SettingsForm({ initialSettings, initialBanners, initialPayments,
               await saveSetting("patchFee", patchFee);
               await saveSetting("freePatchMinItems", freePatchItems);
               await saveSetting("freeNamesetMinItems", freeNamesetItems);
+              await saveSetting("promoFreeShipping", promoFreeShipping ? "1" : "0");
+              await saveSetting("promoFreeNameset", promoFreeNameset ? "1" : "0");
+              await saveSetting("promoFreePatch", promoFreePatch ? "1" : "0");
+              await saveSetting("promoCustomizationScope", promoCustomizationScope);
               await saveSetting("runningBannerText", runningBanner.slice(0, 500));
               await saveSetting("sulawesiBlocked", sulawesiBlocked ? "1" : "0");
-              setStatus("Pengaturan Delivery & Ticker berhasil disimpan!");
+              setStatus("Pengaturan Delivery, Promo & Ticker berhasil disimpan!");
             }}
           >
-            Simpan Pengiriman
+            Simpan Pengiriman &amp; Promo
           </Button>
+        </div>
+
+        {/* Saklar Promo Harian (Event 1-Klik) */}
+        <div className="rounded-xl border border-[#E2F952]/25 bg-[#181820]/70 p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#E2F952]">
+                Saklar Promo Harian (Event 1-Klik)
+              </h3>
+              <p className="text-[11px] text-zinc-400 mt-0.5">
+                Aktifkan kapan saja untuk promo hari spesial (tanpa minimal beli / mulai 1 pcs). Saat dimatikan, otomatis kembali ke aturan Tier normal di bawah.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+            <label
+              className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
+                promoFreeShipping
+                  ? "border-[#E2F952] bg-[#E2F952]/10 text-white"
+                  : "border-[#27272A] bg-[#121217] text-zinc-300 hover:border-zinc-600"
+              }`}
+            >
+              <Checkbox
+                className="mt-0.5"
+                checked={promoFreeShipping}
+                onCheckedChange={(c) => {
+                  const on = c === true;
+                  setPromoFreeShipping(on);
+                  saveSetting("promoFreeShipping", on ? "1" : "0");
+                }}
+              />
+              <div className="space-y-0.5 min-w-0">
+                <span className="block text-xs font-bold">Hari Gratis Ongkir</span>
+                <span className="block text-[11px] text-zinc-400 leading-snug">
+                  Beli 1 item langsung Gratis Ongkir Jawa &amp; Luar Jawa.
+                </span>
+              </div>
+            </label>
+
+            <label
+              className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
+                promoFreeNameset
+                  ? "border-[#E2F952] bg-[#E2F952]/10 text-white"
+                  : "border-[#27272A] bg-[#121217] text-zinc-300 hover:border-zinc-600"
+              }`}
+            >
+              <Checkbox
+                className="mt-0.5"
+                checked={promoFreeNameset}
+                onCheckedChange={(c) => {
+                  const on = c === true;
+                  setPromoFreeNameset(on);
+                  saveSetting("promoFreeNameset", on ? "1" : "0");
+                }}
+              />
+              <div className="space-y-0.5 min-w-0">
+                <span className="block text-xs font-bold">Hari Gratis Nameset</span>
+                <span className="block text-[11px] text-zinc-400 leading-snug">
+                  Beli 1 jersey langsung Gratis Custom Nameset.
+                </span>
+              </div>
+            </label>
+
+            <label
+              className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
+                promoFreePatch
+                  ? "border-[#E2F952] bg-[#E2F952]/10 text-white"
+                  : "border-[#27272A] bg-[#121217] text-zinc-300 hover:border-zinc-600"
+              }`}
+            >
+              <Checkbox
+                className="mt-0.5"
+                checked={promoFreePatch}
+                onCheckedChange={(c) => {
+                  const on = c === true;
+                  setPromoFreePatch(on);
+                  saveSetting("promoFreePatch", on ? "1" : "0");
+                }}
+              />
+              <div className="space-y-0.5 min-w-0">
+                <span className="block text-xs font-bold">Hari Gratis Patch</span>
+                <span className="block text-[11px] text-zinc-400 leading-snug">
+                  Beli 1 jersey langsung Gratis Patch Lengan.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <div className="pt-2 border-t border-white/10 space-y-2">
+            <Label className="block text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Cakupan Diskon Gratis Nameset / Patch (Saat Promo atau Tier Terbuka)
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {(
+                [
+                  [
+                    "one",
+                    "Gratis 1 Pcs per Pesanan (Order)",
+                    "Potongan maksimal 1x Nameset & 1x Patch per transaksi checkout.",
+                  ],
+                  [
+                    "all",
+                    "Gratis Semua Kaos di Keranjang",
+                    "Seluruh kaos yang memakai Nameset / Patch di keranjang gratis 100%.",
+                  ],
+                ] as const
+              ).map(([val, title, desc]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => {
+                    setPromoCustomizationScope(val);
+                    saveSetting("promoCustomizationScope", val);
+                  }}
+                  className={`text-left p-3 rounded-lg border transition-colors cursor-pointer ${
+                    promoCustomizationScope === val
+                      ? "border-[#E2F952] bg-[#E2F952]/10 text-white"
+                      : "border-[#27272A] bg-[#121217] text-zinc-300 hover:border-zinc-600"
+                  }`}
+                >
+                  <span className="block text-xs font-bold">{title}</span>
+                  <span className="block text-[11px] text-zinc-400 mt-0.5 leading-snug">{desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">

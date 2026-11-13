@@ -26,6 +26,10 @@ interface JerseyCustomizerProps {
   namesetFee: number;
   patchFee: number;
   freeShippingMinItems?: number;
+  promoFreeShipping?: boolean;
+  promoFreeNameset?: boolean;
+  promoFreePatch?: boolean;
+  promoCustomizationScope?: "one" | "all";
 }
 
 export function JerseyCustomizer({
@@ -33,6 +37,10 @@ export function JerseyCustomizer({
   namesetFee,
   patchFee,
   freeShippingMinItems = 2,
+  promoFreeShipping = false,
+  promoFreeNameset = false,
+  promoFreePatch = false,
+  promoCustomizationScope = "one",
 }: JerseyCustomizerProps) {
   const addItem = useCartStore((state) => state.addItem);
   const jacket = isJacket(jersey);
@@ -63,10 +71,26 @@ export function JerseyCustomizer({
   const basePrice = parseFloat(jersey.price);
   // fee hanya saat nama diketik — sama dengan server (order.ts)
   const hasNameset = !jacket && enableNameset && namesetName.trim().length > 0;
-  const namesetCost = hasNameset ? namesetFee : 0;
-  const patchCost = !jacket && enablePatch ? patchFee : 0;
-  const unitTotal = basePrice + namesetCost + patchCost;
-  const grandTotal = unitTotal * quantity;
+  const rawNamesetTotal = hasNameset ? namesetFee * quantity : 0;
+  const namesetDiscountPreview =
+    promoFreeNameset && hasNameset
+      ? promoCustomizationScope === "all"
+        ? rawNamesetTotal
+        : Math.min(rawNamesetTotal, namesetFee)
+      : 0;
+  const rawPatchTotal = !jacket && enablePatch ? patchFee * quantity : 0;
+  const patchDiscountPreview =
+    promoFreePatch && !jacket && enablePatch
+      ? promoCustomizationScope === "all"
+        ? rawPatchTotal
+        : Math.min(rawPatchTotal, patchFee)
+      : 0;
+  const grandTotal =
+    basePrice * quantity + (rawNamesetTotal - namesetDiscountPreview) + (rawPatchTotal - patchDiscountPreview);
+  const unitTotal =
+    basePrice +
+    (hasNameset && !promoFreeNameset ? namesetFee : 0) +
+    (!jacket && enablePatch && !promoFreePatch ? patchFee : 0);
 
   // Available stock for selected size (undefined = no real count, show nothing)
   const stockForSelectedSize = jersey.stockData[selectedSize];
@@ -260,9 +284,16 @@ export function JerseyCustomizer({
                 />
                 <span>Custom Player Name &amp; Number</span>
               </span>
-              <span className="text-xs font-mono font-bold text-volt">
-                +{formatIDR(namesetFee)}
-              </span>
+              {promoFreeNameset ? (
+                <span className="text-xs font-mono font-bold flex items-center gap-1.5">
+                  <span className="line-through text-zinc-500 text-[10px]">+{formatIDR(namesetFee)}</span>
+                  <span className="text-emerald-400">GRATIS{promoCustomizationScope === "one" ? " (1x)" : ""}</span>
+                </span>
+              ) : (
+                <span className="text-xs font-mono font-bold text-volt">
+                  +{formatIDR(namesetFee)}
+                </span>
+              )}
             </label>
 
             {enableNameset && (
@@ -307,9 +338,16 @@ export function JerseyCustomizer({
                 />
                 <span>Sleeve Competition Patch</span>
               </span>
-              <span className="text-xs font-mono font-bold text-volt">
-                +{formatIDR(patchFee)}
-              </span>
+              {promoFreePatch ? (
+                <span className="text-xs font-mono font-bold flex items-center gap-1.5">
+                  <span className="line-through text-zinc-500 text-[10px]">+{formatIDR(patchFee)}</span>
+                  <span className="text-emerald-400">GRATIS{promoCustomizationScope === "one" ? " (1x)" : ""}</span>
+                </span>
+              ) : (
+                <span className="text-xs font-mono font-bold text-volt">
+                  +{formatIDR(patchFee)}
+                </span>
+              )}
             </label>
 
             {enablePatch && (
@@ -383,7 +421,11 @@ export function JerseyCustomizer({
           <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400 pt-2">
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <Truck className="w-4 h-4 text-volt shrink-0" />
-              <span>Free Delivery on {freeShippingMinItems}+ {jacket ? "Items" : "Kits"}</span>
+              <span>
+                {promoFreeShipping
+                  ? "Gratis Ongkir Tanpa Minimal!"
+                  : `Free Delivery on ${freeShippingMinItems}+ ${jacket ? "Items" : "Kits"}`}
+              </span>
             </div>
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <QrCode className="w-4 h-4 text-zinc-300 shrink-0" />

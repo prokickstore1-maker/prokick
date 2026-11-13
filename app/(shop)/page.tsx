@@ -104,7 +104,9 @@ export default async function HomePage() {
                 Gratis Ongkir Se-Indonesia
               </p>
               <p className="text-[11px] text-zinc-400 mt-0.5">
-                Otomatis gratis min. {ship.freeShippingMinItems} kaos (J&amp;T Express)
+                {ship.promoFreeShipping
+                  ? "Promo Hari Ini: Gratis ongkir tanpa minimal beli (J&T Express)"
+                  : `Otomatis gratis min. ${ship.freeShippingMinItems} kaos (J&T Express)`}
               </p>
             </div>
           </div>
@@ -404,7 +406,9 @@ export default async function HomePage() {
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-2 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 1 • Min. {ship.freeShippingMinItems} Kaos</span>
+                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">
+                      {ship.promoFreeShipping ? "Promo Hari Ini • Tanpa Minimal" : `Tier 1 • Min. ${ship.freeShippingMinItems} Kaos`}
+                    </span>
                     <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
                       <Truck className="w-3.5 h-3.5" />
                     </div>
@@ -413,14 +417,18 @@ export default async function HomePage() {
                   <p className="text-[11px] text-zinc-400 mt-1">Hemat {formatIDR(ship.javaRate)}–{formatIDR(ship.outsideJavaRate)} ongkir via J&amp;T ke seluruh Indonesia.</p>
                 </div>
                 <div className="pt-2 border-t border-white/6">
-                  <span className="text-[10px] font-bold text-zinc-400">Tier Pembuka</span>
+                  <span className="text-[10px] font-bold text-zinc-400">
+                    {ship.promoFreeShipping ? "Aktif Mulai 1 Item" : "Tier Pembuka"}
+                  </span>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-2 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 2 • Min. {ship.freePatchMinItems} Kaos</span>
+                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">
+                      {ship.promoFreePatch ? "Promo Hari Ini • Tanpa Minimal" : `Tier 2 • Min. ${ship.freePatchMinItems} Kaos`}
+                    </span>
                     <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
                       <Award className="w-3.5 h-3.5" />
                     </div>
@@ -430,7 +438,7 @@ export default async function HomePage() {
                 </div>
                 <div className="pt-2 border-t border-white/6">
                   <span className="inline-flex items-center text-[10px] font-extrabold text-[#E2F952]">
-                    + Tetap Gratis Ongkir
+                    {ship.promoFreePatch ? "Aktif Mulai 1 Jersey" : "+ Tetap Gratis Ongkir"}
                   </span>
                 </div>
               </div>
@@ -438,7 +446,9 @@ export default async function HomePage() {
               <div className="p-4 rounded-xl bg-white/5 border border-white/8 space-y-2 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">Tier 3 • Min. {ship.freeNamesetMinItems} Kaos</span>
+                    <span className="text-[10px] font-bold text-[#E2F952] uppercase">
+                      {ship.promoFreeNameset ? "Promo Hari Ini • Tanpa Minimal" : `Tier 3 • Min. ${ship.freeNamesetMinItems} Kaos`}
+                    </span>
                     <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
                       <Sparkles className="w-3.5 h-3.5" />
                     </div>
@@ -448,7 +458,7 @@ export default async function HomePage() {
                 </div>
                 <div className="pt-2 border-t border-white/6">
                   <span className="inline-flex items-center text-[10px] font-extrabold text-[#E2F952]">
-                    + Gratis Ongkir &amp; Patch
+                    {ship.promoFreeNameset ? "Aktif Mulai 1 Jersey" : "+ Gratis Ongkir & Patch"}
                   </span>
                 </div>
               </div>

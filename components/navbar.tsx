@@ -21,9 +21,17 @@ export function Navbar({
   shippingSettings?: Record<string, string>;
 }) {
   const freeMin = Math.max(1, Number(shippingSettings?.freeShippingMinItems) || 2);
-  const banner =
-    shippingSettings?.runningBannerText?.trim() ||
-    DEFAULT_TICKER.replace("2+", `${freeMin}+`);
+  const promoParts: string[] = [];
+  if (shippingSettings?.promoFreeShipping === "1") promoParts.push("Promo Hari Ini: Gratis Ongkir Tanpa Minimal Beli");
+  if (shippingSettings?.promoFreeNameset === "1") promoParts.push("Promo Hari Ini: Gratis Custom Nameset");
+  if (shippingSettings?.promoFreePatch === "1") promoParts.push("Promo Hari Ini: Gratis Patch Lengan");
+
+  const defaultTicker =
+    promoParts.length > 0
+      ? [...promoParts, "QRIS & e-Wallet Instan", "J&T Express"].join(" | ")
+      : `Gratis Ongkir Se-Indonesia min. ${freeMin} Kaos | QRIS & e-Wallet Instan | J&T Express`;
+
+  const banner = shippingSettings?.runningBannerText?.trim() || defaultTicker;
   // split | jadi fragmen; mobile hanya fragmen pertama
   const tickerParts = banner.split("|").map((s) => s.trim()).filter(Boolean);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

@@ -37,6 +37,8 @@ export const BASE_SHIPPING_RATES: Record<ShippingZone, number> = {
 };
 
 // Override dari settings admin; nilai uang dalam IDR
+export type PromoCustomizationScope = "one" | "all";
+
 export interface ShippingSettings {
   javaRate: number;
   outsideJavaRate: number;
@@ -45,6 +47,10 @@ export interface ShippingSettings {
   patchFee: number;
   freePatchMinItems: number;
   freeNamesetMinItems: number;
+  promoFreeShipping: boolean;
+  promoFreePatch: boolean;
+  promoFreeNameset: boolean;
+  promoCustomizationScope: PromoCustomizationScope;
 }
 
 export function toShippingSettings(settings?: Record<string, string>): ShippingSettings {
@@ -59,8 +65,12 @@ export function toShippingSettings(settings?: Record<string, string>): ShippingS
     freeShippingMinItems: Math.max(1, Math.floor(num(safeSettings.freeShippingMinItems, 2))),
     namesetFee: num(safeSettings.namesetFee, STANDARD_NAMESET_FEE),
     patchFee: num(safeSettings.patchFee, STANDARD_PATCH_FEE),
-    freePatchMinItems: Math.max(2, Math.floor(num(safeSettings.freePatchMinItems, 3))),
-    freeNamesetMinItems: Math.max(2, Math.floor(num(safeSettings.freeNamesetMinItems, 5))),
+    freePatchMinItems: Math.max(1, Math.floor(num(safeSettings.freePatchMinItems, 3))),
+    freeNamesetMinItems: Math.max(1, Math.floor(num(safeSettings.freeNamesetMinItems, 5))),
+    promoFreeShipping: safeSettings.promoFreeShipping === "1",
+    promoFreePatch: safeSettings.promoFreePatch === "1",
+    promoFreeNameset: safeSettings.promoFreeNameset === "1",
+    promoCustomizationScope: safeSettings.promoCustomizationScope === "all" ? "all" : "one",
   };
 }
 
@@ -68,7 +78,7 @@ export const STANDARD_NAMESET_FEE = 70000;
 export const STANDARD_PATCH_FEE = 35000;
 
 /**
- * Pure deterministic calculation function for cart bundle promotions
+ * Pure deterministic calculation function for cart bundle & daily event promotions
  */
 export function calculatePromoEngine(
   items: PromoItem[],
@@ -98,54 +108,81 @@ export function calculatePromoEngine(
     : BASE_SHIPPING_RATES;
   const baseShipping = rates[zone] ?? BASE_SHIPPING_RATES.Jawa;
 
-  // Tier 1: Buy N+ (default 2, diatur admin) -> Free Nationwide Shipping
-  const freeShippingMin = settings?.freeShippingMinItems ?? 2;
-  const freeShippingUnlocked = totalQuantity >= freeShippingMin;
+  const scope: PromoCustomizationScope = settings?.promoCustomizationScope ?? "one";
+
+  // Effective minimum items (1 if daily promo toggle is ON, otherwise tier setting)
+  const freeShippingMin = settings?.promoFreeShipping ? 1 : (settings?.freeShippingMinItems ?? 2);
+  const freePatchMin = settings?.promoFreePatch ? 1 : (settings?.freePatchMinItems ?? 3);
+  const freeNamesetMin = settings?.promoFreeNameset ? 1 : (settings?.freeNamesetMinItems ?? 5);
+
+  // 1. Free Shipping Calculation
+  const freeShippingUnlocked = totalQuantity > 0 && totalQuantity >= freeShippingMin;
   const shippingDiscount = freeShippingUnlocked ? baseShipping : 0;
   const shippingCost = freeShippingUnlocked ? 0 : baseShipping;
 
-  // Tier 2: Buy N+ (default 3, diatur admin) -> Free Sleeve Patch (up to standard patch fee)
-  const freePatchMin = settings?.freePatchMinItems ?? 3;
-  const freePatchUnlocked = totalQuantity >= freePatchMin;
-  const patchDiscount = freePatchUnlocked ? Math.min(totalPatchCost, patchFee) : 0;
+  // 2. Free Patch Calculation (never exceeds actual patch cost; respects "one" vs "all" scope)
+  const freePatchUnlocked = totalQuantity > 0 && totalQuantity >= freePatchMin;
+  const maxPatchCoverage = scope === "all" ? totalPatchCost : patchFee;
+  const patchDiscount = freePatchUnlocked ? Math.min(totalPatchCost, maxPatchCoverage) : 0;
 
-  // Tier 3: Buy N+ (default 5, diatur admin) -> Free Nameset
-  const freeNamesetMin = settings?.freeNamesetMinItems ?? 5;
-  const freeNamesetUnlocked = totalQuantity >= freeNamesetMin;
-  const namesetDiscount = freeNamesetUnlocked ? Math.min(totalNamesetCost, namesetFee) : 0;
+  // 3. Free Nameset Calculation (never exceeds actual nameset cost; respects "one" vs "all" scope)
+  const freeNamesetUnlocked = totalQuantity > 0 && totalQuantity >= freeNamesetMin;
+  const maxNamesetCoverage = scope === "all" ? totalNamesetCost : namesetFee;
+  const namesetDiscount = freeNamesetUnlocked ? Math.min(totalNamesetCost, maxNamesetCoverage) : 0;
+
   const bonusJerseyUnlocked = false;
   const bonusJerseyDiscount = 0;
 
   const totalDiscount = shippingDiscount + patchDiscount + namesetDiscount + bonusJerseyDiscount;
-  const grandTotal = Math.max(0, rawSubtotal + customizationTotal + shippingCost - patchDiscount - namesetDiscount - bonusJerseyDiscount);
+  const grandTotal = Math.max(
+    0,
+    rawSubtotal + customizationTotal + shippingCost - patchDiscount - namesetDiscount - bonusJerseyDiscount
+  );
 
-  // Concrete, Direct Messaging (Anti-Slop)
+  // Dynamic, collision-free tier & promo messaging (handles any combination of toggles & thresholds)
+  const tiers = [
+    { key: "shipping", min: freeShippingMin, unlocked: freeShippingUnlocked, label: "Gratis Ongkir", askLabel: "gratis ongkir J&T" },
+    { key: "patch", min: freePatchMin, unlocked: freePatchUnlocked, label: "Gratis Patch", askLabel: "gratis patch lengan" },
+    { key: "nameset", min: freeNamesetMin, unlocked: freeNamesetUnlocked, label: "Gratis Nameset", askLabel: "gratis custom nameset" },
+  ];
+
+  const maxTargetMin = Math.max(1, freeShippingMin, freePatchMin, freeNamesetMin);
+  const unlockedLabels = tiers.filter((t) => t.unlocked).map((t) => t.label);
+  const pendingTiers = tiers.filter((t) => !t.unlocked).sort((a, b) => a.min - b.min);
+
   let nextTierMessage = "";
   let progressPercent = 0;
   let promoBadgeText = "Standard Order";
 
   if (totalQuantity === 0) {
-    nextTierMessage = `Add jerseys to activate volume discounts.`;
+    const activeEventLabels: string[] = [];
+    if (settings?.promoFreeShipping) activeEventLabels.push("Gratis Ongkir");
+    if (settings?.promoFreeNameset) activeEventLabels.push("Gratis Nameset");
+    if (settings?.promoFreePatch) activeEventLabels.push("Gratis Patch");
+
+    if (activeEventLabels.length > 0) {
+      nextTierMessage = `Promo Hari Ini Aktif: ${activeEventLabels.join(" + ")} tanpa minimal beli!`;
+    } else {
+      nextTierMessage = `Tambah produk ke keranjang untuk mengaktifkan promo gratis ongkir & kustomisasi.`;
+    }
     progressPercent = 0;
-  } else if (totalQuantity < freeShippingMin) {
-    const needed = freeShippingMin - totalQuantity;
-    nextTierMessage = `Add ${needed} more jersey${needed > 1 ? "s" : ""} for free J&T delivery.`;
-    progressPercent = Math.round((totalQuantity / freeShippingMin) * 50);
-    promoBadgeText = `${totalQuantity} Jersey${totalQuantity > 1 ? "s" : ""}`;
-  } else if (totalQuantity < freePatchMin) {
-    const needed = freePatchMin - totalQuantity;
-    nextTierMessage = `Add ${needed} more jersey${needed > 1 ? "s" : ""} for a free sleeve patch.`;
-    progressPercent = Math.round((totalQuantity / freePatchMin) * 75);
-    promoBadgeText = "Free Shipping Active";
-  } else if (totalQuantity < freeNamesetMin) {
-    const needed = freeNamesetMin - totalQuantity;
-    nextTierMessage = `Add ${needed} more jersey${needed > 1 ? "s" : ""} for a free custom nameset.`;
-    progressPercent = Math.round((totalQuantity / freeNamesetMin) * 95);
-    promoBadgeText = "Free Shipping + Patch Active";
+  } else if (pendingTiers.length > 0) {
+    const nextTarget = pendingTiers[0];
+    const needed = nextTarget.min - totalQuantity;
+    // Kelompokkan semua benefit yang terbuka di angka min yang sama
+    const sameStepLabels = pendingTiers
+      .filter((t) => t.min === nextTarget.min)
+      .map((t) => t.askLabel)
+      .join(" & ");
+
+    const prefix = unlockedLabels.length > 0 ? `${unlockedLabels.join(" + ")} aktif! ` : "";
+    nextTierMessage = `${prefix}Tambah ${needed} item lagi untuk ${sameStepLabels}.`;
+    progressPercent = Math.min(95, Math.max(15, Math.round((totalQuantity / maxTargetMin) * 100)));
+    promoBadgeText = unlockedLabels.length > 0 ? `${unlockedLabels.join(" + ")} Aktif` : `${totalQuantity} Item`;
   } else {
-    nextTierMessage = "All volume discounts active: free delivery, free sleeve patch, and free nameset.";
+    nextTierMessage = "Semua promo aktif: Gratis Ongkir, Gratis Patch, dan Gratis Custom Nameset!";
     progressPercent = 100;
-    promoBadgeText = "All Discounts Active";
+    promoBadgeText = "Semua Promo Aktif";
   }
 
   return {

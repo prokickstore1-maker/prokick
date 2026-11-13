@@ -228,10 +228,27 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
     })
     .join("\n\n");
 
+  const totalCustomizationCost = order.items.reduce((sum, item) => {
+    const ns = item.namesetName ? Number(item.namesetPrice || 0) * item.quantity : 0;
+    const pt = item.patch ? Number(item.patchPrice || 0) * item.quantity : 0;
+    return sum + ns + pt;
+  }, 0);
+  const rawGrossTotal = Number(order.subtotal) + totalCustomizationCost + Number(order.shippingCost);
+  const promoDiscountAmount = Math.max(0, Math.round(rawGrossTotal - Number(order.totalAmount)));
+
   const shippingCostText = Number(order.shippingCost) === 0 ? "GRATIS ONGKIR" : formatIDR(order.shippingCost);
   const paymentStatusNote = uploadSuccess
     ? "✅ Bukti pembayaran sudah saya unggah di halaman invoice. Mohon segera diverifikasi & diproses ya min!"
     : "Saya sudah melakukan pemesanan dan ingin konfirmasi pembayaran/pengiriman.";
+
+  const paymentSummaryLines = [
+    `• Subtotal Produk: ${formatIDR(order.subtotal)}`,
+    ...(totalCustomizationCost > 0 ? [`• Biaya Kustomisasi: ${formatIDR(totalCustomizationCost)}`] : []),
+    ...(promoDiscountAmount > 0 ? [`• Diskon Promo: -${formatIDR(promoDiscountAmount)}`] : []),
+    `• Ongkir: ${shippingCostText}`,
+    `• *Total Tagihan: ${formatIDR(order.totalAmount)}*`,
+    `• Metode Bayar: ${order.paymentMethodLabel || "Transfer / QRIS"}`,
+  ];
 
   const fullOrderChatText = [
     `Halo Admin *ProKick*, saya ingin konfirmasi pesanan saya:`,
@@ -250,10 +267,7 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
     itemsSummaryText,
     ``,
     `💰 *RINCIAN PEMBAYARAN*`,
-    `• Subtotal: ${formatIDR(order.subtotal)}`,
-    `• Ongkir: ${shippingCostText}`,
-    `• *Total Tagihan: ${formatIDR(order.totalAmount)}*`,
-    `• Metode Bayar: ${order.paymentMethodLabel || "Transfer / QRIS"}`,
+    ...paymentSummaryLines,
     ``,
     paymentStatusNote,
   ].join("\n");
@@ -597,6 +611,36 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Ringkasan Tagihan di Invoice */}
+        <div className="pt-3 border-t border-white/10 space-y-1.5 text-xs">
+          <div className="flex justify-between text-zinc-400">
+            <span>Subtotal Produk</span>
+            <span className="font-mono text-white font-semibold">{formatIDR(order.subtotal)}</span>
+          </div>
+          {totalCustomizationCost > 0 && (
+            <div className="flex justify-between text-zinc-400">
+              <span>Biaya Kustomisasi (Nameset / Patch)</span>
+              <span className="font-mono text-white font-semibold">{formatIDR(totalCustomizationCost)}</span>
+            </div>
+          )}
+          {promoDiscountAmount > 0 && (
+            <div className="flex justify-between text-emerald-400 font-semibold">
+              <span>Diskon Promo (Nameset / Patch)</span>
+              <span className="font-mono">-{formatIDR(promoDiscountAmount)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-zinc-400">
+            <span>Ongkos Kirim ({order.shippingZone})</span>
+            <span className={`font-mono font-semibold ${Number(order.shippingCost) === 0 ? "text-emerald-400" : "text-white"}`}>
+              {shippingCostText}
+            </span>
+          </div>
+          <div className="pt-2 border-t border-white/10 flex justify-between items-baseline">
+            <span className="font-bold text-white uppercase font-display">Total Tagihan</span>
+            <span className="text-base font-black text-white font-mono">{formatIDR(order.totalAmount)}</span>
+          </div>
         </div>
 
         <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-zinc-400 gap-2">
