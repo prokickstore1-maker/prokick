@@ -5,6 +5,22 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 
 ---
 
+## 2026-11-13 (Jumat)
+
+### Target Hari Ini:
+- [x] Perbaiki format pesan konfirmasi WhatsApp & Telegram di halaman Invoice (`components/order/invoice-view.tsx`) agar memuat rincian pesanan lengkap (No. Order, Status, Data Penerima, Alamat Pengiriman, Daftar Produk + Ukuran/Qty/Nameset/Patch, Subtotal, Ongkir, Total Tagihan, dan Metode Pembayaran) seperti format Clover/Steps.
+- [x] Hentikan pengiriman notifikasi Telegram pada order mentah yang belum dibayar di `createOrderAction` (`app/actions/order.ts`), sehingga bot Telegram hanya mengirim notifikasi saat pembeli sudah mengunggah bukti transfer di `uploadReceiptAction`.
+
+### Pekerjaan Selesai & Ringkasan Teknis:
+- **[`components/order/invoice-view.tsx`](file:///d:/project%20web/PROKICK%20MY/components/order/invoice-view.tsx)**: Mengganti pesan WhatsApp 1 kalimat singkat (`waHelpMessage` & `tgHelpMessage`) dengan generator rekapan pesanan lengkap yang menampilkan detail pesanan, penerima, alamat, daftar produk beserta opsi kustomisasi (nameset & patch), rincian pembayaran (subtotal, ongkir, total tagihan, metode bayar), serta catatan dinamis apakah bukti pembayaran sudah diunggah.
+- **[`app/actions/order.ts`](file:///d:/project%20web/PROKICK%20MY/app/actions/order.ts)**: Mencabut pemanggilan `sendTelegramNotification` dari `createOrderAction` (`NEW_ORDER`) sehingga notifikasi ke bot Telegram admin hanya dikirim ketika pembeli benar-benar mengunggah bukti pembayaran (`uploadReceiptAction` / `PAYMENT_PROOF`).
+- **Verifikasi**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit: `9524563`).
+
+### Prioritas Sesi Berikutnya:
+- Konfirmasi commit & push ke repository jika sudah siap rilis ke produksi.
+
+---
+
 ## 2026-11-06 (Jumat)
 
 ### Target Hari Ini:

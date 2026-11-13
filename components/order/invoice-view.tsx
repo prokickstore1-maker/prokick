@@ -206,12 +206,60 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
     Boolean(order.paymentQrImageUrl) ||
     Boolean(order.paymentMethodLabel?.toLowerCase().includes("qr"));
 
-  const waHelpMessage = encodeURIComponent(
-    `Halo ProKick, saya memesan #${order.orderNumber} dengan total Rp${order.totalAmount}. Saya ingin bertanya tentang pembayaran/pengiriman.`
-  );
-  const tgHelpMessage = encodeURIComponent(
-    `Halo ProKick, saya memesan #${order.orderNumber} dengan total Rp${order.totalAmount}. Saya ingin bertanya tentang pembayaran/pengiriman.`
-  );
+  const itemsSummaryText = order.items
+    .map((item, idx) => {
+      const lines = [
+        `${idx + 1}. *${item.name}*`,
+        `   • Ukuran: ${item.size} (${item.quantity} pcs) — ${formatIDR(item.unitPrice)}`,
+      ];
+      if (item.namesetName) {
+        lines.push(
+          `   • Nameset: ${item.namesetName} #${item.namesetNumber || "0"}${
+            Number(item.namesetPrice) > 0 ? ` (+${formatIDR(item.namesetPrice || 0)})` : ""
+          }`
+        );
+      }
+      if (item.patch) {
+        lines.push(
+          `   • Patch: ${item.patch}${Number(item.patchPrice) > 0 ? ` (+${formatIDR(item.patchPrice || 0)})` : ""}`
+        );
+      }
+      return lines.join("\n");
+    })
+    .join("\n\n");
+
+  const shippingCostText = Number(order.shippingCost) === 0 ? "GRATIS ONGKIR" : formatIDR(order.shippingCost);
+  const paymentStatusNote = uploadSuccess
+    ? "✅ Bukti pembayaran sudah saya unggah di halaman invoice. Mohon segera diverifikasi & diproses ya min!"
+    : "Saya sudah melakukan pemesanan dan ingin konfirmasi pembayaran/pengiriman.";
+
+  const fullOrderChatText = [
+    `Halo Admin *ProKick*, saya ingin konfirmasi pesanan saya:`,
+    ``,
+    `📋 *DETAIL PESANAN*`,
+    `• No. Order: *#${order.orderNumber}*`,
+    `• Status: ${uploadSuccess ? "Sudah Upload Bukti Bayar (Menunggu Verifikasi)" : statusLabel}`,
+    ``,
+    `👤 *DATA PENERIMA*`,
+    `• Nama: ${order.customerName}`,
+    `• WhatsApp: ${order.customerPhone}`,
+    `• Zona Kirim: ${order.shippingZone}`,
+    `• Alamat: ${order.customerAddress}`,
+    ``,
+    `🛒 *RINCIAN PRODUK*`,
+    itemsSummaryText,
+    ``,
+    `💰 *RINCIAN PEMBAYARAN*`,
+    `• Subtotal: ${formatIDR(order.subtotal)}`,
+    `• Ongkir: ${shippingCostText}`,
+    `• *Total Tagihan: ${formatIDR(order.totalAmount)}*`,
+    `• Metode Bayar: ${order.paymentMethodLabel || "Transfer / QRIS"}`,
+    ``,
+    paymentStatusNote,
+  ].join("\n");
+
+  const waHelpMessage = encodeURIComponent(fullOrderChatText);
+  const tgHelpMessage = encodeURIComponent(fullOrderChatText.replace(/\*/g, ""));
   // tombol chat sesuai pilihan admin: wa | telegram | both; telegram disembunyikan kalau username kosong
   const showWa = (chatButtons === "wa" || chatButtons === "both") && Boolean(waNumber);
   const showTg = (chatButtons === "telegram" || chatButtons === "both") && Boolean(telegramUsername);

@@ -1,6 +1,10 @@
-# HANDOFF — PROKICK Indonesia (Update: 2026-11-06)
+# HANDOFF — PROKICK Indonesia (Update: 2026-11-13)
 
 ## 1. Status Terbaru Sistem
+- **Update 2026-11-13 (Format Konfirmasi WhatsApp Lengkap & Filter Notifikasi Telegram)**:
+  1. **Format Pesan Konfirmasi WhatsApp & Telegram di Invoice**: Di [`components/order/invoice-view.tsx`](file:///d:/project%20web/PROKICK%20MY/components/order/invoice-view.tsx), pesan chat ke admin diperbarui menjadi rekapan pesanan lengkap (No. Order, Status Pembayaran, Data Penerima, Alamat Pengiriman, Daftar Produk beserta Ukuran/Qty/Nameset/Patch, Subtotal, Ongkir, Total Tagihan, dan Metode Pembayaran) seperti format Clover/Steps.
+  2. **Notifikasi Bot Telegram Khusus Bukti Bayar**: Di [`app/actions/order.ts`](file:///d:/project%20web/PROKICK%20MY/app/actions/order.ts), pemanggilan `sendTelegramNotification` pada `createOrderAction` dicabut sehingga bot Telegram tidak lagi mengirim notifikasi untuk order mentah yang belum dibayar, dan **hanya** mengirim notifikasi saat pembeli telah mengunggah bukti transfer di `uploadReceiptAction`.
+  3. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Commit `9524563`).
 - **Update 2026-11-06 (Featured Collection, Pembatasan Pengiriman Sulawesi, Perbaikan Upload Admin & UI Mobile)**:
   1. **Featured Collection Beranda**: Menambahkan fungsi `getFeaturedItems(limit = 8)` di [`lib/data.ts`](file:///d:/project%20web/PROKICK%20MY/lib/data.ts) yang mengambil produk `is_featured = true` lintas lini (`Jersey` maupun `Jaket`) diurutkan berdasarkan `updatedAt DESC`, dan menampilkan section **Featured Collection** tepat di atas **Best Sellers** di [`app/(shop)/page.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/page.tsx) (Commit `0e3c29b`).
   2. **Pembatasan Pengiriman Sulawesi (Keputusan Ditutup & Aktif)**: Sesuai instruksi, pembeli dari seluruh Pulau Sulawesi (Sulawesi Selatan, Utara, Tengah, Barat, Tenggara, & Gorontalo) tetap bisa mengisi alamat & memilih provinsi. Saat submit order, muncul pesan pembatasan pengiriman disertai tombol WhatsApp resmi admin (+628881658229) dengan pesan otomatis. Proteksi server-side aktif via setting `sulawesiBlocked = '1'` di DB produksi (Commit `8747d38`).

@@ -214,24 +214,8 @@ export async function createOrderAction(input: CreateOrderInput) {
       console.warn("grantOrderAccess warning:", e);
     }
 
-    // Kirim notifikasi Telegram untuk pesanan baru masuk (background)
-    sendTelegramNotification({
-      orderNumber: newOrder.orderNumber,
-      customerName: newOrder.customerName,
-      customerPhone: newOrder.customerPhone,
-      customerAddress: newOrder.customerAddress,
-      shippingZone: newOrder.shippingZone,
-      items: newOrder.items.map((i) => ({
-        name: i.name,
-        size: i.size,
-        quantity: i.quantity,
-        nameset: i.namesetName ? `${i.namesetName} #${i.namesetNumber || "0"}` : undefined,
-        patch: i.patch || undefined,
-      })),
-      totalAmount: `Rp ${Number(newOrder.totalAmount).toLocaleString("id-ID")}`,
-      paymentMethod: `${method.label} (Menunggu Pembayaran)`,
-      notificationType: "NEW_ORDER",
-    }).catch((err) => console.error("Telegram new order notification failed:", err));
+    // Catatan: Notifikasi Telegram HANYA dikirim saat pembeli mengunggah bukti bayar di uploadReceiptAction
+    // agar bot tidak mengirim notifikasi untuk order yang belum dibayar.
 
     return {
       success: true,
