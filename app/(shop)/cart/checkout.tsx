@@ -189,13 +189,13 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
           <ShoppingBag className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-black text-white font-display uppercase mb-2">
-          Your Shopping Bag is Empty
+          Keranjang Belanja Masih Kosong
         </h2>
         <p className="text-xs text-zinc-400 max-w-sm mb-6">
           Pesan {freeMin} kaos atau lebih dapat gratis ongkir ke seluruh Indonesia.
         </p>
         <Button asChild className="rounded-lg px-7 h-auto py-3 text-xs uppercase tracking-wider font-extrabold">
-          <Link href="/jersey">Shop Kits</Link>
+          <Link href="/jersey">Lihat Katalog</Link>
         </Button>
       </div>
     );
@@ -205,8 +205,8 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] py-8 sm:py-12 px-4 sm:px-8 lg:px-12">
       <div className="max-w-[1280px] mx-auto space-y-8">
         {/* Page Title */}
-        <div className="border-b border-white/10 pb-4">
-          <div className="flex items-center gap-2 mb-1.5 text-xs text-zinc-400">
+        <div className="border-b border-white/10 pb-4 space-y-2">
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
             <span className="font-bold text-white uppercase tracking-wider">
               Checkout
             </span>
@@ -214,8 +214,11 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
             <span>Pengiriman ke seluruh Indonesia</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white font-display uppercase tracking-tight">
-            Shipping &amp; Payment
+            Pengiriman &amp; Pembayaran
           </h1>
+          <p className="text-xs text-zinc-400">
+            <strong className="text-volt">Alur Pemesanan:</strong> 1. Isi alamat penerima → 2. Pilih QRIS atau Transfer Bank → 3. Klik <strong className="text-white">Buat Pesanan &amp; Bayar</strong> lalu upload bukti transfer.
+          </p>
         </div>
 
         {errorMessage && (
@@ -264,7 +267,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="customerName" className="text-sm font-bold text-zinc-300">
-                    Full Recipient Name *
+                    Nama Lengkap Penerima *
                   </Label>
                   <Input
                     id="customerName"
@@ -272,14 +275,14 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                     required
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="e.g. Budi Santoso"
+                    placeholder="Contoh: Budi Santoso"
                     className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium resize-none"
                   />
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="customerPhone" className="text-sm font-bold text-zinc-300">
-                    Active WhatsApp Mobile Number *
+                    Nomor WhatsApp Aktif *
                   </Label>
                   <Input
                     id="customerPhone"
@@ -287,14 +290,14 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                     required
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="e.g. 0812-3456-7890"
+                    placeholder="Contoh: 0812-3456-7890"
                     className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="streetAddress" className="text-sm font-bold text-zinc-300">
-                    Street Address / House / Unit No. *
+                    Alamat Lengkap (Jalan, No. Rumah, RT/RW) *
                   </Label>
                   <Textarea
                     id="streetAddress"
@@ -302,7 +305,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                     required
                     value={streetAddress}
                     onChange={(e) => setStreetAddress(e.target.value)}
-                    placeholder="e.g. Jl. Kemang Raya No. 25"
+                    placeholder="Contoh: Jl. Kemang Raya No. 25, RT 02/RW 05"
                     className="w-full px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
                   />
                 </div>
@@ -317,7 +320,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                     required
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="e.g. Jakarta Selatan"
+                    placeholder="Contoh: Jakarta Selatan"
                     className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-medium"
                   />
                 </div>
@@ -333,7 +336,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                     maxLength={5}
                     value={postcode}
                     onChange={(e) => setPostcode(e.target.value)}
-                    placeholder="e.g. 40000"
+                    placeholder="Contoh: 12730"
                     className="w-full h-auto px-4 py-3 rounded-xl bg-[#09090B] border-white/15 text-sm text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-medium"
                   />
                 </div>
@@ -372,7 +375,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
 
             {/* 2. Payment Method Card */}
             <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-6">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-4">
                 <h2 className="text-base font-bold text-white font-display uppercase tracking-wide flex items-center gap-2">
                   <QrCode className="w-4 h-4 text-volt" />
                   <span>2. Pilih Metode Pembayaran</span>
@@ -449,7 +452,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                                 <div className="mt-3 pt-3 border-t border-white/10 text-[11px] text-zinc-300 flex items-center gap-2">
                                   <span className="w-1.5 h-1.5 rounded-full bg-volt shrink-0 animate-pulse" />
                                   <span>
-                                    Barcode QRIS akan langsung tampil di invoice setelah Anda klik <strong>Place Order</strong>.
+                                    Barcode QRIS akan langsung tampil di halaman invoice setelah Anda klik <strong>Buat Pesanan &amp; Bayar</strong>.
                                   </span>
                                 </div>
                               )}
@@ -535,9 +538,9 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
           <div className="lg:col-span-5 space-y-6">
             <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-6 sm:p-8 bg-[#121217] border-white/10 space-y-5 sticky top-24">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <h3 className="font-bold text-white text-base font-display uppercase tracking-wider">Order Summary</h3>
+                <h3 className="font-bold text-white text-base font-display uppercase tracking-wider">Ringkasan Pesanan</h3>
                 <span className="text-xs font-mono text-zinc-300 font-bold">
-                  {promoResult.totalQuantity} {promoResult.totalQuantity === 1 ? "Kit" : "Kits"}
+                  {promoResult.totalQuantity} Item
                 </span>
               </div>
 
@@ -551,7 +554,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-white truncate font-display">{item.name}</h4>
                       <p className="text-[11px] text-zinc-400">
-                        Size: <strong className="text-white font-mono">{item.size}</strong> &times; {item.quantity}
+                        Ukuran: <strong className="text-white font-mono">{item.size}</strong> &times; {item.quantity}
                       </p>
                       {item.namesetName && (
                         <p className="text-[10px] text-zinc-400 font-semibold">
@@ -585,7 +588,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
               <div className="p-4 rounded-xl bg-[#09090B] border border-white/8 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-zinc-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                    Promotions &amp; Delivery
+                    Promo &amp; Pengiriman
                   </span>
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-white/10 text-white border border-white/10">
                     {promoResult.promoBadgeText}
@@ -605,22 +608,22 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
               {/* Financial Breakdown */}
               <div className="space-y-2 text-xs pt-2 border-t border-white/10">
                 <div className="flex justify-between text-zinc-400">
-                  <span>Subtotal</span>
+                  <span>Subtotal Produk</span>
                   <span className="font-mono text-white font-semibold">{formatIDR(promoResult.rawSubtotal)}</span>
                 </div>
 
                 {promoResult.customizationTotal > 0 && (
                   <div className="flex justify-between text-zinc-400">
-                    <span>Customization (Nameset/Patch)</span>
+                    <span>Biaya Sablon (Nameset/Patch)</span>
                     <span className="font-mono text-white font-semibold">{formatIDR(promoResult.customizationTotal)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center text-zinc-400">
-                  <span>Shipping ({currentZone})</span>
+                  <span>Ongkos Kirim ({currentZone})</span>
                   {promoResult.freeShippingUnlocked ? (
                     <span className="font-mono font-bold text-emerald-400 flex items-center gap-1.5">
-                      <span>FREE</span>
+                      <span>GRATIS</span>
                       <span className="line-through text-zinc-400 text-[10px]">
                         {formatIDR(shippingFeeValue)}
                       </span>
@@ -634,21 +637,21 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
 
                 {promoResult.patchDiscount > 0 && (
                   <div className="flex justify-between text-zinc-300 font-medium">
-                    <span>Bundle Promo (Free Patch)</span>
+                    <span>Promo Gratis Patch</span>
                     <span className="font-mono">-{formatIDR(promoResult.patchDiscount)}</span>
                   </div>
                 )}
 
                 {promoResult.namesetDiscount > 0 && (
                   <div className="flex justify-between text-zinc-300 font-medium">
-                    <span>Bundle Promo (Free Nameset)</span>
+                    <span>Promo Gratis Nameset</span>
                     <span className="font-mono">-{formatIDR(promoResult.namesetDiscount)}</span>
                   </div>
                 )}
 
                 <div className="pt-3 border-t border-white/10 flex justify-between items-baseline">
                   <div>
-                    <span className="text-sm font-bold text-white uppercase font-display">Grand Total</span>
+                    <span className="text-sm font-bold text-white uppercase font-display">Total Bayar</span>
                     <p className="text-[10px] text-zinc-400">Rupiah (IDR)</p>
                   </div>
                   <span className="text-2xl font-black text-white font-mono">
@@ -666,11 +669,11 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing Order...</span>
+                    <span>Memproses Pesanan...</span>
                   </>
                 ) : (
                   <>
-                    <span>Confirm &amp; Pay ({formatIDR(promoResult.grandTotal)})</span>
+                    <span>Buat Pesanan &amp; Bayar ({formatIDR(promoResult.grandTotal)})</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -678,7 +681,7 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
 
               <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-400 pt-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Checkout via QRIS &bull; J&amp;T Tracked Delivery</span>
+                <span>Pembayaran QRIS / Transfer Bank &bull; Kirim via J&amp;T Express</span>
               </div>
             </div>
           </div>

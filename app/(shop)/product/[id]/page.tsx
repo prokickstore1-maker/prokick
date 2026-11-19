@@ -66,16 +66,16 @@ export default async function ProductDetailPage({
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] py-8 px-4 sm:px-8 lg:px-12 overflow-x-hidden">
       <div className="max-w-[1540px] mx-auto space-y-12 min-w-0 max-w-full">
         {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs text-zinc-400">
-          <Link href="/" className="hover:text-white transition-colors">
+        <nav className="flex items-center gap-2 text-xs text-zinc-400 min-w-0">
+          <Link href="/" className="hover:text-white transition-colors shrink-0">
             Home
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
-          <Link href={listHref} className="hover:text-white transition-colors">
+          <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+          <Link href={listHref} className="hover:text-white transition-colors shrink-0">
             {jacket ? "Jaket" : "Kits"}
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
-          <span className="text-zinc-200 font-semibold truncate max-w-xs">{jersey.name}</span>
+          <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+          <span className="text-zinc-200 font-semibold truncate min-w-0 flex-1">{jersey.name}</span>
         </nav>
 
         {/* Product Customizer Section */}
@@ -96,10 +96,10 @@ export default async function ProductDetailPage({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-volt block mb-1">
-                  More from this collection
+                  Pilihan Lainnya
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black text-white font-display uppercase tracking-tight">
-                  Related Kits
+                  Produk Serupa
                 </h2>
               </div>
               <Link

@@ -1,6 +1,13 @@
-# HANDOFF — PROKICK Indonesia (Update: 2026-11-13)
+# HANDOFF — PROKICK Indonesia (Update: 2026-11-19)
 
 ## 1. Status Terbaru Sistem
+- **Update 2026-11-19 (Lokalisasi Bahasa Indonesia & Perbaikan Alur Checkout Pelanggan)**:
+  1. **Halaman Produk (`components/jersey/jersey-customizer.tsx`, `app/(shop)/product/[id]/page.tsx`)**: Seluruh label berbahasa Inggris diterjemahkan ke Bahasa Indonesia (`Pilih Ukuran`, `Tersedia ... pcs`, `Sablon & Patch (Opsional)`, `Produk Serupa`). Ditambahkan tombol **`Beli Sekarang • Rp...`** (langsung menuju `/cart`) berdampingan dengan **`+ Keranjang`**, serta panduan 3 langkah **Cara Pesan**.
+  2. **Cart Drawer (`components/cart/cart-drawer.tsx`)**: Seluruh label diubah ke Bahasa Indonesia (`Keranjang Belanja`, `Ongkos Kirim`, `GRATIS`, `Lanjut ke Pembayaran`).
+  3. **Halaman Checkout (`app/(shop)/cart/checkout.tsx`)**: Seluruh form & ringkasan order (`Nama Lengkap Penerima`, `Nomor WhatsApp Aktif`, `Alamat Lengkap`, `Ringkasan Pesanan`, `Total Bayar`, `Buat Pesanan & Bayar`) beserta panduan alur checkout diubah ke Bahasa Indonesia.
+  4. **Promo & Panduan Ukuran (`lib/promo.ts`, `components/jersey/size-guide-modal.tsx`)**: Badge `Standard Order` diubah menjadi `Pesanan Reguler` dan header tabel ukuran jaket diterjemahkan.
+  5. **Perbaikan Overlap Mobile 320px (`components/jersey/jersey-customizer.tsx`, `components/jersey/jersey-card.tsx`, `components/order/invoice-view.tsx`, `app/(shop)/product/[id]/page.tsx`)**: Grid ukuran berubah ke `grid-cols-3 min-[380px]:grid-cols-5`, baris qty & tombol keranjang dibuat `flex-wrap`, badge kartu produk di HP dirampingkan agar tidak menutup foto, dan kotak nominal invoice dibuat `flex-wrap`.
+  6. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Commit `4882bbe`).
 - **Update 2026-11-13 (Saklar Promo Harian 1-Klik di Admin, Cakupan Diskon Opsi 3, Format WA Lengkap & Filter Notifikasi Telegram)**:
   1. **Format Pesan Konfirmasi WhatsApp & Telegram di Invoice**: Di [`components/order/invoice-view.tsx`](file:///d:/project%20web/PROKICK%20MY/components/order/invoice-view.tsx), pesan chat ke admin diperbarui menjadi rekapan pesanan lengkap (No. Order, Status Pembayaran, Data Penerima, Alamat Pengiriman, Daftar Produk beserta Ukuran/Qty/Nameset/Patch, Subtotal, Biaya Kustomisasi, Diskon Promo, Ongkir, Total Tagihan, dan Metode Pembayaran) seperti format Clover/Steps.
   2. **Notifikasi Bot Telegram Khusus Bukti Bayar**: Di [`app/actions/order.ts`](file:///d:/project%20web/PROKICK%20MY/app/actions/order.ts), pemanggilan `sendTelegramNotification` pada `createOrderAction` dicabut sehingga bot Telegram tidak lagi mengirim notifikasi untuk order mentah yang belum dibayar, dan **hanya** mengirim notifikasi saat pembeli telah mengunggah bukti transfer di `uploadReceiptAction` (Commit `51b10e8`).

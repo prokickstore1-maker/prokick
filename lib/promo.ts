@@ -152,7 +152,7 @@ export function calculatePromoEngine(
 
   let nextTierMessage = "";
   let progressPercent = 0;
-  let promoBadgeText = "Standard Order";
+  let promoBadgeText = "Pesanan Reguler";
 
   if (totalQuantity === 0) {
     const activeEventLabels: string[] = [];

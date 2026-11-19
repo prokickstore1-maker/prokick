@@ -77,21 +77,21 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
           )}
 
           {/* Top-Left Authentic Tag */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 z-10 max-w-[calc(100%-16px)]">
             {isJacket(jersey) ? (
-              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
+              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25 truncate">
                 {jersey.kitType}
               </span>
             ) : isRetro ? (
-              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
+              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25 truncate">
                 Retro{retroYear ? ` '${retroYear}` : ""}
               </span>
             ) : isPlayerIssue ? (
-              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
+              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25 truncate">
                 Player Issue
               </span>
             ) : jersey.isBestSeller ? (
-              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25">
+              <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 rounded-lg bg-black/80 text-zinc-100 border border-white/25 truncate">
                 Best Seller
               </span>
             ) : null}
@@ -100,37 +100,37 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
           {/* Quick Add Button — hanya saat tepat satu ukuran berstok */}
           {soldOut ? (
             <span
-              className="absolute bottom-3 right-3 min-h-11 px-3 py-1.5 rounded-full font-bold text-xs flex items-center bg-zinc-800 text-zinc-400 border border-white/10 z-10"
-              aria-label="Sold out"
+              className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 sm:min-h-11 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold text-[10px] sm:text-xs flex items-center bg-zinc-800 text-zinc-400 border border-white/10 z-10"
+              aria-label="Stok habis"
             >
-              Sold Out
+              Habis
             </span>
           ) : canQuickAdd ? (
             <button
               onClick={handleQuickAdd}
-              className={`absolute bottom-3 right-3 min-w-11 min-h-11 p-2 sm:px-3 sm:py-1.5 rounded-full font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer z-10 ${
+              className={`absolute bottom-2 right-2 sm:bottom-3 sm:right-3 min-w-9 min-h-9 sm:min-w-11 sm:min-h-11 p-1.5 sm:px-3 sm:py-1.5 rounded-full font-bold text-[10px] sm:text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer z-10 ${
                 justAdded
                   ? "bg-volt text-black"
                   : "bg-white text-black hover:bg-zinc-200 active:scale-95 opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
               }`}
-              title="Quick add to bag"
-              aria-label="Quick add to bag"
+              title="Tambah ke keranjang"
+              aria-label="Tambah ke keranjang"
             >
               {justAdded ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline text-[11px] font-bold">Added</span>
+                  <span className="hidden sm:inline text-[11px] font-bold">Masuk</span>
                 </>
               ) : (
                 <>
                   <Plus className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline text-[11px] font-bold">Add</span>
+                  <span className="hidden sm:inline text-[11px] font-bold">Tambah</span>
                 </>
               )}
             </button>
           ) : (
             <span
-              className="absolute bottom-3 right-3 min-h-11 px-3 py-1.5 rounded-full font-bold text-xs flex items-center bg-zinc-800 text-zinc-300 border border-white/10 z-10"
+              className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 sm:min-h-11 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold text-[10px] sm:text-xs flex items-center bg-zinc-800/95 text-zinc-300 border border-white/10 z-10"
               title="Pilih ukuran di halaman produk"
             >
               Pilih Ukuran
@@ -140,7 +140,7 @@ export function JerseyCard({ jersey, priority }: JerseyCardProps) {
       </Link>
 
       {/* Card Info Area */}
-      <div className="p-3.5 sm:p-4 space-y-1.5 flex flex-col justify-between flex-1">
+      <div className="p-2.5 sm:p-4 space-y-1.5 flex flex-col justify-between flex-1 min-w-0">
         <div>
           <div className="flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
             <span className="truncate">{jersey.league}</span>

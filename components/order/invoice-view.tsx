@@ -345,10 +345,10 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
           </div>
 
           {/* Exact Amount to Pay Box */}
-          <div className="p-4 rounded-xl bg-[#09090B] border border-white/10 flex items-center justify-between">
-            <div>
+          <div className="p-4 rounded-xl bg-[#09090B] border border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
               <span className="text-[10px] text-zinc-400 uppercase font-bold block">Jumlah yang Harus Dibayar</span>
-              <span className="text-2xl font-black text-white font-mono">
+              <span className="text-xl sm:text-2xl font-black text-white font-mono">
                 {formatIDR(order.totalAmount)}
               </span>
             </div>
@@ -585,9 +585,9 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
           {order.items.map((item, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between p-3.5 rounded-xl bg-[#09090B] border border-white/8 text-xs"
+              className="flex items-start justify-between gap-3 p-3.5 rounded-xl bg-[#09090B] border border-white/8 text-xs"
             >
-              <div className="space-y-0.5">
+              <div className="space-y-0.5 min-w-0 flex-1">
                 <span className="font-bold text-white font-display">{item.name}</span>
                 <div className="flex items-center gap-2 text-zinc-400 text-[11px]">
                   <span>Ukuran: <strong className="text-white font-mono">{item.size}</strong></span>

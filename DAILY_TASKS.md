@@ -5,6 +5,31 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 
 ---
 
+## 2026-11-19 (Kamis)
+
+### Target Hari Ini:
+- [x] Terjemahkan seluruh teks halaman pelanggan (PDP, Cart Drawer, Checkout, Size Guide, & Promo Engine) ke Bahasa Indonesia yang jelas dan mudah dipahami pembeli.
+- [x] Tambahkan tombol **Beli Sekarang (Langsung ke Checkout)** serta panduan 3 langkah **Cara Pesan** di halaman detail produk (`components/jersey/jersey-customizer.tsx`) dan panduan alur checkout di `app/(shop)/cart/checkout.tsx`.
+- [x] Perbaikan tata letak responsif layar **mobile 320px** agar tidak ada elemen tumpang-tindih (overlap) pada halaman produk, kartu katalog, checkout, dan invoice.
+
+### Pekerjaan Selesai & Ringkasan Teknis:
+- **[`components/jersey/jersey-customizer.tsx`](file:///d:/project%20web/PROKICK%20MY/components/jersey/jersey-customizer.tsx) & [`app/(shop)/product/[id]/page.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/product/%5Bid%5D/page.tsx)**:
+  - Mengubah seluruh label bahasa Inggris (`Select Size`, `In Stock`, `Official Customization`, `Custom Player Name & Number`, `Sleeve Competition Patch`, `Related Kits`) menjadi Bahasa Indonesia (`Pilih Ukuran`, `Tersedia`, `Sablon & Patch (Opsional)`, `Produk Serupa`).
+  - Memecah CTA menjadi dua tombol yang akrab dengan pembeli Indonesia: **`+ Keranjang`** dan **`Beli Sekarang • Rp...`** (langsung menuju halaman `/cart` tanpa tersangkut di drawer), dilengkapi kotak panduan singkat **Cara Pesan** 3 langkah.
+- **[`components/cart/cart-drawer.tsx`](file:///d:/project%20web/PROKICK%20MY/components/cart/cart-drawer.tsx)**: Mengubah seluruh teks laci keranjang (`Shopping Bag`, `Matchday Bundle Tier`, `Shipping Fee`, `FREE`, `Proceed to Checkout`, dll.) ke Bahasa Indonesia (`Keranjang Belanja`, `Info Promo & Gratis Ongkir`, `Ongkos Kirim`, `GRATIS`, `Lanjut ke Pembayaran`).
+- **[`app/(shop)/cart/checkout.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/cart/checkout.tsx)**: Mengubah label formulir pengiriman (`Full Recipient Name`, `Active WhatsApp Mobile Number`, `Street Address`), `Order Summary`, `Grand Total`, dan `Confirm & Pay` ke Bahasa Indonesia lengkap dengan panduan alur pemesanan di bagian atas halaman.
+- **[`lib/promo.ts`](file:///d:/project%20web/PROKICK%20MY/lib/promo.ts) & [`components/jersey/size-guide-modal.tsx`](file:///d:/project%20web/PROKICK%20MY/components/jersey/size-guide-modal.tsx)**: Mengubah badge `Standard Order` menjadi `Pesanan Reguler` serta header tabel panduan ukuran jaket menjadi Bahasa Indonesia.
+- **Perbaikan Overlap Mobile 320px**:
+  - **[`components/jersey/jersey-customizer.tsx`](file:///d:/project%20web/PROKICK%20MY/components/jersey/jersey-customizer.tsx) & [`app/(shop)/product/[id]/page.tsx`](file:///d:/project%20web/PROKICK%20MY/app/%28shop%29/product/%5Bid%5D/page.tsx)**: Mengubah grid ukuran menjadi `grid-cols-3 min-[380px]:grid-cols-5`, menambahkan `flex-wrap` pada baris toggle nameset/patch serta baris qty + `+ Keranjang`, mengubah value highlight ke `grid-cols-1 min-[360px]:grid-cols-2`, dan memperbaiki `truncate min-w-0 flex-1` pada breadcrumb.
+  - **[`components/jersey/jersey-card.tsx`](file:///d:/project%20web/PROKICK%20MY/components/jersey/jersey-card.tsx)**: Mengecilkan badge `Pilih Ukuran` / `Habis` / `+` di mode HP agar tidak menutupi foto jersey dan tidak bertumpuk dengan tag kiri-atas, serta menerjemahkan `Sold Out` → `Habis`.
+  - **[`components/order/invoice-view.tsx`](file:///d:/project%20web/PROKICK%20MY/components/order/invoice-view.tsx)**: Menambahkan `flex-wrap gap-3` pada kotak nominal bayar + tombol `Salin Nominal` dan `min-w-0 flex-1` pada rincian item agar tidak bertabrakan di layar 320px.
+- **Verifikasi**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit: `4882bbe`).
+
+### Prioritas Sesi Berikutnya:
+- Konfirmasi commit & push ke repository jika sudah siap rilis ke produksi.
+
+---
+
 ## 2026-11-13 (Jumat)
 
 ### Target Hari Ini:

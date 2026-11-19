@@ -40,15 +40,15 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
         side="right"
         className="w-screen sm:max-w-md p-0 gap-0 bg-[#181820] border-l-white/10 text-white pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       >
-        <SheetTitle className="sr-only">Shopping Bag</SheetTitle>
-        <SheetDescription className="sr-only">Daftar item belanjaan dan rincian diskon bundle.</SheetDescription>
+        <SheetTitle className="sr-only">Keranjang Belanja</SheetTitle>
+        <SheetDescription className="sr-only">Daftar item belanjaan dan rincian diskon promo.</SheetDescription>
         {/* Drawer Header */}
         <div className="p-5 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <ShoppingBag className="w-5 h-5 text-volt" />
-            <span className="text-base font-black text-white font-display uppercase tracking-tight">Shopping Bag</span>
+            <span className="text-base font-black text-white font-display uppercase tracking-tight">Keranjang Belanja</span>
             <span className="px-2 py-0.5 rounded-lg bg-white/10 text-zinc-300 text-xs font-mono font-bold border border-white/10">
-              {promoResult.totalQuantity} {promoResult.totalQuantity === 1 ? "Kit" : "Kits"}
+              {promoResult.totalQuantity} Item
             </span>
           </div>
         </div>
@@ -57,10 +57,10 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
         <div className="px-5 py-4 bg-[#181820] border-b border-white/10">
           <div className="flex items-center justify-between text-xs mb-2">
             <span className="font-bold text-volt uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                          Matchday Bundle Tier
+              Info Promo &amp; Gratis Ongkir
             </span>
             <span className="font-mono text-[11px] text-zinc-400 font-semibold">
-              {promoResult.totalQuantity}/{settings.freeNamesetMinItems} Kits
+              {promoResult.totalQuantity}/{settings.freeNamesetMinItems} Item
             </span>
           </div>
 
@@ -84,7 +84,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
               <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 mb-4">
                 <ShoppingBag className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-bold text-white mb-1">Your bag is empty</h3>
+              <h3 className="text-base font-bold text-white mb-1">Keranjang masih kosong</h3>
               <p className="text-xs text-zinc-400 max-w-xs mb-6">
                 {settings.promoFreeShipping
                   ? "Promo Hari Ini: Gratis ongkir ke seluruh Indonesia tanpa minimal beli!"
@@ -92,7 +92,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
               </p>
               <Button asChild className="rounded-lg px-6 h-auto py-2.5 text-xs uppercase tracking-wider font-extrabold">
                 <Link href="/jersey" onClick={closeCart}>
-                  Shop Kits
+                  Lihat Katalog
                 </Link>
               </Button>
             </div>
@@ -132,7 +132,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
 
                   <div className="flex items-center gap-2 mt-1">
                     <span className="px-2 py-0.5 rounded bg-white/5 text-[10px] font-mono text-zinc-300 border border-white/10">
-                      Size: <strong className="text-white">{item.size}</strong>
+                      Ukuran: <strong className="text-white">{item.size}</strong>
                     </span>
                     <span className="font-mono text-xs font-bold text-white">
                       {formatIDR(item.price)}
@@ -159,12 +159,12 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
 
                   {/* Quantity controls */}
                   <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-white/6">
-                    <span className="text-[11px] text-zinc-400">Qty</span>
+                    <span className="text-[11px] text-zinc-400">Jumlah</span>
                     <div className="flex items-center gap-1 bg-[#09090B] rounded-lg px-1 py-0.5 border border-white/10">
                       <button
                         onClick={() => updateQuantity(item.id, -1)}
                         className="min-w-8 min-h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                        aria-label="Decrease quantity"
+                        aria-label="Kurangi jumlah"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
@@ -174,7 +174,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
                       <button
                         onClick={() => updateQuantity(item.id, 1)}
                         className="min-w-8 min-h-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                        aria-label="Increase quantity"
+                        aria-label="Tambah jumlah"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -223,22 +223,22 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
             {/* Price Breakdown */}
             <div className="space-y-1.5 text-xs pt-2 border-t border-white/10">
               <div className="flex justify-between text-zinc-400">
-                <span>Subtotal</span>
+                <span>Subtotal Produk</span>
                 <span className="font-mono text-white font-semibold">{formatIDR(promoResult.rawSubtotal)}</span>
               </div>
 
               {promoResult.customizationTotal > 0 && (
                 <div className="flex justify-between text-zinc-400">
-                  <span>Customization (Nameset/Patch)</span>
+                  <span>Biaya Sablon (Nameset/Patch)</span>
                   <span className="font-mono text-white font-semibold">{formatIDR(promoResult.customizationTotal)}</span>
                 </div>
               )}
 
               <div className="flex justify-between items-center text-zinc-400">
-                <span>Shipping Fee</span>
+                <span>Ongkos Kirim</span>
                 {promoResult.freeShippingUnlocked ? (
                   <span className="font-mono font-bold text-emerald-400 flex items-center gap-1.5">
-                    <span>FREE</span>
+                    <span>GRATIS</span>
                     <span className="line-through text-zinc-400 text-[10px]">
                       {formatIDR(shippingFee)}
                     </span>
@@ -251,23 +251,23 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
               </div>
 
               {promoResult.patchDiscount > 0 && (
-                <div className="flex justify-between text-zinc-300 font-medium">
-                  <span>Bundle Promo (Free Patch)</span>
+                <div className="flex justify-between text-emerald-400 font-medium">
+                  <span>Promo Gratis Patch</span>
                   <span className="font-mono">-{formatIDR(promoResult.patchDiscount)}</span>
                 </div>
               )}
 
               {promoResult.namesetDiscount > 0 && (
-                <div className="flex justify-between text-zinc-300 font-medium">
-                  <span>Bundle Promo (Free Nameset)</span>
+                <div className="flex justify-between text-emerald-400 font-medium">
+                  <span>Promo Gratis Nameset</span>
                   <span className="font-mono">-{formatIDR(promoResult.namesetDiscount)}</span>
                 </div>
               )}
 
               <div className="pt-2 border-t border-white/10 flex justify-between items-baseline">
                 <div>
-                  <span className="text-sm font-bold text-white uppercase font-display">Total</span>
-                  <p className="text-[10px] text-zinc-400">All discounts applied</p>
+                  <span className="text-sm font-bold text-white uppercase font-display">Total Bayar</span>
+                  <p className="text-[10px] text-zinc-400">Diskon promo otomatis diterapkan</p>
                 </div>
                 <span className="text-xl font-black text-white font-mono">
                   {formatIDR(promoResult.grandTotal)}
@@ -278,7 +278,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
             {/* Checkout CTA Button */}
             <Button asChild className="w-full h-auto min-h-11 rounded-full px-4 py-3.5 text-xs font-extrabold uppercase tracking-wider shadow-lg">
               <Link href="/cart" onClick={closeCart}>
-                <span>Proceed to Checkout</span>
+                <span>Lanjut ke Pembayaran</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>

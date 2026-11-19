@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ShoppingBag, Truck, Check, QrCode } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ShoppingBag, Truck, Check, QrCode, ArrowRight } from "lucide-react";
 import { formatIDR } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart";
 import { NormalizedJersey } from "@/lib/data";
@@ -42,7 +43,9 @@ export function JerseyCustomizer({
   promoFreePatch = false,
   promoCustomizationScope = "one",
 }: JerseyCustomizerProps) {
+  const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
+  const closeCart = useCartStore((state) => state.closeCart);
   const jacket = isJacket(jersey);
 
   // Size Selection — default ke ukuran pertama yang berstok (konsisten jersey-card)
@@ -96,24 +99,32 @@ export function JerseyCustomizer({
   const stockForSelectedSize = jersey.stockData[selectedSize];
   const maxQty = stockForSelectedSize !== undefined ? Math.min(10, stockForSelectedSize) : 10;
 
+  const buildCartPayload = () => ({
+    jerseyId: jersey.id,
+    name: jersey.name,
+    team: jersey.team,
+    league: jersey.league,
+    price: basePrice,
+    image: jersey.image || activeImage,
+    size: selectedSize,
+    quantity,
+    namesetName: hasNameset ? namesetName.toUpperCase().trim() : undefined,
+    namesetNumber: hasNameset ? namesetNumber.trim() : undefined,
+    namesetPrice: hasNameset ? namesetFee : 0,
+    patch: !jacket && enablePatch ? selectedPatch : undefined,
+    patchPrice: !jacket && enablePatch ? patchFee : 0,
+  });
+
   const handleAddToCart = () => {
-    addItem({
-      jerseyId: jersey.id,
-      name: jersey.name,
-      team: jersey.team,
-      league: jersey.league,
-      price: basePrice,
-      image: jersey.image || activeImage,
-      size: selectedSize,
-      quantity,
-      namesetName: hasNameset ? namesetName.toUpperCase().trim() : undefined,
-      namesetNumber: hasNameset ? namesetNumber.trim() : undefined,
-      namesetPrice: hasNameset ? namesetFee : 0,
-      patch: !jacket && enablePatch ? selectedPatch : undefined,
-      patchPrice: !jacket && enablePatch ? patchFee : 0,
-    });
+    addItem(buildCartPayload());
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
+  };
+
+  const handleBuyNow = () => {
+    addItem(buildCartPayload());
+    closeCart();
+    router.push("/cart");
   };
 
   const gallery =
@@ -221,18 +232,18 @@ export function JerseyCustomizer({
         {/* 1. Size Selector */}
         <div className="space-y-3 pt-4 border-t border-white/10">
           <div className="flex flex-wrap justify-between items-center gap-2 text-xs">
-            <span className="font-bold text-white uppercase tracking-wider font-display">Select Size:</span>
+            <span className="font-bold text-white uppercase tracking-wider font-display">Pilih Ukuran:</span>
             <div className="flex flex-wrap items-center gap-3">
               {stockForSelectedSize !== undefined && (
                 <span className="text-volt font-mono text-xs font-semibold">
-                  {stockForSelectedSize} In Stock ({selectedSize})
+                  Tersedia {stockForSelectedSize} pcs ({selectedSize})
                 </span>
               )}
               <SizeGuideModal isJacket={jacket} />
             </div>
           </div>
 
-          <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
+          <div className="grid grid-cols-3 min-[380px]:grid-cols-5 gap-2 sm:gap-2.5">
             {jersey.sizes.map((size) => {
               const stock = jersey.stockData[size];
               const isSelected = selectedSize === size;
@@ -253,7 +264,7 @@ export function JerseyCustomizer({
                 >
                   <span className="text-sm font-black">{size}</span>
                   <span className={`text-[9px] ${isSelected ? "text-zinc-700 font-bold" : "text-zinc-400"}`}>
-                    {isOutOfStock ? "Out" : stock !== undefined ? `${stock} left` : ""}
+                    {isOutOfStock ? "Habis" : stock !== undefined ? `Sisa ${stock}` : ""}
                   </span>
                 </button>
               );
@@ -266,31 +277,32 @@ export function JerseyCustomizer({
         <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-4 sm:p-5 bg-[#121217] border-white/10 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 font-display">
-              <span>Official Customization</span>
+              <span>Sablon &amp; Patch (Opsional)</span>
             </span>
             <span className="text-[10px] text-volt font-bold bg-volt/10 px-2 py-0.5 rounded-lg border border-volt/20">
-              Free with Bundle Tiers
+              Bisa Gratis Sesuai Promo
             </span>
           </div>
 
           {/* Nameset Toggle */}
           <div className="space-y-2.5 pt-1">
-            <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-xs text-zinc-200 font-semibold flex items-center gap-2">
+            <label className="flex flex-wrap items-center justify-between gap-2 cursor-pointer">
+              <span className="text-xs text-zinc-200 font-semibold flex items-center gap-2 min-w-0">
                 <Checkbox
                   checked={enableNameset}
                   onCheckedChange={(checked) => setEnableNameset(checked === true)}
-                  aria-label="Add custom player name and number"
+                  aria-label="Tambah custom nama dan nomor punggung"
+                  className="shrink-0"
                 />
-                <span>Custom Player Name &amp; Number</span>
+                <span className="leading-snug">Custom Nama &amp; Nomor Punggung</span>
               </span>
               {promoFreeNameset ? (
-                <span className="text-xs font-mono font-bold flex items-center gap-1.5">
+                <span className="text-xs font-mono font-bold flex items-center gap-1.5 shrink-0">
                   <span className="line-through text-zinc-500 text-[10px]">+{formatIDR(namesetFee)}</span>
                   <span className="text-emerald-400">GRATIS{promoCustomizationScope === "one" ? " (1x)" : ""}</span>
                 </span>
               ) : (
-                <span className="text-xs font-mono font-bold text-volt">
+                <span className="text-xs font-mono font-bold text-volt shrink-0">
                   +{formatIDR(namesetFee)}
                 </span>
               )}
@@ -299,19 +311,19 @@ export function JerseyCustomizer({
             {enableNameset && (
               <div className="grid grid-cols-3 gap-2 pl-6 pt-1">
                 <div className="col-span-2">
-                  <Label htmlFor="nameset-name" className="sr-only">Player name</Label>
+                  <Label htmlFor="nameset-name" className="sr-only">Nama Punggung</Label>
                   <Input
                     id="nameset-name"
                     type="text"
                     maxLength={12}
                     value={namesetName}
                     onChange={(e) => setNamesetName(e.target.value.toUpperCase())}
-                    placeholder="NAME (E.G. BELLINGHAM)"
+                    placeholder="NAMA (CONTOH: BELLINGHAM)"
                     className="w-full h-auto px-3 py-2 rounded-xl bg-[#09090B] border-white/15 text-xs text-white uppercase placeholder:text-zinc-400 focus-visible:border-volt font-mono font-bold"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="nameset-number" className="sr-only">Squad number</Label>
+                  <Label htmlFor="nameset-number" className="sr-only">Nomor Punggung</Label>
                   <Input
                     id="nameset-number"
                     type="number"
@@ -329,22 +341,23 @@ export function JerseyCustomizer({
 
           {/* Sleeve Patch Toggle */}
           <div className="space-y-2.5 pt-2 border-t border-white/8">
-            <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-xs text-zinc-200 font-semibold flex items-center gap-2">
+            <label className="flex flex-wrap items-center justify-between gap-2 cursor-pointer">
+              <span className="text-xs text-zinc-200 font-semibold flex items-center gap-2 min-w-0">
                 <Checkbox
                   checked={enablePatch}
                   onCheckedChange={(checked) => setEnablePatch(checked === true)}
-                  aria-label="Add sleeve competition patch"
+                  aria-label="Tambah patch lengan"
+                  className="shrink-0"
                 />
-                <span>Sleeve Competition Patch</span>
+                <span className="leading-snug">Patch Lengan (UCL / Liga)</span>
               </span>
               {promoFreePatch ? (
-                <span className="text-xs font-mono font-bold flex items-center gap-1.5">
+                <span className="text-xs font-mono font-bold flex items-center gap-1.5 shrink-0">
                   <span className="line-through text-zinc-500 text-[10px]">+{formatIDR(patchFee)}</span>
                   <span className="text-emerald-400">GRATIS{promoCustomizationScope === "one" ? " (1x)" : ""}</span>
                 </span>
               ) : (
-                <span className="text-xs font-mono font-bold text-volt">
+                <span className="text-xs font-mono font-bold text-volt shrink-0">
                   +{formatIDR(patchFee)}
                 </span>
               )}
@@ -372,13 +385,14 @@ export function JerseyCustomizer({
 
         {/* 3. Action Buttons & Quantity */}
         <div className="space-y-3 pt-2">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap min-[360px]:flex-nowrap items-center gap-2.5">
             {/* Quantity Selector */}
-            <div className="flex items-center bg-[#121217] border border-white/10 rounded-xl px-3.5 py-2.5 gap-3">
+            <div className="flex items-center bg-[#121217] border border-white/10 rounded-xl px-2 sm:px-3.5 py-1.5 sm:py-2 gap-1.5 sm:gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="min-w-11 min-h-11 flex items-center justify-center text-zinc-400 hover:text-white font-bold text-sm cursor-pointer"
+                className="min-w-9 min-h-9 sm:min-w-10 sm:min-h-10 flex items-center justify-center text-zinc-400 hover:text-white font-bold text-sm cursor-pointer"
+                aria-label="Kurangi jumlah"
               >
                 -
               </button>
@@ -388,48 +402,66 @@ export function JerseyCustomizer({
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
-                className="min-w-11 min-h-11 flex items-center justify-center text-zinc-400 hover:text-white font-bold text-sm cursor-pointer"
+                className="min-w-9 min-h-9 sm:min-w-10 sm:min-h-10 flex items-center justify-center text-zinc-400 hover:text-white font-bold text-sm cursor-pointer"
+                aria-label="Tambah jumlah"
               >
                 +
               </button>
             </div>
 
-            {/* Add to Cart CTA */}
+            {/* Tambah ke Keranjang */}
             <Button
+              type="button"
+              variant="outline"
               onClick={handleAddToCart}
-              className={`flex flex-1 h-auto py-4 px-4 sm:px-6 rounded-full text-xs uppercase tracking-wider font-bold shadow-lg ${
-                isAdded
-                  ? "bg-volt text-black hover:bg-volt scale-[1.01]"
-                  : ""
+              className={`flex-1 min-w-[140px] h-auto py-3.5 sm:py-4 px-3 sm:px-4 rounded-full text-xs uppercase tracking-wider font-bold border-white/20 bg-[#121217] text-white hover:bg-white/10 hover:text-white ${
+                isAdded ? "border-volt text-volt" : ""
               }`}
             >
               {isAdded ? (
                 <>
-                  <Check className="w-4 h-4" />
-                  <span>Added to Bag!</span>
+                  <Check className="w-4 h-4 shrink-0" />
+                  <span>Masuk Keranjang!</span>
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Bag: {formatIDR(grandTotal)}</span>
+                  <ShoppingBag className="w-4 h-4 shrink-0" />
+                  <span>+ Keranjang</span>
                 </>
               )}
             </Button>
           </div>
 
+          {/* Beli Sekarang (Langsung ke Halaman Checkout) */}
+          <Button
+            type="button"
+            onClick={handleBuyNow}
+            className="w-full h-auto py-4 px-4 sm:px-6 rounded-full text-xs uppercase tracking-wider font-black shadow-lg"
+          >
+            <span>Beli Sekarang • {formatIDR(grandTotal)}</span>
+            <ArrowRight className="w-4 h-4 shrink-0" />
+          </Button>
+
+          {/* Panduan singkat 3 langkah cara pesan */}
+          <div className="rounded-xl bg-[#121217] border border-white/10 p-3 text-[11px] text-zinc-300 leading-relaxed">
+            <span className="font-bold text-volt">Cara Pesan:</span> 1. Pilih ukuran → 2. Klik{" "}
+            <strong className="text-white">Beli Sekarang</strong> (atau{" "}
+            <strong className="text-white">+ Keranjang</strong> jika ingin tambah item lain) → 3. Isi alamat &amp; bayar via QRIS/Transfer.
+          </div>
+
           {/* Value Highlights */}
-          <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400 pt-2">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-2 text-xs text-zinc-400 pt-1">
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <Truck className="w-4 h-4 text-volt shrink-0" />
               <span>
                 {promoFreeShipping
                   ? "Gratis Ongkir Tanpa Minimal!"
-                  : `Free Delivery on ${freeShippingMinItems}+ ${jacket ? "Items" : "Kits"}`}
+                  : `Gratis Ongkir Min. ${freeShippingMinItems} ${jacket ? "Item" : "Kaos"}`}
               </span>
             </div>
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#121217] border border-white/8">
               <QrCode className="w-4 h-4 text-zinc-300 shrink-0" />
-              <span>QRIS</span>
+              <span>QRIS &amp; Transfer Bank</span>
             </div>
           </div>
         </div>

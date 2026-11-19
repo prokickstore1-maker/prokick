@@ -41,11 +41,11 @@ export function SizeGuideModal({ isJacket = false }: { isJacket?: boolean }) {
             <table className="w-full text-sm text-left border-collapse border border-white/10">
               <thead className="bg-[#1a1a1a] text-white font-bold uppercase tracking-wider text-[10px] sm:text-xs">
                 <tr>
-                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Size</th>
-                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Length</th>
-                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Bust</th>
-                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Height</th>
-                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Weight</th>
+                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Ukuran</th>
+                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Panjang (cm)</th>
+                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Lingkar Dada (cm)</th>
+                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Tinggi (cm)</th>
+                  <th className="px-2 py-2.5 sm:px-4 sm:py-3 border border-white/10 text-center">Berat (kg)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10 text-[10px] sm:text-xs font-mono">
