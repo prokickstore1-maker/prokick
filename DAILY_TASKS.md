@@ -10,11 +10,13 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 ### Target Hari Ini:
 - [x] Buka akses `/api/img/` di `app/robots.ts` agar foto produk dapat dibaca langsung oleh AI agent, crawler, dan preview OpenGraph tanpa terblokir aturan `disallow: "/api/"`.
 - [x] Tambahkan header `Access-Control-Allow-Origin: *` pada `app/api/img/[...key]/route.ts` untuk foto produk publik.
+- [x] Arahkan seluruh URL foto katalog & galeri produk ke jalur `/api/img/products/...` di `lib/data.ts` (`toProxyProductImageUrl`) dan aktifkan `images.unoptimized: true` di `next.config.ts` agar `<img src>` langsung memakai `/api/img/` (`image/jpeg` / `image/webp`) tanpa perlu upload ulang produk.
 
 ### Pekerjaan Selesai & Ringkasan Teknis:
 - **[`app/robots.ts`](file:///d:/project%20web/PROKICK%20MY/app/robots.ts)**: Mengubah `allow: "/"` menjadi `allow: ["/", "/api/img/"]` sehingga seluruh foto produk (`/api/img/products/...`) tidak lagi terblokir oleh aturan `disallow: "/api/"`.
 - **[`app/api/img/[...key]/route.ts`](file:///d:/project%20web/PROKICK%20MY/app/api/img/%5B...key%5D/route.ts)**: Menambahkan header `"Access-Control-Allow-Origin": "*"` pada response gambar produk (baik dari S3 client maupun fallback endpoint).
-- **Verifikasi**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit: `c1added`).
+- **[`lib/data.ts`](file:///d:/project%20web/PROKICK%20MY/lib/data.ts) & [`next.config.ts`](file:///d:/project%20web/PROKICK%20MY/next.config.ts)**: Menambahkan `toProxyProductImageUrl()` di `normalizeJerseyRow()` untuk mengonversi seluruh URL S3 `is3.cloudhost.id/prokick/products/...` ke `/api/img/products/...` secara otomatis tanpa migrasi/upload ulang DB, serta menyetel `images.unoptimized: true` di `next.config.ts` agar `<img src>` tidak dibungkus `/_next/image` (AVIF).
+- **Verifikasi**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commits: `60ca847`, `bec92a1`); uji langsung 5 URL `/api/img/products/...` di produksi mengembalikan HTTP `200 OK` dengan `Content-Type: image/jpeg` dan `image/webp`.
 
 ### Prioritas Sesi Berikutnya:
 - Konfirmasi commit & push ke repository jika sudah siap rilis ke produksi.

@@ -61,14 +61,26 @@ async function loadImages(jerseyIds: string[]): Promise<Map<string, string[]>> {
   return map;
 }
 
+// Konversi URL foto S3/relatif ke jalur proxy /api/img/products/... agar konsisten & dapat diakses langsung
+function toProxyProductImageUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("/api/img/")) return url;
+  if (url.startsWith("products/")) return `/api/img/${url}`;
+  const match = url.match(/\/(?:[^/]+\/)?(products\/[\w.\-/]+)$/);
+  if (match) return `/api/img/${match[1]}`;
+  return url;
+}
+
 // Normalisasi row → shape seragam (sizes/stockData JSON parse + fallback field).
 // gallery diisi hanya oleh getJerseyById — listing kartu cukup primary image.
 function normalizeJerseyRow(r: JerseyRow, gallery?: { url: string }[]): NormalizedJersey {
-  const images = gallery?.length ? gallery : undefined;
+  const images = gallery?.length
+    ? gallery.map((g) => ({ url: toProxyProductImageUrl(g.url) }))
+    : undefined;
   return {
     ...r,
     productLine: r.productLine || PRODUCT_LINE_JERSEY,
-    image: images?.[0]?.url || r.image,
+    image: toProxyProductImageUrl(images?.[0]?.url || r.image),
     images,
     sizes: typeof r.sizes === "string" ? JSON.parse(r.sizes) : (r.sizes || []),
     stockData: typeof r.stockData === "string" ? JSON.parse(r.stockData) : (r.stockData || {}),

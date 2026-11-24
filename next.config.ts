@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "6mb" },
   },
   images: {
+    // Nonaktifkan sementara optimasi /_next/image (AVIF) agar <img src> langsung memakai /api/img/ (JPEG/WebP)
+    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days cache for optimized images
     remotePatterns: [
