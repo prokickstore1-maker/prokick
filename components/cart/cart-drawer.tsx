@@ -60,7 +60,7 @@ export function CartDrawer({ shippingSettings }: { shippingSettings: Record<stri
               Info Promo &amp; Gratis Ongkir
             </span>
             <span className="font-mono text-[11px] text-zinc-400 font-semibold">
-              {promoResult.totalQuantity}/{settings.freeNamesetMinItems} Item
+              {promoResult.promoBadgeText}
             </span>
           </div>
 

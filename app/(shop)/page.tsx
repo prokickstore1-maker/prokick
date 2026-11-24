@@ -80,7 +80,7 @@ export default async function HomePage() {
               { label: "Barcelona", q: "Barcelona" },
               { label: "Man United", q: "Manchester United" },
               { label: "Tim Nasional", href: "/jersey?category=Tim+Nasional" },
-              { label: "Retro Vintage", href: "/jersey?edition=Vintage" },
+              { label: "Retro Klasik", href: "/jersey?type=Retro" },
             ].map((chip) => (
               <Link
                 key={chip.label}
@@ -92,6 +92,28 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        {/* 2b. Featured Collection — Produk Iklan Sosial Media & Unggulan (Paling Atas agar Pengunjung Iklan Langsung Menemukan) */}
+        {featuredItems.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
+                  Pilihan Unggulan &bull; Populer di Sosmed
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
+                  Featured Collection
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+              {featuredItems.map((item, idx) => (
+                <JerseyCard key={item.id} jersey={item} priority={idx < 4} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* 3. Store Trust & Benefit Strip */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -218,28 +240,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 5b. Featured Collection — Produk pilihan promosi (Jaket & Jersey) */}
-        {featuredItems.length > 0 && (
-          <section className="space-y-6">
-            <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
-                  Pilihan Unggulan
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase font-display text-white">
-                  Featured Collection
-                </h2>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
-              {featuredItems.map((item, idx) => (
-                <JerseyCard key={item.id} jersey={item} priority={idx < 2} />
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* 6. Best sellers 2026/27 */}
         <section className="space-y-6">
           <div className="flex items-baseline justify-between border-b border-white/10 pb-4">
@@ -345,7 +345,7 @@ export default async function HomePage() {
                 </h2>
               </div>
               <Link
-                href="/jersey?edition=Vintage"
+                href="/jersey?type=Retro"
                 className="min-h-11 flex items-center gap-1.5 -my-2 text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-wider transition-colors"
               >
                 <span>Lihat Semua Retro</span>
@@ -389,17 +389,30 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* 7. Smart Bundle Promo Bento Tile */}
+        {/* 7. Smart Bundle Promo Bento Tile — 100% dinamis mengikuti pengaturan Admin */}
         <section className="rounded-xl border border-white/10 bg-gradient-to-r from-[#121217] via-[#181820] to-[#121217] p-6 sm:p-8">
           <div className="max-w-3xl mx-auto text-center space-y-4">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-white/10 text-white border border-white/15">
-              Promo Bundle
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-[#E2F952]/10 text-[#E2F952] border border-[#E2F952]/25">
+              {ship.promoFreeShipping && ship.promoFreePatch && ship.promoFreeNameset
+                ? "Promo Spesial Hari Ini"
+                : ship.promoFreeShipping || ship.promoFreePatch || ship.promoFreeNameset
+                ? "Promo Hari Ini & Bundle"
+                : "Promo Bundle Otomatis"}
             </span>
             <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight font-display text-white">
-              Beli Lebih Banyak, Makin Hemat
+              {ship.promoFreeShipping && ship.promoFreePatch && ship.promoFreeNameset
+                ? "Promo Spesial Tanpa Minimal Beli"
+                : ship.promoFreeShipping || ship.promoFreePatch || ship.promoFreeNameset
+                ? "Promo Hari Ini & Diskon Bundle"
+                : "Beli Lebih Banyak, Makin Hemat"}
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
-              Semua promo bersifat <strong className="text-white font-bold">akumulatif</strong> &amp; otomatis terpasang langsung saat checkout tanpa perlu voucher.
+              Semua promo aktif di bawah otomatis terpasang saat checkout tanpa perlu kode voucher.{" "}
+              <strong className="text-white font-bold">
+                {ship.promoCustomizationScope === "all"
+                  ? "Gratis kustomisasi berlaku untuk seluruh jersey di keranjang."
+                  : "Gratis kustomisasi berlaku 1x per pesanan."}
+              </strong>
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 text-left">
@@ -407,18 +420,22 @@ export default async function HomePage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold text-[#E2F952] uppercase">
-                      {ship.promoFreeShipping ? "Promo Hari Ini • Tanpa Minimal" : `Tier 1 • Min. ${ship.freeShippingMinItems} Kaos`}
+                      {ship.promoFreeShipping ? "Promo Hari Ini • Tanpa Minimal" : `Tier 1 • Min. ${ship.freeShippingMinItems} Item`}
                     </span>
                     <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
                       <Truck className="w-3.5 h-3.5" />
                     </div>
                   </div>
-                  <h3 className="text-xs font-bold text-white uppercase">Gratis Ongkir</h3>
-                  <p className="text-[11px] text-zinc-400 mt-1">Hemat {formatIDR(ship.javaRate)}–{formatIDR(ship.outsideJavaRate)} ongkir via J&amp;T ke seluruh Indonesia.</p>
+                  <h3 className="text-xs font-bold text-white uppercase">Gratis Ongkir Se-Indonesia</h3>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    {ship.promoFreeShipping
+                      ? `Beli 1 item langsung gratis ongkir J&T Express (hemat ${formatIDR(ship.javaRate)}–${formatIDR(ship.outsideJavaRate)}).`
+                      : `Pesan min. ${ship.freeShippingMinItems} item otomatis gratis ongkir J&T (hemat ${formatIDR(ship.javaRate)}–${formatIDR(ship.outsideJavaRate)}).`}
+                  </p>
                 </div>
                 <div className="pt-2 border-t border-white/6">
-                  <span className="text-[10px] font-bold text-zinc-400">
-                    {ship.promoFreeShipping ? "Aktif Mulai 1 Item" : "Tier Pembuka"}
+                  <span className="text-[10px] font-extrabold text-[#E2F952]">
+                    {ship.promoFreeShipping ? "Aktif Mulai 1 Item" : `Syarat: Min. ${ship.freeShippingMinItems} Item`}
                   </span>
                 </div>
               </div>
@@ -427,18 +444,25 @@ export default async function HomePage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold text-[#E2F952] uppercase">
-                      {ship.promoFreePatch ? "Promo Hari Ini • Tanpa Minimal" : `Tier 2 • Min. ${ship.freePatchMinItems} Kaos`}
+                      {ship.promoFreePatch ? "Promo Hari Ini • Tanpa Minimal" : `Tier 2 • Min. ${ship.freePatchMinItems} Item`}
                     </span>
                     <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
                       <Award className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <h3 className="text-xs font-bold text-white uppercase">Gratis Patch Resmi</h3>
-                  <p className="text-[11px] text-zinc-400 mt-1">Badge UCL Starball atau EPL gold termasuk (hemat {formatIDR(ship.patchFee)}).</p>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    Gratis patch lengan kompetisi senilai {formatIDR(ship.patchFee)} (
+                    {ship.promoCustomizationScope === "all" ? "berlaku untuk semua jersey di keranjang" : "gratis 1x patch per pesanan"}).
+                  </p>
                 </div>
                 <div className="pt-2 border-t border-white/6">
                   <span className="inline-flex items-center text-[10px] font-extrabold text-[#E2F952]">
-                    {ship.promoFreePatch ? "Aktif Mulai 1 Jersey" : "+ Tetap Gratis Ongkir"}
+                    {ship.promoFreePatch
+                      ? ship.promoCustomizationScope === "all"
+                        ? "Gratis Semua Jersey (Mulai 1 Pcs)"
+                        : "Gratis 1x per Order (Mulai 1 Pcs)"
+                      : `Syarat: Min. ${ship.freePatchMinItems} Item (${ship.promoCustomizationScope === "all" ? "Semua Gratis" : "1x per Order"})`}
                   </span>
                 </div>
               </div>
@@ -447,18 +471,25 @@ export default async function HomePage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-bold text-[#E2F952] uppercase">
-                      {ship.promoFreeNameset ? "Promo Hari Ini • Tanpa Minimal" : `Tier 3 • Min. ${ship.freeNamesetMinItems} Kaos`}
+                      {ship.promoFreeNameset ? "Promo Hari Ini • Tanpa Minimal" : `Tier 3 • Min. ${ship.freeNamesetMinItems} Item`}
                     </span>
                     <div className="w-7 h-7 rounded-lg bg-[#E2F952]/10 border border-[#E2F952]/20 flex items-center justify-center text-[#E2F952]">
                       <Sparkles className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <h3 className="text-xs font-bold text-white uppercase">Gratis Nameset Custom</h3>
-                  <p className="text-[11px] text-zinc-400 mt-1">Custom nama &amp; nomor pemain termasuk (hemat {formatIDR(ship.namesetFee)}).</p>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    Gratis sablon custom nama &amp; nomor punggung senilai {formatIDR(ship.namesetFee)} (
+                    {ship.promoCustomizationScope === "all" ? "berlaku untuk semua jersey di keranjang" : "gratis 1x nameset per pesanan"}).
+                  </p>
                 </div>
                 <div className="pt-2 border-t border-white/6">
                   <span className="inline-flex items-center text-[10px] font-extrabold text-[#E2F952]">
-                    {ship.promoFreeNameset ? "Aktif Mulai 1 Jersey" : "+ Gratis Ongkir & Patch"}
+                    {ship.promoFreeNameset
+                      ? ship.promoCustomizationScope === "all"
+                        ? "Gratis Semua Jersey (Mulai 1 Pcs)"
+                        : "Gratis 1x per Order (Mulai 1 Pcs)"
+                      : `Syarat: Min. ${ship.freeNamesetMinItems} Item (${ship.promoCustomizationScope === "all" ? "Semua Gratis" : "1x per Order"})`}
                   </span>
                 </div>
               </div>

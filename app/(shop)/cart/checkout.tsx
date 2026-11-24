@@ -192,7 +192,9 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
           Keranjang Belanja Masih Kosong
         </h2>
         <p className="text-xs text-zinc-400 max-w-sm mb-6">
-          Pesan {freeMin} kaos atau lebih dapat gratis ongkir ke seluruh Indonesia.
+          {parsedSettings.promoFreeShipping
+            ? "Promo Hari Ini: Gratis ongkir ke seluruh Indonesia tanpa minimal beli!"
+            : `Pesan ${freeMin} kaos atau lebih dapat gratis ongkir ke seluruh Indonesia.`}
         </p>
         <Button asChild className="rounded-lg px-7 h-auto py-3 text-xs uppercase tracking-wider font-extrabold">
           <Link href="/jersey">Lihat Katalog</Link>
@@ -679,9 +681,14 @@ export function Checkout({ paymentOptions, shippingSettings }: { paymentOptions:
                 )}
               </Button>
 
-              <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-400 pt-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Pembayaran QRIS / Transfer Bank &bull; Kirim via J&amp;T Express</span>
+              <div className="rounded-xl bg-[#09090B] border border-white/8 p-3 space-y-1 text-[11px] text-zinc-300">
+                <div className="flex items-center gap-2 font-bold text-emerald-400">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  <span>Garansi Kepuasan &amp; Keamanan ProKick</span>
+                </div>
+                <p className="text-zinc-400 leading-relaxed pl-6">
+                  Jaminan tukar baru jika produk cacat / salah kirim &bull; Pengiriman resmi J&amp;T Express ke seluruh Indonesia.
+                </p>
               </div>
             </div>
           </div>

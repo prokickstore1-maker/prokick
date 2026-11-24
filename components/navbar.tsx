@@ -21,17 +21,20 @@ export function Navbar({
   shippingSettings?: Record<string, string>;
 }) {
   const freeMin = Math.max(1, Number(shippingSettings?.freeShippingMinItems) || 2);
+  const freePatchMin = Math.max(1, Number(shippingSettings?.freePatchMinItems) || 3);
+  const freeNamesetMin = Math.max(1, Number(shippingSettings?.freeNamesetMinItems) || 5);
   const promoParts: string[] = [];
   if (shippingSettings?.promoFreeShipping === "1") promoParts.push("Promo Hari Ini: Gratis Ongkir Tanpa Minimal Beli");
   if (shippingSettings?.promoFreeNameset === "1") promoParts.push("Promo Hari Ini: Gratis Custom Nameset");
   if (shippingSettings?.promoFreePatch === "1") promoParts.push("Promo Hari Ini: Gratis Patch Lengan");
 
+  // Jika ada saklar promo harian yang aktif, utamakan pengumuman promo harian tersebut secara dinamis
   const defaultTicker =
     promoParts.length > 0
-      ? [...promoParts, "QRIS & e-Wallet Instan", "J&T Express"].join(" | ")
-      : `Gratis Ongkir Se-Indonesia min. ${freeMin} Kaos | QRIS & e-Wallet Instan | J&T Express`;
+      ? [...promoParts, "QRIS & Transfer Instan", "J&T Express"].join(" | ")
+      : `Gratis Ongkir Min. ${freeMin} Item | Gratis Patch Min. ${freePatchMin} Item | Gratis Nameset Min. ${freeNamesetMin} Item`;
 
-  const banner = shippingSettings?.runningBannerText?.trim() || defaultTicker;
+  const banner = promoParts.length > 0 ? defaultTicker : (shippingSettings?.runningBannerText?.trim() || defaultTicker);
   // split | jadi fragmen; mobile hanya fragmen pertama
   const tickerParts = banner.split("|").map((s) => s.trim()).filter(Boolean);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,7 +91,7 @@ export function Navbar({
         {/* Desktop Navigation Links — liga & klub dropdown dinamis */}
         <nav className="hidden lg:flex items-center gap-6 xl:gap-7 text-xs font-bold uppercase tracking-wider text-zinc-400">
           <Link href="/jersey" className="hover:text-white transition-colors">
-            All Kits
+            Semua Jersey
           </Link>
           <div className="relative group/nav py-2">
             <Link href="/jaket" className="hover:text-white transition-colors flex items-center gap-1.5">
@@ -198,8 +201,8 @@ export function Navbar({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search club, kit..."
-              aria-label="Search kits"
+              placeholder="Cari klub, jersey, jaket..."
+              aria-label="Cari produk"
               className="bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-white/40 text-xs text-white placeholder:text-zinc-400 w-28 md:w-36 lg:w-44"
             />
             <button
@@ -236,7 +239,7 @@ export function Navbar({
               )}
             </div>
             <span className="hidden sm:inline text-xs font-semibold text-zinc-300">
-              Bag
+              Keranjang
             </span>
           </button>
 
@@ -260,8 +263,8 @@ export function Navbar({
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search club, player, kit..."
-                    aria-label="Search kits"
+                    placeholder="Cari klub, jersey, jaket..."
+                    aria-label="Cari produk"
                     className="min-w-0 flex-1 text-xs text-white placeholder:text-zinc-400 bg-transparent outline-none focus-visible:ring-1 focus-visible:ring-white/40"
                   />
                   <button
@@ -276,7 +279,7 @@ export function Navbar({
                   onClick={() => setMobileMenuOpen(false)}
                   className="min-h-11 border-b border-white/5 text-white hover:text-volt flex items-center justify-between"
                 >
-                  <span>All Football Kits</span>
+                  <span>Semua Jersey &amp; Kit</span>
                   <span className="text-[11px] text-zinc-400 font-bold">2026/27</span>
                 </Link>
                 <Link

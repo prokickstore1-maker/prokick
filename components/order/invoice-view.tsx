@@ -306,6 +306,35 @@ export function InvoiceView({ order, waNumber, telegramUsername, chatButtons = "
         </div>
       </div>
 
+      {/* Panduan 3 Langkah Penyelesaian Pembayaran (Tampil saat belum upload bukti bayar) */}
+      {!uploadSuccess && order.orderStatus === "PENDING_PAYMENT" && (
+        <div className="rounded-xl border border-[#E2F952]/30 bg-[#181820] p-4 sm:p-5 space-y-2 text-xs">
+          <p className="font-bold text-[#E2F952] uppercase tracking-wider text-[11px]">
+            Pesanan Berhasil Dibuat! Ikuti 3 Langkah Berikut:
+          </p>
+          <ol className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-zinc-200 pt-1">
+            <li className="rounded-lg bg-[#121217] border border-white/8 p-3">
+              <strong className="text-white block mb-0.5">1. Lakukan Pembayaran</strong>
+              <span className="text-[11px] text-zinc-400">
+                Scan barcode QRIS atau transfer sesuai <strong>Jumlah yang Harus Dibayar</strong> di bawah.
+              </span>
+            </li>
+            <li className="rounded-lg bg-[#121217] border border-white/8 p-3">
+              <strong className="text-white block mb-0.5">2. Unggah Bukti Transfer</strong>
+              <span className="text-[11px] text-zinc-400">
+                Pilih foto/screenshot bukti bayar pada kotak <strong>Bukti Pembayaran</strong> lalu klik <strong>Kirim Bukti Pembayaran</strong>.
+              </span>
+            </li>
+            <li className="rounded-lg bg-[#121217] border border-white/8 p-3">
+              <strong className="text-white block mb-0.5">3. Pesanan Diproses</strong>
+              <span className="text-[11px] text-zinc-400">
+                Setelah bukti terkirim, admin kami langsung memverifikasi &amp; mengirim paket Anda.
+              </span>
+            </li>
+          </ol>
+        </div>
+      )}
+
       {/* Courier Tracking Banner if Shipped */}
       {order.trackingNumber && (
         <div className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 p-5 bg-emerald-950/30 border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">

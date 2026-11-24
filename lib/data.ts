@@ -153,15 +153,62 @@ export interface CatalogFilter {
 
 export type CatalogSort = "featured" | "price-asc" | "price-desc";
 
+const SEARCH_STOP_WORDS = new Set(["jersey", "kaos", "baju", "bola", "kit", "kits", "shirt"]);
+
 function buildCatalogWhere(f: CatalogFilter): SQL | undefined {
-  const conds: (SQL | undefined)[] = [eq(jerseys.productLine, f.productLine || PRODUCT_LINE_JERSEY)];
-  if (f.league) conds.push(ilike(jerseys.league, f.league));
-  if (f.team) conds.push(ilike(jerseys.team, f.team));
-  if (f.category) conds.push(ilike(jerseys.category, f.category));
-  if (f.country) conds.push(ilike(jerseys.country, f.country));
-  if (f.type) conds.push(ilike(jerseys.type, f.type));
+  const conds: (SQL | undefined)[] = [];
+
+  // Jika user memilih klub (team), negara (country), atau melakukan pencarian (search) di katalog utama,
+  // tampilkan seluruh produk klub/negara tersebut lintas lini (baik Jersey maupun Jaket/Tracksuit).
+  // Hanya kunci productLine bila f.productLine dikirim eksplisit (misal halaman /jaket) atau sedang browsing katalog default.
+  const isCrossLineQuery = !f.productLine && Boolean(f.team || f.country || f.search);
+  if (!isCrossLineQuery) {
+    conds.push(eq(jerseys.productLine, f.productLine || PRODUCT_LINE_JERSEY));
+  }
+
+  // Jika filter team aktif, jangan gugurkan produk klub tersebut hanya karena kolom league-nya "Retro" / berbeda,
+  // dan cocokkan baik di kolom team maupun name agar jaket & retro klub yang sama selalu tampil lengkap.
+  if (f.team) {
+    const cleanTeam = f.team.trim();
+    conds.push(or(ilike(jerseys.team, cleanTeam), ilike(jerseys.name, `%${cleanTeam}%`)));
+  } else if (f.league) {
+    conds.push(ilike(jerseys.league, f.league));
+  }
+
+  if (f.category && !f.team && !f.country) conds.push(ilike(jerseys.category, f.category));
+  if (f.country) {
+    const cleanCountry = f.country.trim();
+    conds.push(or(ilike(jerseys.country, cleanCountry), ilike(jerseys.team, cleanCountry), ilike(jerseys.name, `%${cleanCountry}%`)));
+  }
+  if (f.type) {
+    if (/^retro|^vintage/i.test(f.type.trim())) {
+      conds.push(
+        or(
+          ilike(jerseys.edition, "Vintage"),
+          ilike(jerseys.edition, "Retro"),
+          ilike(jerseys.type, "%Retro%"),
+          ilike(jerseys.league, "%Retro%")
+        )
+      );
+    } else {
+      conds.push(ilike(jerseys.type, f.type));
+    }
+  }
   if (f.season) conds.push(eq(jerseys.season, f.season));
-  if (f.edition) conds.push(ilike(jerseys.edition, f.edition));
+  if (f.edition) {
+    if (/^retro|^vintage/i.test(f.edition.trim())) {
+      conds.push(
+        or(
+          ilike(jerseys.edition, "Vintage"),
+          ilike(jerseys.edition, "Retro"),
+          ilike(jerseys.type, "%Retro%"),
+          ilike(jerseys.league, "%Retro%")
+        )
+      );
+    } else {
+      conds.push(ilike(jerseys.edition, f.edition));
+    }
+  }
   if (f.kitType) conds.push(ilike(jerseys.kitType, f.kitType));
   if (f.size) {
     // sizes = JSON array string; kecocokan elemen persis (XL tidak match XXL)
@@ -170,8 +217,31 @@ function buildCatalogWhere(f: CatalogFilter): SQL | undefined {
   if (f.minPrice && f.minPrice > 0) conds.push(gte(jerseys.price, String(f.minPrice)));
   if (f.maxPrice && f.maxPrice > 0) conds.push(lte(jerseys.price, String(f.maxPrice)));
   if (f.search) {
-    const q = `%${f.search}%`;
-    conds.push(or(ilike(jerseys.name, q), ilike(jerseys.team, q), ilike(jerseys.tags, q)));
+    const rawTokens = f.search
+      .trim()
+      .split(/\s+/)
+      .map((t) => t.replace(/[%_]/g, ""))
+      .filter(Boolean);
+    const meaningfulTokens = rawTokens.filter((t) => !SEARCH_STOP_WORDS.has(t.toLowerCase()));
+    const tokens = meaningfulTokens.length > 0 ? meaningfulTokens : rawTokens;
+
+    for (const token of tokens) {
+      const q = `%${token}%`;
+      conds.push(
+        or(
+          ilike(jerseys.name, q),
+          ilike(jerseys.team, q),
+          ilike(jerseys.league, q),
+          ilike(jerseys.country, q),
+          ilike(jerseys.kitType, q),
+          ilike(jerseys.type, q),
+          ilike(jerseys.edition, q),
+          ilike(jerseys.season, q),
+          ilike(jerseys.productLine, q),
+          ilike(jerseys.tags, q)
+        )
+      );
+    }
   }
   const active = conds.filter(Boolean) as SQL[];
   return active.length ? and(...active) : undefined;
@@ -347,13 +417,13 @@ export async function getRelatedKits(
     const collected: JerseyRow[] = [];
     const seenIds = new Set<string>([excludeId]);
 
-    // 1. Prioritas Utama: Produk dari klub / tim yang sama
+    // 1. Prioritas Utama: Produk dari klub / tim yang sama (lintas lini: Jersey maupun Jaket tim tersebut)
     if (team && team.trim()) {
+      const cleanTeam = team.trim();
       const sameTeam = await db.query.jerseys.findMany({
         where: and(
           ne(jerseys.id, excludeId),
-          eq(jerseys.productLine, productLine),
-          ilike(jerseys.team, team.trim())
+          or(ilike(jerseys.team, cleanTeam), ilike(jerseys.name, `%${cleanTeam}%`))
         ),
         orderBy: [desc(jerseys.isFeatured), desc(jerseys.isBestSeller), desc(jerseys.createdAt)],
         limit,
@@ -444,10 +514,10 @@ export async function getCatalogFilterOptions(productLine: string = PRODUCT_LINE
   }
 }
 
-// Opsi liga/klub untuk navbar & footer — cached 60 detik, di-invalidate admin via revalidateTag("jerseys-all")
+// Opsi liga/klub untuk navbar & footer — mencakup semua produk (Jersey & Jaket) agar klub lengkap
 export const getCachedLeagueOptions: () => Promise<LeagueOption[]> = unstable_cache(
   async () => {
-    const rows = await getAllJerseys(undefined, PRODUCT_LINE_JERSEY);
+    const rows = await getAllJerseys();
     return buildLeagueOptions(rows);
   },
   ["league-options"],

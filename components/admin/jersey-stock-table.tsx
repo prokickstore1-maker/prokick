@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Minus, ExternalLink, Search } from "lucide-react";
+import { Plus, Minus, ExternalLink, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { NormalizedJersey } from "@/lib/data";
 import { formatIDR } from "@/lib/utils";
 import { updateJerseyStockAction } from "@/app/actions/jersey";
@@ -25,8 +25,10 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
   const [jerseysList, setJerseysList] = useState<NormalizedJersey[]>(initialJerseys);
   const [search, setSearch] = useState("");
   const [lineFilter, setLineFilter] = useState<"ALL" | "Jersey" | "Jaket">("ALL");
+  const [page, setPage] = useState(1);
   const [loadingSize, setLoadingSize] = useState<string | null>(null);
 
+  const PAGE_SIZE = 25;
   const jerseyCount = jerseysList.filter((j) => (j.productLine || "Jersey") === "Jersey").length;
   const jacketCount = jerseysList.filter((j) => j.productLine === "Jaket").length;
 
@@ -41,6 +43,10 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
       j.kitType.toLowerCase().includes(q)
     );
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const handleStockAdjust = async (jerseyId: string, size: string, delta: number) => {
     if (delta === 0) return;
@@ -88,7 +94,10 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
             <button
               key={val}
               type="button"
-              onClick={() => setLineFilter(val)}
+              onClick={() => {
+                setLineFilter(val);
+                setPage(1);
+              }}
               className={`px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
                 lineFilter === val
                   ? "bg-white text-black font-extrabold"
@@ -104,19 +113,22 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
             type="text"
             placeholder="Cari jersey, jaket, klub, atau kompetisi…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full rounded-lg pl-10 text-xs font-medium bg-[#181820] border-[#27272A] text-white placeholder:text-zinc-500"
           />
           <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
         </div>
         <span className="text-xs font-mono text-zinc-400 font-semibold self-end sm:self-center">
-          {filtered.length} Kits Listed
+          Menampilkan {paginated.length} dari {filtered.length} produk
         </span>
       </div>
 
       {/* Mobile: kartu stok — kontrol ukuran per ukuran tak tergeser keluar layar */}
       <div className="grid gap-3 sm:hidden">
-        {filtered.map((j) => (
+        {paginated.map((j) => (
           <div key={j.id} className="rounded-xl border border-[#27272A] bg-[#121217] p-4 space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg bg-black/40 relative overflow-hidden shrink-0 border border-[#27272A] flex items-center justify-center">
@@ -195,7 +207,7 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody className="font-medium text-zinc-200">
-              {filtered.map((j) => (
+              {paginated.map((j) => (
                 <TableRow key={j.id} className="hover:bg-[#181820] transition-colors border-[#27272A]">
                   {/* Jersey Info */}
                   <TableCell className="p-4">
@@ -326,6 +338,36 @@ export function JerseyStockTable({ initialJerseys }: JerseyStockTableProps) {
           </Table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <span className="text-xs font-mono text-zinc-400">
+            Halaman <strong className="text-white">{safePage}</strong> dari{" "}
+            <strong className="text-white">{totalPages}</strong> ({filtered.length} produk)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="inline-flex items-center gap-1 px-3 py-2 min-h-10 rounded-lg border border-[#27272A] bg-[#181820] text-xs font-bold text-white hover:bg-[#27272A] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Sebelumnya</span>
+            </button>
+            <button
+              type="button"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="inline-flex items-center gap-1 px-3 py-2 min-h-10 rounded-lg border border-[#27272A] bg-[#181820] text-xs font-bold text-white hover:bg-[#27272A] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <span>Berikutnya</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

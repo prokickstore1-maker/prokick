@@ -52,7 +52,27 @@ export function Footer({
               <li><span>Pengiriman via J&amp;T Express</span></li>
               <li><span>Estimasi Jawa (1–2 Hari Kerja)</span></li>
               <li><span>Estimasi Luar Jawa (2–4 Hari Kerja)</span></li>
-              <li className="text-[#E2F952] font-semibold"><span>Gratis Ongkir min. {freeMin} Kaos</span></li>
+              <li className="text-[#E2F952] font-semibold">
+                <span>
+                  {ship.promoFreeShipping
+                    ? "Promo Hari Ini: Gratis Ongkir Tanpa Minimal Beli"
+                    : `Gratis Ongkir min. ${freeMin} Kaos`}
+                </span>
+              </li>
+              {ship.promoFreeNameset && (
+                <li className="text-[#E2F952] font-semibold">
+                  <span>
+                    Promo Gratis Nameset ({ship.promoCustomizationScope === "all" ? "Semua Kaos" : "1x per Order"})
+                  </span>
+                </li>
+              )}
+              {ship.promoFreePatch && (
+                <li className="text-[#E2F952] font-semibold">
+                  <span>
+                    Promo Gratis Patch ({ship.promoCustomizationScope === "all" ? "Semua Kaos" : "1x per Order"})
+                  </span>
+                </li>
+              )}
             </ul>
           </div>
 

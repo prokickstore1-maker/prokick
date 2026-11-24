@@ -54,9 +54,11 @@ export default async function JerseyCatalogPage({
   const currentCategory = resolvedParams.category || "";
   const currentCountry = resolvedParams.country || "";
   const currentTeam = resolvedParams.team || "";
-  const currentType = resolvedParams.type || "";
-  const currentSeason = resolvedParams.season || "";
   const currentEdition = resolvedParams.edition || "";
+  // Satukan Vintage & Retro ke satu filter Tipe "Retro" agar tidak ada duplikasi konsep Retro vs Vintage
+  const currentType =
+    resolvedParams.type || (/^vintage|^retro/i.test(currentEdition) ? "Retro" : "");
+  const currentSeason = resolvedParams.season || "";
   const currentKitType = resolvedParams.kitType || "";
   const currentSize = resolvedParams.size || "";
   const minPrice = Number(resolvedParams.minPrice || 0);
@@ -140,15 +142,14 @@ export default async function JerseyCatalogPage({
   };
 
   const filterLabels: string[] = [
-    currentLeague && `League: ${currentLeague}`,
-    currentTeam && `Team: ${currentTeam}`,
-    currentCategory && `Category: ${currentCategory}`,
-    currentCountry && `Country: ${currentCountry}`,
-    currentType && `Type: ${currentType}`,
-    currentSeason && `Season: ${currentSeason}`,
-    currentEdition && `Edition: ${currentEdition}`,
+    currentLeague && `Liga: ${currentLeague}`,
+    currentTeam && `Klub: ${currentTeam}`,
+    currentCategory && `Kategori: ${currentCategory}`,
+    currentCountry && `Negara: ${currentCountry}`,
+    currentType && `Tipe: ${currentType}`,
+    currentSeason && `Musim: ${currentSeason}`,
     currentKitType && `Kit: ${currentKitType}`,
-    currentSize && `Size: ${currentSize}`,
+    currentSize && `Ukuran: ${currentSize}`,
     minPrice > 0 && `Min Rp${minPrice}`,
     maxPrice > 0 && `Max Rp${maxPrice}`,
     searchQuery && `“${searchQuery}”`,
@@ -156,24 +157,62 @@ export default async function JerseyCatalogPage({
 
   const hasActiveFilters = filterLabels.length > 0 || sort !== "featured";
 
+  const activeFilterChips: Array<{ label: string; clearHref: string }> = [
+    ...(currentTeam ? [{ label: `Klub: ${currentTeam}`, clearHref: withFilter({ team: "", page: "" }) }] : []),
+    ...(currentCountry ? [{ label: `Negara: ${currentCountry}`, clearHref: withFilter({ country: "", page: "" }) }] : []),
+    ...(currentLeague && !currentTeam ? [{ label: `Liga: ${currentLeague}`, clearHref: withFilter({ league: "", page: "" }) }] : []),
+    ...(currentCategory ? [{ label: `Kategori: ${currentCategory}`, clearHref: withFilter({ category: "", page: "" }) }] : []),
+    ...(currentType ? [{ label: `Tipe: ${currentType}`, clearHref: withFilter({ type: "", edition: "", page: "" }) }] : []),
+    ...(currentSeason ? [{ label: `Musim: ${currentSeason}`, clearHref: withFilter({ season: "", page: "" }) }] : []),
+    ...(currentKitType ? [{ label: `Kit: ${currentKitType}`, clearHref: withFilter({ kitType: "", page: "" }) }] : []),
+    ...(currentSize ? [{ label: `Ukuran: ${currentSize}`, clearHref: withFilter({ size: "", page: "" }) }] : []),
+    ...(minPrice > 0 ? [{ label: `Min Rp${minPrice}`, clearHref: withFilter({ minPrice: "", page: "" }) }] : []),
+    ...(maxPrice > 0 ? [{ label: `Max Rp${maxPrice}`, clearHref: withFilter({ maxPrice: "", page: "" }) }] : []),
+    ...(searchQuery ? [{ label: `Cari: "${searchQuery}"`, clearHref: withFilter({ search: "", page: "" }) }] : []),
+  ];
+
+  const pageHeading = currentTeam
+    ? `Koleksi ${currentTeam}`
+    : currentCountry
+    ? `Tim Nasional ${currentCountry}`
+    : searchQuery
+    ? `Hasil Pencarian: “${searchQuery}”`
+    : /^retro$/i.test(currentType)
+    ? "Koleksi Jersey Retro Klasik"
+    : currentLeague
+    ? `Koleksi ${currentLeague}`
+    : currentCategory
+    ? `Koleksi ${currentCategory}`
+    : "Katalog Jersey & Kit";
+
+  const pageSubtitle = currentTeam
+    ? `${currentLeague || "Klub"} • Jersey & Jaket Resmi`
+    : currentCountry
+    ? "Koleksi Tim Nasional • Jersey & Jaket"
+    : searchQuery
+    ? "Pencarian Lintas Katalog (Jersey & Jaket)"
+    : /^retro$/i.test(currentType)
+    ? "Edisi Klasik & Legendaris"
+    : "Musim 2026/27 • Semua Koleksi";
+
   return (
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA] py-8 px-4 sm:px-8 lg:px-12">
-      <div className="max-w-[1540px] mx-auto space-y-8">
+      <div className="max-w-[1540px] mx-auto space-y-6">
         {/* Header Title */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-5">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#E2F952] block mb-1">
-              2026/27 Season &bull; All Kits
+              {pageSubtitle}
             </span>
-            <h1 className="text-2xl sm:text-4xl font-black text-white font-display uppercase tracking-tight flex items-baseline gap-3">
-              <span>Football Shirts &amp; Kits</span>
+            <h1 className="text-2xl sm:text-4xl font-black text-white font-display uppercase tracking-tight flex flex-wrap items-baseline gap-2.5">
+              <span>{pageHeading}</span>
               <span className="text-base sm:text-xl font-mono text-zinc-400 font-semibold">
-                ({totalItems} {totalItems === 1 ? "Kit" : "Kits"})
+                ({totalItems} Produk)
               </span>
             </h1>
             {totalPages > 1 && (
               <p className="text-xs text-zinc-400 font-sans mt-1">
-                Showing <span className="text-white font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}&ndash;{Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}</span> of <span className="text-white font-semibold">{totalItems}</span> kits &bull; Page {currentPage} of {totalPages}
+                Menampilkan <span className="text-white font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}&ndash;{Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}</span> dari <span className="text-white font-semibold">{totalItems}</span> produk &bull; Halaman {currentPage} dari {totalPages}
               </p>
             )}
           </div>
@@ -184,10 +223,30 @@ export default async function JerseyCatalogPage({
               className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-white transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset All Filters</span>
+              <span>Tampilkan Semua Produk</span>
             </Link>
           )}
         </div>
+
+        {/* Pita Filter Aktif — Pembeli tahu persis posisi filter yang sedang terbuka */}
+        {activeFilterChips.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mr-1">
+              Filter Aktif:
+            </span>
+            {activeFilterChips.map((chip) => (
+              <Link
+                key={chip.label}
+                href={chip.clearHref}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E2F952]/10 border border-[#E2F952]/30 text-[#E2F952] text-xs font-bold hover:bg-[#E2F952]/20 transition-colors"
+                title="Klik untuk menghapus filter ini"
+              >
+                <span>{chip.label}</span>
+                <span aria-hidden className="text-zinc-300 font-black">&times;</span>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Top Control Bar: League Pills & Search */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
@@ -212,35 +271,27 @@ export default async function JerseyCatalogPage({
             })}
           </div>
 
-          {/* Search Input — carries every other active filter */}
-          <form method="GET" action="/jersey" className="relative w-full lg:w-80">
-            {Object.entries({
-              league: currentLeague,
-              team: currentTeam,
-              category: currentCategory,
-              country: currentCountry,
-              type: currentType,
-              season: currentSeason,
-              edition: currentEdition,
-              kitType: currentKitType,
-              size: currentSize,
-              minPrice: resolvedParams.minPrice || "",
-              maxPrice: resolvedParams.maxPrice || "",
-              sort: sort === "featured" ? "" : sort,
-            })
-              .filter(([, v]) => v)
-              .map(([k, v]) => (
-                <input key={k} type="hidden" name={k} value={v} />
-              ))}
-            <Input
-              type="text"
-              name="search"
-              aria-label="Search kits"
-              defaultValue={searchQuery}
-              placeholder="Search club, player, kit..."
-              className="w-full h-auto rounded-lg bg-[#121217] hover:bg-[#181820] text-xs text-white placeholder:text-zinc-400 px-4 py-2.5 pl-10 border-white/10 focus-visible:border-white/30 font-sans"
-            />
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {/* Search Input — pencarian baru tidak mengunci klub/liga lama agar hasil selalu ditemukan */}
+          <form method="GET" action="/jersey" className="relative flex items-center gap-2 w-full lg:w-96">
+            {sort !== "featured" && <input type="hidden" name="sort" value={sort} />}
+            <div className="relative flex-1">
+              <Input
+                key={searchQuery}
+                type="text"
+                name="search"
+                aria-label="Cari jersey atau jaket"
+                defaultValue={searchQuery}
+                placeholder="Cari klub, negara, jaket, retro..."
+                className="w-full h-auto rounded-lg bg-[#121217] hover:bg-[#181820] text-xs text-white placeholder:text-zinc-400 px-4 py-2.5 pl-10 border-white/10 focus-visible:border-white/30 font-sans"
+              />
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <Button
+              type="submit"
+              className="h-auto px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-wider shrink-0"
+            >
+              Cari
+            </Button>
           </form>
         </div>
 
@@ -256,30 +307,15 @@ export default async function JerseyCatalogPage({
           <input type="hidden" name="country" value={currentCountry} />
           <input type="hidden" name="kitType" value={currentKitType} />
 
-          {/* Type Filter */}
+          {/* Type Filter (Sudah mencakup Player Issue, Fans Version, & Retro — tanpa duplikasi dropdown Vintage) */}
           <select
             name="type"
-            aria-label="Filter by type"
+            aria-label="Filter tipe jersey"
             defaultValue={currentType}
             className="rounded-xl border border-white/10 bg-[#181820] text-zinc-200 px-3 py-2 text-xs focus:outline-none focus:border-white/30 cursor-pointer"
           >
-            <option value="">All Types</option>
-            {typeOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-
-          {/* Edition Filter */}
-          <select
-            name="edition"
-            aria-label="Filter by edition"
-            defaultValue={currentEdition}
-            className="rounded-xl border border-white/10 bg-[#181820] text-zinc-200 px-3 py-2 text-xs focus:outline-none focus:border-white/30 cursor-pointer"
-          >
-            <option value="">All Editions</option>
-            {editionOptions.map((opt) => (
+            <option value="">Semua Tipe (Player Issue / Fans / Retro)</option>
+            {Array.from(new Set(["Player Issue", "Fans Version", "Retro", ...typeOptions.filter((t) => !/^vintage$/i.test(t))])).map((opt) => (
               <option key={opt} value={opt}>
                 {opt}
               </option>
@@ -289,14 +325,14 @@ export default async function JerseyCatalogPage({
           {/* Size Filter */}
           <select
             name="size"
-            aria-label="Filter by size"
+            aria-label="Filter ukuran"
             defaultValue={currentSize}
             className="rounded-xl border border-white/10 bg-[#181820] text-zinc-200 px-3 py-2 text-xs focus:outline-none focus:border-white/30 cursor-pointer"
           >
-            <option value="">All Sizes</option>
+            <option value="">Semua Ukuran</option>
             {sizeOptions.map((opt) => (
               <option key={opt} value={opt}>
-                Size {opt}
+                Ukuran {opt}
               </option>
             ))}
           </select>
@@ -304,11 +340,11 @@ export default async function JerseyCatalogPage({
           {/* Category Filter */}
           <select
             name="category"
-            aria-label="Filter by category"
+            aria-label="Filter kategori"
             defaultValue={currentCategory}
             className="rounded-xl border border-white/10 bg-[#181820] text-zinc-200 px-3 py-2 text-xs focus:outline-none focus:border-white/30 cursor-pointer"
           >
-            <option value="">All Categories</option>
+            <option value="">Semua Kategori</option>
             {categoryOptions.map((opt) => (
               <option key={opt} value={opt}>
                 {opt}
@@ -319,11 +355,11 @@ export default async function JerseyCatalogPage({
           {/* Season Filter */}
           <select
             name="season"
-            aria-label="Filter by season"
+            aria-label="Filter musim"
             defaultValue={currentSeason}
             className="rounded-xl border border-white/10 bg-[#181820] text-zinc-200 px-3 py-2 text-xs focus:outline-none focus:border-white/30 cursor-pointer"
           >
-            <option value="">All Seasons</option>
+            <option value="">Semua Musim</option>
             {seasonOptions.map((opt) => (
               <option key={opt} value={opt}>
                 {opt}
@@ -357,13 +393,13 @@ export default async function JerseyCatalogPage({
           {/* Sort Filter */}
           <select
             name="sort"
-            aria-label="Sort results"
+            aria-label="Urutkan hasil"
             defaultValue={sort}
             className="rounded-xl border border-white/10 bg-[#181820] text-zinc-200 px-3 py-2 text-xs focus:outline-none focus:border-white/30 cursor-pointer"
           >
-            <option value="featured">Sort: Featured</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
+            <option value="featured">Urutkan: Unggulan</option>
+            <option value="price-asc">Harga: Termurah</option>
+            <option value="price-desc">Harga: Termahal</option>
           </select>
 
           {/* Submit Action */}
@@ -372,7 +408,7 @@ export default async function JerseyCatalogPage({
             className="h-auto w-full rounded-xl px-4 py-2 text-xs gap-1.5 uppercase tracking-wider font-extrabold"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Apply</span>
+            <span>Terapkan Filter</span>
           </Button>
         </form>
 
@@ -445,14 +481,14 @@ export default async function JerseyCatalogPage({
         ) : (
           <section className="group rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 py-24 text-center space-y-4 bg-[#121217] border-white/8">
             <h2 className="text-xl sm:text-2xl font-black text-white uppercase font-display">
-              No Football Kits Found
+              Produk Tidak Ditemukan
             </h2>
             <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-              No kits match {filterLabels.length ? filterLabels.join(", ") : "the selected sort order"}. Adjust your filters or reset to explore the full collection.
+              Belum ada produk yang cocok dengan filter {filterLabels.length ? filterLabels.join(", ") : "yang dipilih"}. Silakan hapus filter untuk melihat seluruh katalog.
             </p>
             <div className="pt-2">
               <Button asChild className="rounded-lg px-7 h-auto py-3 text-xs uppercase tracking-wider font-extrabold">
-                <Link href="/jersey">Reset All Filters</Link>
+                <Link href="/jersey">Lihat Semua Katalog</Link>
               </Button>
             </div>
           </section>

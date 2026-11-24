@@ -148,21 +148,26 @@ export default async function JacketCatalogPage({ searchParams }: { searchParams
             <Link href={withFilter({ category: "Tim Nasional", team: "", country: "", page: "" })} className={pill(category === "Tim Nasional")}>Negara</Link>
           </div>
 
-          <form method="GET" action={BASE} className="relative w-full lg:w-80">
-            {Object.entries({ kitType, category, league, team, country, size, minPrice: p.minPrice || "", maxPrice: p.maxPrice || "", sort: sort === "featured" ? "" : sort })
-              .filter(([, v]) => v)
-              .map(([k, v]) => (
-                <input key={k} type="hidden" name={k} value={v} />
-              ))}
-            <Input
-              type="text"
-              name="search"
-              aria-label="Cari jaket"
-              defaultValue={search}
-              placeholder="Cari klub, negara, jaket..."
-              className="w-full h-auto rounded-lg bg-[#121217] hover:bg-[#181820] text-xs text-white placeholder:text-zinc-400 px-4 py-2.5 pl-10 border-white/10 focus-visible:border-white/30 font-sans"
-            />
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <form method="GET" action={BASE} className="relative flex items-center gap-2 w-full lg:w-96">
+            {sort !== "featured" && <input type="hidden" name="sort" value={sort} />}
+            <div className="relative flex-1">
+              <Input
+                key={search}
+                type="text"
+                name="search"
+                aria-label="Cari jaket"
+                defaultValue={search}
+                placeholder="Cari klub, negara, tracksuit, jaket..."
+                className="w-full h-auto rounded-lg bg-[#121217] hover:bg-[#181820] text-xs text-white placeholder:text-zinc-400 px-4 py-2.5 pl-10 border-white/10 focus-visible:border-white/30 font-sans"
+              />
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <Button
+              type="submit"
+              className="h-auto px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-wider shrink-0"
+            >
+              Cari
+            </Button>
           </form>
         </div>
 

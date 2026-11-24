@@ -27,6 +27,8 @@ interface JerseyCustomizerProps {
   namesetFee: number;
   patchFee: number;
   freeShippingMinItems?: number;
+  freePatchMinItems?: number;
+  freeNamesetMinItems?: number;
   promoFreeShipping?: boolean;
   promoFreeNameset?: boolean;
   promoFreePatch?: boolean;
@@ -38,6 +40,8 @@ export function JerseyCustomizer({
   namesetFee,
   patchFee,
   freeShippingMinItems = 2,
+  freePatchMinItems = 3,
+  freeNamesetMinItems = 5,
   promoFreeShipping = false,
   promoFreeNameset = false,
   promoFreePatch = false,
@@ -59,6 +63,7 @@ export function JerseyCustomizer({
   const [enableNameset, setEnableNameset] = useState(false);
   const [namesetName, setNamesetName] = useState("");
   const [namesetNumber, setNamesetNumber] = useState("");
+  const [namesetWarning, setNamesetWarning] = useState("");
 
   const [enablePatch, setEnablePatch] = useState(false);
   const patchOptions = getAvailablePatches(jersey);
@@ -72,8 +77,8 @@ export function JerseyCustomizer({
   const [activeImage, setActiveImage] = useState(jersey.image || "");
 
   const basePrice = parseFloat(jersey.price);
-  // fee hanya saat nama diketik — sama dengan server (order.ts)
-  const hasNameset = !jacket && enableNameset && namesetName.trim().length > 0;
+  // fee aktif saat nama atau nomor punggung diisi — sama dengan server (order.ts)
+  const hasNameset = !jacket && enableNameset && (namesetName.trim().length > 0 || namesetNumber.trim().length > 0);
   const rawNamesetTotal = hasNameset ? namesetFee * quantity : 0;
   const namesetDiscountPreview =
     promoFreeNameset && hasNameset
@@ -115,13 +120,24 @@ export function JerseyCustomizer({
     patchPrice: !jacket && enablePatch ? patchFee : 0,
   });
 
+  const validateNamesetBeforeCart = (): boolean => {
+    if (!jacket && enableNameset && !namesetName.trim() && !namesetNumber.trim()) {
+      setNamesetWarning("Silakan isi Nama atau Nomor Punggung di atas, atau hapus centang sablon jika ingin jersey polos.");
+      return false;
+    }
+    setNamesetWarning("");
+    return true;
+  };
+
   const handleAddToCart = () => {
+    if (!validateNamesetBeforeCart()) return;
     addItem(buildCartPayload());
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
 
   const handleBuyNow = () => {
+    if (!validateNamesetBeforeCart()) return;
     addItem(buildCartPayload());
     closeCart();
     router.push("/cart");
@@ -270,6 +286,23 @@ export function JerseyCustomizer({
               );
             })}
           </div>
+
+          {/* Info Cutting / Tips Ukuran Otomatis */}
+          <p className="text-[11px] text-zinc-400 leading-relaxed pt-0.5">
+            {jacket ? (
+              <>
+                <strong className="text-zinc-200">Tips Ukuran Jaket:</strong> Potongan regular-fit nyaman dipakai harian. Cek <strong className="text-white">Panduan Ukuran</strong> untuk detail panjang &amp; lingkar dada.
+              </>
+            ) : /player/i.test(jersey.type) ? (
+              <>
+                <strong className="text-volt">Tips Ukuran Player Issue:</strong> Potongan <em>slim-fit</em> mengikuti badan pemain. Disarankan <strong>naik 1 ukuran</strong> (misal biasa M pilih L) jika suka potongan agak longgar.
+              </>
+            ) : (
+              <>
+                <strong className="text-zinc-200">Tips Ukuran {jersey.type}:</strong> Potongan <em>regular-fit</em> standar suporter, pas sesuai ukuran kaos harian Anda.
+              </>
+            )}
+          </p>
         </div>
 
         {/* 2. Interactive Customizer: Nameset & Patch (hanya jersey) */}
@@ -280,7 +313,13 @@ export function JerseyCustomizer({
               <span>Sablon &amp; Patch (Opsional)</span>
             </span>
             <span className="text-[10px] text-volt font-bold bg-volt/10 px-2 py-0.5 rounded-lg border border-volt/20">
-              Bisa Gratis Sesuai Promo
+              {promoFreeNameset && promoFreePatch
+                ? `Promo: Nameset & Patch Gratis (${promoCustomizationScope === "all" ? "Semua Kaos" : "1x/Order"})`
+                : promoFreeNameset
+                ? `Promo: Gratis Nameset (${promoCustomizationScope === "all" ? "Semua Kaos" : "1x/Order"})`
+                : promoFreePatch
+                ? `Promo: Gratis Patch (${promoCustomizationScope === "all" ? "Semua Kaos" : "1x/Order"})`
+                : `Gratis Patch Min. ${freePatchMinItems} • Gratis Nameset Min. ${freeNamesetMinItems}`}
             </span>
           </div>
 
@@ -309,32 +348,45 @@ export function JerseyCustomizer({
             </label>
 
             {enableNameset && (
-              <div className="grid grid-cols-3 gap-2 pl-6 pt-1">
-                <div className="col-span-2">
-                  <Label htmlFor="nameset-name" className="sr-only">Nama Punggung</Label>
-                  <Input
-                    id="nameset-name"
-                    type="text"
-                    maxLength={12}
-                    value={namesetName}
-                    onChange={(e) => setNamesetName(e.target.value.toUpperCase())}
-                    placeholder="NAMA (CONTOH: BELLINGHAM)"
-                    className="w-full h-auto px-3 py-2 rounded-xl bg-[#09090B] border-white/15 text-xs text-white uppercase placeholder:text-zinc-400 focus-visible:border-volt font-mono font-bold"
-                  />
+              <div className="space-y-2 pl-6 pt-1">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <Label htmlFor="nameset-name" className="sr-only">Nama Punggung</Label>
+                    <Input
+                      id="nameset-name"
+                      type="text"
+                      maxLength={12}
+                      value={namesetName}
+                      onChange={(e) => {
+                        setNamesetName(e.target.value.toUpperCase());
+                        if (namesetWarning) setNamesetWarning("");
+                      }}
+                      placeholder="NAMA (CONTOH: BELLINGHAM)"
+                      className="w-full h-auto px-3 py-2 rounded-xl bg-[#09090B] border-white/15 text-xs text-white uppercase placeholder:text-zinc-400 focus-visible:border-volt font-mono font-bold"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="nameset-number" className="sr-only">Nomor Punggung</Label>
+                    <Input
+                      id="nameset-number"
+                      type="number"
+                      min={0}
+                      max={99}
+                      value={namesetNumber}
+                      onChange={(e) => {
+                        setNamesetNumber(e.target.value);
+                        if (namesetWarning) setNamesetWarning("");
+                      }}
+                      placeholder="NO (0-99)"
+                      className="w-full h-auto px-3 py-2 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-bold text-center"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="nameset-number" className="sr-only">Nomor Punggung</Label>
-                  <Input
-                    id="nameset-number"
-                    type="number"
-                    min={0}
-                    max={99}
-                    value={namesetNumber}
-                    onChange={(e) => setNamesetNumber(e.target.value)}
-                    placeholder="NO (0-99)"
-                    className="w-full h-auto px-3 py-2 rounded-xl bg-[#09090B] border-white/15 text-xs text-white placeholder:text-zinc-400 focus-visible:border-volt font-mono font-bold text-center"
-                  />
-                </div>
+                {namesetWarning && (
+                  <p role="alert" className="text-[11px] font-semibold text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded-lg px-3 py-2">
+                    {namesetWarning}
+                  </p>
+                )}
               </div>
             )}
           </div>

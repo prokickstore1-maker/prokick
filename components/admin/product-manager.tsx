@@ -19,8 +19,10 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
   const [products, setProducts] = useState(initialProducts);
   const [query, setQuery] = useState("");
   const [lineFilter, setLineFilter] = useState<"ALL" | "Jersey" | "Jaket" | "FEATURED">("ALL");
+  const [page, setPage] = useState(1);
   const [message, setMessage] = useState("");
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const PAGE_SIZE = 25;
   const jerseyCount = products.filter((p) => (p.productLine || "Jersey") === "Jersey").length;
   const jacketCount = products.filter((p) => p.productLine === "Jaket").length;
   const featuredCount = products.filter((p) => p.isFeatured).length;
@@ -30,6 +32,9 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
     if (lineFilter !== "ALL" && lineFilter !== "FEATURED" && line !== lineFilter) return false;
     return `${p.name} ${p.team} ${p.league} ${line} ${p.kitType}`.toLowerCase().includes(query.toLowerCase());
   });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   async function remove(id: string) {
     if (!window.confirm("Hapus produk ini?")) return;
@@ -67,7 +72,10 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
           <button
             key={val}
             type="button"
-            onClick={() => setLineFilter(val)}
+            onClick={() => {
+              setLineFilter(val);
+              setPage(1);
+            }}
             className={`px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
               lineFilter === val
                 ? "bg-white text-black font-extrabold"
@@ -78,12 +86,21 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
           </button>
         ))}
       </div>
-      <Input aria-label="Cari produk" className="text-sm sm:max-w-xs" placeholder="Cari produk…" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <Input
+        aria-label="Cari produk"
+        className="text-sm sm:max-w-xs"
+        placeholder="Cari produk…"
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setPage(1);
+        }}
+      />
     </div>
 
     {/* Mobile: kartu vertikal — nama tak terpotong, aksi tap-target ramah jempol */}
     <div className="space-y-2 sm:hidden">
-      {filtered.map((p) => (
+      {paginated.map((p) => (
         <div key={p.id} className="rounded-xl border border-[#27272A] bg-[#121217] p-3.5 space-y-3">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -120,7 +137,7 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
             </TableRow>
           </TableHeader>
           <TableBody className="text-zinc-200">
-            {filtered.map((p) => (
+            {paginated.map((p) => (
               <TableRow key={p.id} className="border-[#27272A] hover:bg-[#181820]">
                 <TableCell className="font-semibold text-white">{p.name}</TableCell>
                 <TableCell>
@@ -144,6 +161,33 @@ export function ProductManager({ initialProducts }: { initialProducts: Normalize
           </TableBody>
         </Table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <span className="text-xs font-mono text-zinc-400">
+            Halaman <strong className="text-white">{safePage}</strong> dari{" "}
+            <strong className="text-white">{totalPages}</strong> ({filtered.length} produk)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="px-3 py-2 min-h-10 rounded-lg border border-[#27272A] bg-[#181820] text-xs font-bold text-white hover:bg-[#27272A] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+            >
+              Sebelumnya
+            </button>
+            <button
+              type="button"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="px-3 py-2 min-h-10 rounded-lg border border-[#27272A] bg-[#181820] text-xs font-bold text-white hover:bg-[#27272A] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+            >
+              Berikutnya
+            </button>
+          </div>
+        </div>
+      )}
   </div>;
 }
 

@@ -112,7 +112,9 @@ export async function createOrderAction(input: CreateOrderInput) {
       }
       const verifiedName = dbJersey.name;
       const customizable = !isJacket(dbJersey);
-      const hasNameset = customizable && Boolean(item.namesetName && item.namesetName.trim());
+      const hasNameset =
+        customizable &&
+        Boolean((item.namesetName && item.namesetName.trim()) || (item.namesetNumber && item.namesetNumber.trim()));
       const hasPatch = customizable && Boolean(item.patch && item.patch.trim());
 
       verifiedItems.push({

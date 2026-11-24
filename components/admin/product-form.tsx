@@ -151,7 +151,14 @@ export function ProductForm({ initialProducts, product }: { initialProducts: Nor
   const [dragging, setDragging] = useState(false);
 
   const update = (key: keyof ProductInput, value: string | boolean | string[] | Record<string, number>) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      // Otomatis sinkronkan edition dari type agar admin tidak bingung antara Retro vs Vintage
+      if (key === "type" && typeof value === "string") {
+        next.edition = /retro/i.test(value) ? "Vintage" : "Current";
+      }
+      return next;
+    });
 
   const isJacketLine = form.productLine === PRODUCT_LINE_JACKET;
 
@@ -486,7 +493,6 @@ export function ProductForm({ initialProducts, product }: { initialProducts: Nor
             </div>
             {selectField("category", "Kategori", uniqueLower(["Klub", "Tim Nasional", ...initialProducts.map((j) => j.category)]))}
             {!isJacketLine && selectField("type", "Tipe jersey", ["Player Issue", "Fans Version", "Retro", "Kids"])}
-            {!isJacketLine && selectField("edition", "Edisi", ["Current", "Vintage"])}
             {selectField("kitType", isJacketLine ? "Jenis jaket" : "Tipe kit", isJacketLine ? [...JACKET_KINDS] : [...JERSEY_KIT_TYPES])}
             {textField("season", "Musim", undefined, "Contoh: 2026/2027")}
             {textField("country", "Negara", "country-options", "Negara klub/tim (untuk filter)", "England, Spain, Indonesia…")}

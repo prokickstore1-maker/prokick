@@ -84,6 +84,8 @@ export default async function ProductDetailPage({
           namesetFee={shipSettings.namesetFee || STANDARD_NAMESET_FEE}
           patchFee={shipSettings.patchFee || STANDARD_PATCH_FEE}
           freeShippingMinItems={shipSettings.promoFreeShipping ? 1 : shipSettings.freeShippingMinItems}
+          freePatchMinItems={shipSettings.freePatchMinItems}
+          freeNamesetMinItems={shipSettings.freeNamesetMinItems}
           promoFreeShipping={shipSettings.promoFreeShipping}
           promoFreeNameset={shipSettings.promoFreeNameset}
           promoFreePatch={shipSettings.promoFreePatch}
