@@ -42,6 +42,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ key: strin
           headers: {
             "Content-Type": obj.ContentType || "image/jpeg",
             "Cache-Control": "public, max-age=31536000, immutable",
+            "Access-Control-Allow-Origin": "*",
           },
         });
       }
@@ -60,6 +61,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ key: strin
         headers: {
           "Content-Type": pubRes.headers.get("Content-Type") || "image/jpeg",
           "Cache-Control": "public, max-age=31536000, immutable",
+          "Access-Control-Allow-Origin": "*",
         },
       });
     }

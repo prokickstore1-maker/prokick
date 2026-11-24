@@ -8,7 +8,8 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
+      // Izinkan /api/img/ agar foto produk bisa dibaca crawler, AI agent, dan preview OG
+      allow: ["/", "/api/img/"],
       disallow: ["/admin/", "/admin/login", "/invoice/", "/api/", "/cart"],
     },
     sitemap: `${BASE}/sitemap.xml`,

@@ -5,6 +5,22 @@ Setiap hari kerja baru ditambahkan di bagian paling atas (*reverse chronological
 
 ---
 
+## 2026-11-24 (Selasa)
+
+### Target Hari Ini:
+- [x] Buka akses `/api/img/` di `app/robots.ts` agar foto produk dapat dibaca langsung oleh AI agent, crawler, dan preview OpenGraph tanpa terblokir aturan `disallow: "/api/"`.
+- [x] Tambahkan header `Access-Control-Allow-Origin: *` pada `app/api/img/[...key]/route.ts` untuk foto produk publik.
+
+### Pekerjaan Selesai & Ringkasan Teknis:
+- **[`app/robots.ts`](file:///d:/project%20web/PROKICK%20MY/app/robots.ts)**: Mengubah `allow: "/"` menjadi `allow: ["/", "/api/img/"]` sehingga seluruh foto produk (`/api/img/products/...`) tidak lagi terblokir oleh aturan `disallow: "/api/"`.
+- **[`app/api/img/[...key]/route.ts`](file:///d:/project%20web/PROKICK%20MY/app/api/img/%5B...key%5D/route.ts)**: Menambahkan header `"Access-Control-Allow-Origin": "*"` pada response gambar produk (baik dari S3 client maupun fallback endpoint).
+- **Verifikasi**: `node_modules/.bin/tsc --noEmit` EXIT=0 (Commit: `c1added`).
+
+### Prioritas Sesi Berikutnya:
+- Konfirmasi commit & push ke repository jika sudah siap rilis ke produksi.
+
+---
+
 ## 2026-11-19 (Kamis)
 
 ### Target Hari Ini:

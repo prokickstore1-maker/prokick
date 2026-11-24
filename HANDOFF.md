@@ -1,6 +1,10 @@
-# HANDOFF — PROKICK Indonesia (Update: 2026-11-19)
+# HANDOFF — PROKICK Indonesia (Update: 2026-11-24)
 
 ## 1. Status Terbaru Sistem
+- **Update 2026-11-24 (Akses Gambar Produk Publik untuk Crawler & AI Agent)**:
+  1. **`robots.txt` (`app/robots.ts`)**: Menambahkan `allow: ["/", "/api/img/"]` agar URL foto produk `/api/img/products/...` diizinkan untuk diakses oleh AI agent, Googlebot, dan preview link, sementara endpoint `/api/` lainnya tetap diblokir.
+  2. **Header CORS Gambar (`app/api/img/[...key]/route.ts`)**: Menambahkan `"Access-Control-Allow-Origin": "*"` pada response proxy foto produk publik.
+  3. **Type-Check Status**: `node_modules/.bin/tsc --noEmit` **EXIT=0** (Commit `c1added`).
 - **Update 2026-11-19 (Lokalisasi Bahasa Indonesia & Perbaikan Alur Checkout Pelanggan)**:
   1. **Halaman Produk (`components/jersey/jersey-customizer.tsx`, `app/(shop)/product/[id]/page.tsx`)**: Seluruh label berbahasa Inggris diterjemahkan ke Bahasa Indonesia (`Pilih Ukuran`, `Tersedia ... pcs`, `Sablon & Patch (Opsional)`, `Produk Serupa`). Ditambahkan tombol **`Beli Sekarang • Rp...`** (langsung menuju `/cart`) berdampingan dengan **`+ Keranjang`**, serta panduan 3 langkah **Cara Pesan**.
   2. **Cart Drawer (`components/cart/cart-drawer.tsx`)**: Seluruh label diubah ke Bahasa Indonesia (`Keranjang Belanja`, `Ongkos Kirim`, `GRATIS`, `Lanjut ke Pembayaran`).
